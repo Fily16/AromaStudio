@@ -14,11 +14,65 @@ import { Perfume } from '../../models/perfume.model';
 export class CatalogComponent {
   private perfumeService = inject(PerfumeService);
 
+  // View state
+  currentView = signal<'landing' | 'retail' | 'wholesale'>('landing');
+
   searchQuery = signal('');
   selectedCategory = signal<'all' | 'men' | 'women' | 'unisex'>('all');
   sortBy = signal<'name' | 'price-asc' | 'price-desc' | 'brand'>('name');
 
   allPerfumes = this.perfumeService.getAllPerfumes();
+
+  setView(view: 'landing' | 'retail' | 'wholesale'): void {
+    this.currentView.set(view);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  // Wholesale products
+  wholesaleProducts = [
+    {
+      id: 1,
+      name: 'Eclaire',
+      brand: 'Lattafa',
+      wholesalePrice: 126,
+      imageUrl: 'imagenes/eclaire.jpg'
+    },
+    {
+      id: 2,
+      name: 'Yara Candy',
+      brand: 'Lattafa',
+      wholesalePrice: 115,
+      imageUrl: 'imagenes/yara candy.webp'
+    },
+    {
+      id: 3,
+      name: 'Yara Rosa',
+      brand: 'Lattafa',
+      wholesalePrice: 115,
+      imageUrl: 'imagenes/yara.webp'
+    },
+    {
+      id: 4,
+      name: 'Sublime',
+      brand: 'Lattafa',
+      wholesalePrice: 120,
+      imageUrl: 'imagenes/lattafa sublime.webp'
+    },
+    {
+      id: 5,
+      name: 'Asad',
+      brand: 'Lattafa',
+      wholesalePrice: 115,
+      imageUrl: 'imagenes/lattafa asad.webp'
+    },
+    {
+      id: 6,
+      name: 'Khamrah Dukhan',
+      brand: 'Lattafa',
+      wholesalePrice: 140,
+      imageUrl: 'imagenes/khamrah dukhan.webp'
+    }
+  ];
 
   filteredPerfumes = computed(() => {
     let perfumes = [...this.allPerfumes];
@@ -97,5 +151,19 @@ export class CatalogComponent {
 
   trackByPerfume(index: number, perfume: Perfume): number {
     return perfume.id;
+  }
+
+  getWhatsAppLink(product: { name: string; brand: string; wholesalePrice: number; imageUrl: string }): string {
+    const message = `🛒 *PEDIDO AL POR MAYOR*
+
+📦 *Producto:* ${product.name}
+🏷️ *Marca:* ${product.brand}
+💰 *Precio mayorista:* S/ ${product.wholesalePrice} por unidad
+
+📌 *Mínimo 6 unidades*
+
+¡Hola! Me interesa este perfume al por mayor. ¿Tienen disponibilidad?`;
+
+    return `https://wa.me/51903250695?text=${encodeURIComponent(message)}`;
   }
 }
