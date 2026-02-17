@@ -6,7 +6,8 @@
     "start": "ng serve",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
-    "test": "ng test"
+    "test": "ng test",
+    "deploy": "ng build --base-href https://fily16.github.io/AromaStudio/ && npx gh-pages -d dist/paginaweb"
   },
   "prettier": {
     "printWidth": 100,
@@ -39,6 +40,7 @@
     "@angular/compiler-cli": "^21.0.0",
     "angular-cli-ghpages": "^2.0.3",
     "astro": "^5.16.7",
+    "gh-pages": "^6.3.0",
     "jsdom": "^27.1.0",
     "typescript": "~5.9.2",
     "vitest": "^4.0.8"
