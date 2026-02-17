@@ -4,18 +4,16 @@
     <section class="landing-page">
       <div class="landing-content">
         <div class="landing-logo">
-          <span class="logo-sparkle">✨</span>
+          <span class="logo-sparkle">✦</span>
           <h1>AromaStudio</h1>
-          <span class="logo-sparkle">✨</span>
         </div>
         <p class="landing-tagline">Perfumes Árabes Originales</p>
-        <div class="landing-divider"></div>
-        <p class="landing-subtitle">Selecciona cómo deseas comprar</p>
+        <p class="landing-subtitle">Fragancias exclusivas que cautivan</p>
 
         <div class="landing-buttons">
           <button class="landing-btn btn-retail" (click)="setView('retail')">
             <span class="btn-icon-wrapper">
-              <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/>
                 <path d="M3 6h18"/>
                 <path d="M16 10a4 4 0 0 1-8 0"/>
@@ -29,7 +27,7 @@
 
           <button class="landing-btn btn-wholesale" (click)="setView('wholesale')">
             <span class="btn-icon-wrapper">
-              <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="m7.5 4.27 9 5.15"/>
                 <path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/>
                 <path d="m3.3 7 8.7 5 8.7-5"/>
@@ -43,19 +41,27 @@
           </button>
         </div>
 
-        <div class="landing-footer">
-          <div class="landing-stats">
-            <span>100% Originales</span>
-            <span class="stat-divider">•</span>
-            <span>Envíos a todo Perú</span>
+        <div class="landing-stats">
+          <div class="stat">
+            <span class="stat-number">70+</span>
+            <span class="stat-label">Fragancias</span>
+          </div>
+          <div class="stat-divider"></div>
+          <div class="stat">
+            <span class="stat-number">100%</span>
+            <span class="stat-label">Originales</span>
+          </div>
+          <div class="stat-divider"></div>
+          <div class="stat">
+            <span class="stat-number">24h</span>
+            <span class="stat-label">Envío Lima</span>
           </div>
         </div>
       </div>
 
       <div class="landing-bg-elements">
-        <div class="bg-circle bg-circle-1"></div>
-        <div class="bg-circle bg-circle-2"></div>
-        <div class="bg-circle bg-circle-3"></div>
+        <div class="bg-glow bg-glow-1"></div>
+        <div class="bg-glow bg-glow-2"></div>
       </div>
     </section>
   }
@@ -63,37 +69,42 @@
   <!-- Retail View (Por Menor) -->
   @if (currentView() === 'retail') {
     <div class="catalog-container">
-      <!-- Header with back button -->
+      <!-- Header -->
       <header class="section-header">
-        <button class="back-btn" (click)="setView('landing')">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="m15 18-6-6 6-6"/>
-          </svg>
-          Volver
-        </button>
-        <div class="header-brand">
-          <span>✨</span>
-          <h1>AromaStudio</h1>
+        <div class="header-top">
+          <button class="back-btn" (click)="setView('landing')">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="m15 18-6-6 6-6"/>
+            </svg>
+          </button>
+          <div class="header-brand">
+            <span class="brand-mark">✦</span>
+            <h1>AromaStudio</h1>
+          </div>
+          <div class="header-spacer"></div>
         </div>
-        <p class="header-subtitle">Catálogo Por Menor</p>
       </header>
 
       <!-- Filters Section -->
       <section class="filters-section">
         <div class="search-container">
-          <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <circle cx="11" cy="11" r="8"></circle>
             <path d="m21 21-4.3-4.3"></path>
           </svg>
           <input
             type="text"
-            placeholder="Buscar perfume, marca o descripción..."
+            placeholder="Buscar perfume..."
             [value]="searchQuery()"
             (input)="onSearchChange($event)"
             class="search-input"
           />
           @if (searchQuery()) {
-            <button class="clear-search" (click)="searchQuery.set('')">✕</button>
+            <button class="clear-search" (click)="searchQuery.set('')">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M18 6 6 18"/><path d="m6 6 12 12"/>
+              </svg>
+            </button>
           }
         </div>
 
@@ -111,8 +122,7 @@
           </div>
 
           <div class="sort-container">
-            <label for="sort">Ordenar:</label>
-            <select id="sort" [value]="sortBy()" (change)="onSortChange($event)">
+            <select [value]="sortBy()" (change)="onSortChange($event)">
               @for (option of sortOptions; track option.value) {
                 <option [value]="option.value">{{ option.label }}</option>
               }
@@ -121,9 +131,9 @@
         </div>
 
         <div class="results-info">
-          <span class="results-count">{{ totalCount() }} perfumes encontrados</span>
+          <span class="results-count">{{ totalCount() }} perfumes</span>
           @if (searchQuery() || selectedCategory() !== 'all') {
-            <button class="clear-filters" (click)="clearFilters()">Limpiar filtros</button>
+            <button class="clear-filters" (click)="clearFilters()">Limpiar</button>
           }
         </div>
       </section>
@@ -131,46 +141,56 @@
       <!-- Catalog Grid -->
       <main class="catalog-grid">
         @for (perfume of filteredPerfumes(); track perfume.id) {
-          <app-perfume-card [perfume]="perfume" />
+          <div class="perfume-card-wrapper">
+            <app-perfume-card [perfume]="perfume" />
+          </div>
         } @empty {
           <div class="empty-state">
             <span class="empty-icon">🔍</span>
             <h3>No se encontraron perfumes</h3>
-            <p>Intenta con otros términos de búsqueda o ajusta los filtros</p>
-            <button class="btn-reset" (click)="clearFilters()">Ver todos los perfumes</button>
+            <p>Intenta con otros términos de búsqueda</p>
+            <button class="btn-reset" (click)="clearFilters()">Ver todos</button>
           </div>
         }
       </main>
+
+      <!-- Variety CTA -->
+      <section class="wholesale-cta">
+        <div class="cta-content">
+          <p class="cta-text">¡Contamos con mucha más variedad! 🌟</p>
+          <p class="cta-subtext">Para ver todo nuestro catálogo mayorista, escríbenos</p>
+          <a href="https://wa.me/51903250695?text=%C2%A1Hola!%20Me%20interesa%20ver%20el%20cat%C3%A1logo%20completo%20de%20mayoreo" target="_blank" class="cta-whatsapp-btn">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+            </svg>
+            Háblanos al WhatsApp
+          </a>
+        </div>
+      </section>
 
       <!-- Footer -->
       <footer class="footer">
         <div class="footer-content">
           <div class="footer-brand">
-            <h2>✨ AromaStudio</h2>
-            <p>Tu tienda de perfumes árabes originales en Perú</p>
+            <span>✦</span>
+            <h2>AromaStudio</h2>
           </div>
-          <div class="footer-contact">
-            <h3>Contáctanos</h3>
-            <a href="https://wa.me/51903250695" class="whatsapp-link">
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+          <p class="footer-tagline">Perfumes Árabes Originales en Perú</p>
+          <div class="footer-links">
+            <a href="https://wa.me/51903250695" class="footer-link">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
               </svg>
               WhatsApp
             </a>
-            <div class="social-links">
-              <a href="#" class="social-link">📸 Instagram</a>
-              <a href="#" class="social-link">🎵 TikTok</a>
-            </div>
-          </div>
-          <div class="footer-info">
-            <h3>Información</h3>
-            <p>📍 Lima, Perú</p>
-            <p>🚚 Envíos a todo el país</p>
-            <p>💳 Yape, Plin, Transferencia</p>
+            <span class="footer-divider">·</span>
+            <span>Lima, Perú</span>
+            <span class="footer-divider">·</span>
+            <span>Envíos a todo el país</span>
           </div>
         </div>
         <div class="footer-bottom">
-          <p>© 2025 AromaStudio. Todos los derechos reservados.</p>
+          <p>© 2025 AromaStudio</p>
         </div>
       </footer>
     </div>
@@ -178,94 +198,87 @@
 
   <!-- Wholesale View (Por Mayor) -->
   @if (currentView() === 'wholesale') {
-    <div class="wholesale-container">
-      <!-- Header with back button -->
-      <header class="section-header section-header-dark">
-        <button class="back-btn back-btn-light" (click)="setView('landing')">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="m15 18-6-6 6-6"/>
-          </svg>
-          Volver
-        </button>
-        <div class="header-brand header-brand-light">
-          <span>✨</span>
-          <h1>AromaStudio</h1>
+    <div class="catalog-container wholesale-view">
+      <!-- Header -->
+      <header class="section-header">
+        <div class="header-top">
+          <button class="back-btn" (click)="setView('landing')">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="m15 18-6-6 6-6"/>
+            </svg>
+          </button>
+          <div class="header-brand">
+            <span class="brand-mark">✦</span>
+            <h1>AromaStudio</h1>
+          </div>
+          <div class="header-spacer"></div>
         </div>
-        <p class="header-subtitle header-subtitle-light">Catálogo Por Mayor</p>
-        <div class="wholesale-notice">
-          <span class="notice-icon">📦</span>
-          <span class="notice-text">Mínimo <strong>6 unidades</strong> para acceder a precios mayoristas</span>
+        <div class="wholesale-badge">
+          <span>Por Mayor</span>
+          <span class="badge-info">Mínimo 6 unidades</span>
         </div>
       </header>
 
       <!-- Wholesale Grid -->
       <main class="wholesale-grid">
         @for (product of wholesaleProducts; track product.id) {
-          <a [href]="getWhatsAppLink(product)" target="_blank" class="wholesale-card">
-            <div class="wholesale-card-image">
+          <a [href]="getWhatsAppLink(product)" target="_blank" class="perfume-card-wrapper wholesale-card">
+            <div class="card-image">
               <img [src]="product.imageUrl" [alt]="product.name" loading="lazy" />
-              <div class="wholesale-badge-overlay">MAYOREO</div>
             </div>
-            <div class="wholesale-card-content">
-              <h3 class="wholesale-product-name">{{ product.name }}</h3>
-              <p class="wholesale-brand">{{ product.brand }}</p>
-              <div class="wholesale-price-container">
-                <span class="wholesale-price">S/ {{ product.wholesalePrice }}</span>
-                <span class="wholesale-unit">por unidad</span>
+            <div class="card-content">
+              <span class="product-brand">{{ product.brand }}</span>
+              <h3 class="product-name">{{ product.name }}</h3>
+              <div class="price-row">
+                <span class="price">S/ {{ product.wholesalePrice }}</span>
+                <span class="price-unit">/unidad</span>
               </div>
-              <div class="wholesale-card-cta">
-                <span class="cta-icon">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
-                  </svg>
-                </span>
-                Consultar por WhatsApp
+              <div class="card-cta">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+                </svg>
+                Consultar
               </div>
             </div>
           </a>
         }
       </main>
 
-      <!-- Wholesale CTA -->
-      <div class="wholesale-cta">
-        <p>¿Necesitas más información sobre compras al por mayor?</p>
-        <a href="https://wa.me/51903250695?text=Hola!%20Me%20interesa%20comprar%20al%20por%20mayor" class="wholesale-btn">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
-          </svg>
-          Contactar por WhatsApp
-        </a>
-      </div>
+      <!-- Variety CTA -->
+      <section class="wholesale-cta">
+        <div class="cta-content">
+          <p class="cta-text">¡Contamos con mucha más variedad! 🌟</p>
+          <p class="cta-subtext">Para ver todo nuestro catálogo mayorista, escríbenos</p>
+          <a href="https://wa.me/51903250695?text=%C2%A1Hola!%20Me%20interesa%20ver%20el%20cat%C3%A1logo%20completo%20de%20mayoreo" target="_blank" class="cta-whatsapp-btn">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+            </svg>
+            Háblanos al WhatsApp
+          </a>
+        </div>
+      </section>
 
       <!-- Footer -->
       <footer class="footer">
         <div class="footer-content">
           <div class="footer-brand">
-            <h2>✨ AromaStudio</h2>
-            <p>Tu tienda de perfumes árabes originales en Perú</p>
+            <span>✦</span>
+            <h2>AromaStudio</h2>
           </div>
-          <div class="footer-contact">
-            <h3>Contáctanos</h3>
-            <a href="https://wa.me/51903250695" class="whatsapp-link">
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+          <p class="footer-tagline">Perfumes Árabes Originales en Perú</p>
+          <div class="footer-links">
+            <a href="https://wa.me/51903250695" class="footer-link">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
               </svg>
               WhatsApp
             </a>
-            <div class="social-links">
-              <a href="#" class="social-link">📸 Instagram</a>
-              <a href="#" class="social-link">🎵 TikTok</a>
-            </div>
-          </div>
-          <div class="footer-info">
-            <h3>Información</h3>
-            <p>📍 Lima, Perú</p>
-            <p>🚚 Envíos a todo el país</p>
-            <p>💳 Yape, Plin, Transferencia</p>
+            <span class="footer-divider">·</span>
+            <span>Lima, Perú</span>
           </div>
         </div>
         <div class="footer-bottom">
-          <p>© 2025 AromaStudio. Todos los derechos reservados.</p>
+          <p>© 2025 AromaStudio</p>
         </div>
       </footer>
     </div>

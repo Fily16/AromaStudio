@@ -1,8 +1,13 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal, AfterViewInit, OnDestroy, PLATFORM_ID } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { PerfumeService } from '../../services/perfume.service';
 import { PerfumeCardComponent } from '../perfume-card/perfume-card.component';
 import { FormsModule } from '@angular/forms';
 import { Perfume } from '../../models/perfume.model';
+import { gsap } from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
+
+gsap.registerPlugin(ScrollTrigger);
 
 @Component({
   selector: 'app-catalog',
@@ -11,10 +16,11 @@ import { Perfume } from '../../models/perfume.model';
   templateUrl: './catalog.component.html',
   styleUrl: './catalog.component.css'
 })
-export class CatalogComponent {
+export class CatalogComponent implements AfterViewInit, OnDestroy {
   private perfumeService = inject(PerfumeService);
+  private platformId = inject(PLATFORM_ID);
 
-  // View state
+  // View state - sin hero
   currentView = signal<'landing' | 'retail' | 'wholesale'>('landing');
 
   searchQuery = signal('');
@@ -23,9 +29,107 @@ export class CatalogComponent {
 
   allPerfumes = this.perfumeService.getAllPerfumes();
 
+  ngAfterViewInit(): void {
+    if (isPlatformBrowser(this.platformId)) {
+      setTimeout(() => this.initScrollAnimations(), 100);
+    }
+  }
+
+  ngOnDestroy(): void {
+    ScrollTrigger.getAll().forEach(st => st.kill());
+  }
+
+  private initScrollAnimations(): void {
+    // Animate landing page elements
+    if (this.currentView() === 'landing') {
+      gsap.from('.landing-logo', {
+        y: 40,
+        opacity: 0,
+        duration: 1,
+        ease: 'power3.out'
+      });
+
+      gsap.from('.landing-tagline', {
+        y: 30,
+        opacity: 0,
+        duration: 1,
+        delay: 0.2,
+        ease: 'power3.out'
+      });
+
+      gsap.from('.landing-buttons', {
+        y: 30,
+        opacity: 0,
+        duration: 1,
+        delay: 0.4,
+        ease: 'power3.out'
+      });
+    }
+  }
+
+  initCatalogAnimations(): void {
+    if (!isPlatformBrowser(this.platformId)) return;
+
+    // Esperar a que el DOM se actualice
+    setTimeout(() => {
+      // Animate header
+      gsap.from('.section-header', {
+        y: -30,
+        opacity: 0,
+        duration: 0.8,
+        ease: 'power3.out'
+      });
+
+      // Animate filters
+      gsap.from('.filters-section', {
+        y: 20,
+        opacity: 0,
+        duration: 0.8,
+        delay: 0.2,
+        ease: 'power3.out'
+      });
+
+      // Animate cards with stagger and scroll trigger
+      gsap.utils.toArray<HTMLElement>('.perfume-card-wrapper').forEach((card, i) => {
+        gsap.from(card, {
+          y: 60,
+          opacity: 0,
+          duration: 0.8,
+          delay: i * 0.05, // Stagger inicial
+          ease: 'power3.out',
+          scrollTrigger: {
+            trigger: card,
+            start: 'top 90%',
+            toggleActions: 'play none none none'
+          }
+        });
+      });
+
+      // Parallax effect on card images
+      gsap.utils.toArray<HTMLElement>('.card-image-parallax').forEach(img => {
+        gsap.to(img, {
+          yPercent: -10,
+          ease: 'none',
+          scrollTrigger: {
+            trigger: img,
+            start: 'top bottom',
+            end: 'bottom top',
+            scrub: 1
+          }
+        });
+      });
+    }, 100);
+  }
+
   setView(view: 'landing' | 'retail' | 'wholesale'): void {
     this.currentView.set(view);
     window.scrollTo({ top: 0, behavior: 'smooth' });
+
+    // Re-initialize animations when view changes
+    if (view === 'retail' || view === 'wholesale') {
+      ScrollTrigger.getAll().forEach(st => st.kill());
+      this.initCatalogAnimations();
+    }
   }
 
   // Wholesale products
@@ -34,42 +138,42 @@ export class CatalogComponent {
       id: 1,
       name: 'Eclaire',
       brand: 'Lattafa',
-      wholesalePrice: 126,
+      wholesalePrice: 100,
       imageUrl: 'imagenes/eclaire.jpg'
     },
     {
       id: 2,
       name: 'Yara Candy',
       brand: 'Lattafa',
-      wholesalePrice: 115,
+      wholesalePrice: 90,
       imageUrl: 'imagenes/yara candy.webp'
     },
     {
       id: 3,
       name: 'Yara Rosa',
       brand: 'Lattafa',
-      wholesalePrice: 115,
+      wholesalePrice: 90,
       imageUrl: 'imagenes/yara.webp'
     },
     {
       id: 4,
       name: 'Sublime',
       brand: 'Lattafa',
-      wholesalePrice: 120,
+      wholesalePrice: 95,
       imageUrl: 'imagenes/lattafa sublime.webp'
     },
     {
       id: 5,
       name: 'Asad',
       brand: 'Lattafa',
-      wholesalePrice: 115,
+      wholesalePrice: 95,
       imageUrl: 'imagenes/lattafa asad.webp'
     },
     {
       id: 6,
       name: 'Khamrah Dukhan',
       brand: 'Lattafa',
-      wholesalePrice: 140,
+      wholesalePrice: 110,
       imageUrl: 'imagenes/khamrah dukhan.webp'
     }
   ];
