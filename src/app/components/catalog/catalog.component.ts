@@ -137,25 +137,25 @@ export class CatalogComponent implements AfterViewInit, OnDestroy {
     // ═══════════════════════════════════════
     // AFNAN - Línea 9PM / 9AM
     // ═══════════════════════════════════════
-    { id: 1, name: '9PM Tester', brand: 'Afnan', wholesalePrice: 92, imageUrl: '' },
-    { id: 2, name: '9PM', brand: 'Afnan', wholesalePrice: 100, imageUrl: '' },
+    { id: 1, name: '9PM Tester', brand: 'Afnan', wholesalePrice: 92, imageUrl: 'imagenes/9 pm.webp' },
+    { id: 2, name: '9PM', brand: 'Afnan', wholesalePrice: 100, imageUrl: 'imagenes/9 pm.webp' },
     { id: 3, name: '9AM Dive', brand: 'Afnan', wholesalePrice: 100, imageUrl: 'imagenes/afnan 9 am dive.webp' },
-    { id: 4, name: '9PM Rebel Tester', brand: 'Afnan', wholesalePrice: 118, imageUrl: '' },
-    { id: 5, name: '9PM Rebel', brand: 'Afnan', wholesalePrice: 118, imageUrl: '' },
+    { id: 4, name: '9PM Rebel Tester', brand: 'Afnan', wholesalePrice: 118, imageUrl: 'imagenes/9 pm rebel.webp' },
+    { id: 5, name: '9PM Rebel', brand: 'Afnan', wholesalePrice: 118, imageUrl: 'imagenes/9 pm rebel.webp' },
     { id: 6, name: '9PM Elixir', brand: 'Afnan', wholesalePrice: 118, imageUrl: 'imagenes/9 pm elixir.webp' },
-    { id: 7, name: '9PM Elixir Tester', brand: 'Afnan', wholesalePrice: 118, imageUrl: '' },
+    { id: 7, name: '9PM Elixir Tester', brand: 'Afnan', wholesalePrice: 118, imageUrl: 'imagenes/9 pm elixir.webp' },
 
     // ═══════════════════════════════════════
     // ZIMAYA
     // ═══════════════════════════════════════
-    { id: 8, name: 'Tiramisu', brand: 'Zimaya', wholesalePrice: 118, imageUrl: '' },
+    { id: 8, name: 'Tiramisu', brand: 'Zimaya', wholesalePrice: 118, imageUrl: 'imagenes/tiramisu.webp' },
 
     // ═══════════════════════════════════════
     // LATTAFA
     // ═══════════════════════════════════════
     { id: 9, name: 'Sublime', brand: 'Lattafa', wholesalePrice: 92, imageUrl: 'imagenes/lattafa sublime.webp' },
     { id: 10, name: 'Honor & Glory', brand: 'Lattafa', wholesalePrice: 92, imageUrl: 'imagenes/honos and glory.jpg' },
-    { id: 11, name: 'Amethyst', brand: 'Lattafa', wholesalePrice: 92, imageUrl: '' },
+    { id: 11, name: 'Amethyst', brand: 'Lattafa', wholesalePrice: 92, imageUrl: 'imagenes/amethyst.webp' },
     { id: 12, name: 'Oud for Glory', brand: 'Lattafa', wholesalePrice: 92, imageUrl: 'imagenes/lattafa oud for glory.jpg' },
     { id: 13, name: 'Asad', brand: 'Lattafa', wholesalePrice: 92, imageUrl: 'imagenes/lattafa asad.webp' },
     { id: 14, name: 'Asad Bourbon', brand: 'Lattafa', wholesalePrice: 100, imageUrl: 'imagenes/lattafa asad bournbon.webp' },
@@ -168,7 +168,7 @@ export class CatalogComponent implements AfterViewInit, OnDestroy {
     { id: 21, name: 'Fakhar Rose', brand: 'Lattafa', wholesalePrice: 92, imageUrl: '' },
     { id: 22, name: 'Fakhar Platin', brand: 'Lattafa', wholesalePrice: 118, imageUrl: 'imagenes/fakhar platin.jpg' },
     { id: 23, name: 'Khamrah Clásico', brand: 'Lattafa', wholesalePrice: 100, imageUrl: 'imagenes/lattafa khamrah.jpg' },
-    { id: 24, name: 'Khamrah Qahwa', brand: 'Lattafa', wholesalePrice: 100, imageUrl: '' },
+    { id: 24, name: 'Khamrah Qahwa', brand: 'Lattafa', wholesalePrice: 100, imageUrl: 'imagenes/khamra qawah.webp' },
     { id: 25, name: 'Khamrah Dukhan', brand: 'Lattafa', wholesalePrice: 100, imageUrl: 'imagenes/khamrah dukhan.webp' },
     { id: 26, name: 'Asad Elixir', brand: 'Lattafa', wholesalePrice: 118, imageUrl: '' },
     { id: 27, name: 'Yara Elixir', brand: 'Lattafa', wholesalePrice: 118, imageUrl: '' },
