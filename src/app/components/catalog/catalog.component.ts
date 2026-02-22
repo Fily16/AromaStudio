@@ -647,7 +647,7 @@ export class CatalogComponent implements AfterViewInit, OnDestroy {
   }
 
   getWhatsAppLink(product: { name: string; brand: string; wholesalePrice: number; imageUrl: string }): string {
-    const message = `🛒 *PEDIDO AL POR MAYOR*
+    const message = `🛒 *Condolidado*
 
 📦 *Producto:* ${product.name}
 🏷️ *Marca:* ${product.brand}
