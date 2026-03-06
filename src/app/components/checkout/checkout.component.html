@@ -1,0 +1,86 @@
+<div class="checkout-page">
+
+  @if (step() === 'form') {
+    <div class="checkout-card">
+      <h1>Finalizar Pedido</h1>
+      <p class="subtitle">Ingresa tus datos para procesar tu pedido del consolidado</p>
+
+      <div class="order-summary">
+        <h3>Resumen del Pedido</h3>
+        @for (item of cart.cartItems(); track item.product.id) {
+          <div class="summary-item">
+            <span>{{item.product.brand}} - {{item.product.name}} x{{item.quantity}}</span>
+            <span>S/ {{(item.unitPricePen * item.quantity) | number:'1.2-2'}}</span>
+          </div>
+        }
+        <div class="summary-total">
+          <span>Total</span>
+          <span>S/ {{cart.totalPen() | number:'1.2-2'}}</span>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="name">Nombre completo</label>
+        <input id="name" type="text" [value]="clientName()" (input)="clientName.set($any($event.target).value)" placeholder="Tu nombre">
+      </div>
+
+      <div class="form-group">
+        <label for="phone">WhatsApp (con código de país)</label>
+        <input id="phone" type="tel" [value]="clientPhone()" (input)="clientPhone.set($any($event.target).value)" placeholder="51903250695">
+      </div>
+
+      @if (error()) {
+        <p class="error-msg">{{error()}}</p>
+      }
+
+      <button class="submit-btn" (click)="submitOrder()" [disabled]="loading()">
+        @if (loading()) {
+          Procesando...
+        } @else {
+          Generar pedido y ver datos de Yape
+        }
+      </button>
+    </div>
+  }
+
+  @if (step() === 'yape') {
+    <div class="checkout-card yape-card">
+      <div class="yape-icon">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+      </div>
+      <h1>Paga con Yape</h1>
+      <p class="subtitle">Tu pedido #{{orderId()}} fue registrado. Ahora realiza el pago por Yape.</p>
+
+      <div class="yape-amount">
+        <span class="label">Monto a pagar</span>
+        <span class="amount">S/ {{cart.totalPen() | number:'1.2-2'}}</span>
+      </div>
+
+      <div class="yape-number">
+        <span class="label">Número de Yape</span>
+        <span class="number">{{yapeNumber()}}</span>
+      </div>
+
+      <div class="yape-instructions">
+        <p>1. Abre tu app de Yape</p>
+        <p>2. Yapea al número <strong>{{yapeNumber()}}</strong></p>
+        <p>3. Monto exacto: <strong>S/ {{cart.totalPen() | number:'1.2-2'}}</strong></p>
+        <p>4. Una vez realizado el pago, haz clic en el botón de abajo</p>
+      </div>
+
+      <button class="submit-btn" (click)="confirmYape()">Ya realicé el Yape</button>
+    </div>
+  }
+
+  @if (step() === 'done') {
+    <div class="checkout-card success-card">
+      <div class="success-icon">
+        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#34d399" stroke-width="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+      </div>
+      <h1>Pedido Registrado</h1>
+      <p class="subtitle">Tu pedido #{{orderId()}} está pendiente de verificación. Te contactaremos por WhatsApp una vez confirmado el Yape.</p>
+      <button class="submit-btn" (click)="goHome()">Volver al catálogo</button>
+    </div>
+  }
+
+</div>

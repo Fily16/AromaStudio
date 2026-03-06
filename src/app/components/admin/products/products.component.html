@@ -1,0 +1,69 @@
+<div class="admin-page">
+  <nav class="admin-nav">
+    <div class="nav-brand"><span class="brand-name">AromaStudio</span><span class="brand-tag">Admin</span></div>
+    <div class="nav-links">
+      <a routerLink="/admin" class="nav-link">Dashboard</a>
+      <a routerLink="/admin/orders" class="nav-link">Pedidos</a>
+      <a routerLink="/admin/products" class="nav-link active">Productos</a>
+      <a routerLink="/admin/inventory" class="nav-link">Inventario</a>
+      <a routerLink="/admin/config" class="nav-link">Config</a>
+    </div>
+  </nav>
+
+  <div class="admin-content">
+    <div class="page-header">
+      <h1>Productos y Precios</h1>
+      <input type="text" placeholder="Buscar producto..." (input)="onSearchInput($event)" class="search-input">
+    </div>
+
+    <div class="products-table-wrapper">
+      <table class="products-table">
+        <thead>
+          <tr>
+            <th>SKU</th>
+            <th>Producto</th>
+            <th>Tipo</th>
+            <th>Precio USD</th>
+            <th>Precio Retail (S/)</th>
+            <th>Precio Consolidado (S/)</th>
+            <th>Disponible</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (p of filteredProducts(); track p.id) {
+            <tr>
+              <td class="sku">{{p.sku}}</td>
+              <td><strong>{{p.brand}}</strong> - {{p.name}} {{p.ml}}ml</td>
+              <td><span class="type-badge" [class]="p.category">{{p.category}}</span></td>
+
+              @if (editingId() === p.id) {
+                <td><input type="number" step="0.01" [value]="editPrices().priceUsd" (input)="updateEditField('priceUsd', $event)" class="edit-input"></td>
+                <td><input type="number" step="0.01" [value]="editPrices().retailPricePen" (input)="updateEditField('retailPricePen', $event)" class="edit-input"></td>
+                <td><input type="number" step="0.01" [value]="editPrices().wholesalePricePen" (input)="updateEditField('wholesalePricePen', $event)" class="edit-input"></td>
+              } @else {
+                <td>${{p.priceUsd | number:'1.2-2'}}</td>
+                <td>{{p.retailPricePen ? 'S/ ' + (p.retailPricePen | number:'1.2-2') : '—'}}</td>
+                <td>{{p.wholesalePricePen ? 'S/ ' + (p.wholesalePricePen | number:'1.2-2') : '—'}}</td>
+              }
+
+              <td>
+                <button class="toggle-btn" [class.active]="p.available" (click)="toggleAvailable(p)">
+                  {{p.available ? 'Sí' : 'No'}}
+                </button>
+              </td>
+              <td>
+                @if (editingId() === p.id) {
+                  <button class="save-btn" (click)="savePrices(p.id)">Guardar</button>
+                  <button class="cancel-btn" (click)="cancelEdit()">X</button>
+                } @else {
+                  <button class="edit-btn" (click)="startEdit(p)">Editar</button>
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

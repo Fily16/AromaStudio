@@ -1,0 +1,64 @@
+<div class="admin-page">
+  <nav class="admin-nav">
+    <div class="nav-brand"><span class="brand-name">AromaStudio</span><span class="brand-tag">Admin</span></div>
+    <div class="nav-links">
+      <a routerLink="/admin" class="nav-link">Dashboard</a>
+      <a routerLink="/admin/orders" class="nav-link">Pedidos</a>
+      <a routerLink="/admin/products" class="nav-link">Productos</a>
+      <a routerLink="/admin/inventory" class="nav-link">Inventario</a>
+      <a routerLink="/admin/config" class="nav-link active">Config</a>
+    </div>
+  </nav>
+
+  <div class="admin-content">
+    <h1>Configuración del Sistema</h1>
+
+    @if (message()) {
+      <div class="message">{{message()}}</div>
+    }
+
+    <div class="config-list">
+      @for (config of configs(); track config.id) {
+        <div class="config-item">
+          <div class="config-header">
+            <div class="config-label">{{getLabel(config.configKey)}}</div>
+            <span class="config-key">{{config.configKey}}</span>
+          </div>
+
+          @if (editing() === config.configKey) {
+            <div class="config-edit">
+              <input
+                type="text"
+                [value]="editValue()"
+                (input)="setEditValue($event)"
+                (keyup.enter)="saveEdit(config.configKey)"
+                class="config-input"
+                autofocus
+              />
+              <div class="edit-actions">
+                <button class="btn-save" (click)="saveEdit(config.configKey)">Guardar</button>
+                <button class="btn-cancel" (click)="cancelEdit()">Cancelar</button>
+              </div>
+            </div>
+          } @else {
+            <div class="config-display" (click)="startEdit(config)">
+              <span class="config-value">{{config.configValue}}</span>
+              <button class="btn-edit">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/>
+                  <path d="m15 5 4 4"/>
+                </svg>
+              </button>
+            </div>
+          }
+
+          @if (config.description) {
+            <p class="config-desc">{{config.description}}</p>
+          }
+        </div>
+      } @empty {
+        <p class="empty">No hay configuraciones</p>
+      }
+    </div>
+  </div>
+</div>

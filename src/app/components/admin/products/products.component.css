@@ -1,0 +1,63 @@
+.admin-page { min-height: 100vh; background: #0a0a0b; color: #fff; }
+.admin-nav { display: flex; align-items: center; justify-content: space-between; padding: 0.75rem 2rem; background: #111113; border-bottom: 1px solid rgba(255,255,255,0.06); flex-wrap: wrap; gap: 0.75rem; }
+.nav-brand { display: flex; align-items: center; gap: 0.5rem; }
+.brand-name { font-weight: 700; font-size: 1.1rem; color: #C9A227; }
+.brand-tag { font-size: 0.7rem; background: rgba(201,162,39,0.15); color: #C9A227; padding: 2px 8px; border-radius: 4px; }
+.nav-links { display: flex; gap: 0.25rem; flex-wrap: wrap; }
+.nav-link { padding: 0.5rem 0.75rem; color: #a1a1aa; text-decoration: none; font-size: 0.85rem; border-radius: 6px; }
+.nav-link:hover { color: #fff; background: rgba(255,255,255,0.05); }
+.nav-link.active { color: #C9A227; background: rgba(201,162,39,0.1); }
+
+.admin-content { padding: 2rem; max-width: 1400px; margin: 0 auto; }
+.page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem; }
+.page-header h1 { font-size: 1.5rem; }
+
+.search-input {
+  background: #18181b; color: #fff; border: 1px solid rgba(255,255,255,0.1);
+  padding: 0.5rem 1rem; border-radius: 8px; font-size: 0.9rem; width: 250px;
+}
+.search-input:focus { outline: none; border-color: #C9A227; }
+
+.products-table-wrapper { overflow-x: auto; }
+
+.products-table {
+  width: 100%; border-collapse: collapse; font-size: 0.85rem;
+}
+.products-table th {
+  text-align: left; padding: 0.75rem; color: #a1a1aa; font-size: 0.75rem;
+  text-transform: uppercase; letter-spacing: 0.5px;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.products-table td {
+  padding: 0.6rem 0.75rem;
+  border-bottom: 1px solid rgba(255,255,255,0.03);
+}
+.products-table tbody tr:hover { background: rgba(255,255,255,0.02); }
+
+.sku { font-family: monospace; font-size: 0.75rem; color: #a1a1aa; }
+
+.type-badge { padding: 2px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: 600; text-transform: uppercase; }
+.type-badge.men { background: rgba(59,130,246,0.15); color: #3b82f6; }
+.type-badge.women { background: rgba(236,72,153,0.15); color: #ec4899; }
+.type-badge.unisex { background: rgba(139,92,246,0.15); color: #8b5cf6; }
+
+.edit-input {
+  width: 80px; padding: 0.3rem 0.5rem;
+  background: rgba(255,255,255,0.05); border: 1px solid #C9A227;
+  border-radius: 4px; color: #fff; font-size: 0.85rem;
+}
+
+.toggle-btn {
+  padding: 3px 10px; border-radius: 4px; border: none; font-size: 0.75rem; cursor: pointer;
+  background: rgba(239,68,68,0.15); color: #ef4444;
+}
+.toggle-btn.active { background: rgba(52,211,153,0.15); color: #34d399; }
+
+.edit-btn { background: rgba(201,162,39,0.15); color: #C9A227; border: none; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 0.75rem; }
+.save-btn { background: rgba(52,211,153,0.15); color: #34d399; border: none; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 0.75rem; margin-right: 4px; }
+.cancel-btn { background: rgba(239,68,68,0.1); color: #ef4444; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 0.75rem; }
+
+@media (max-width: 768px) {
+  .admin-content { padding: 1rem; }
+  .search-input { width: 100%; }
+}

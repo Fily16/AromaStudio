@@ -1,4 +1,12 @@
 <div class="app-container">
+  <!-- Cart Toast -->
+  @if (cartToast()) {
+    <div class="cart-toast">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+      {{cartToast()}}
+    </div>
+  }
+
   <!-- Landing Page -->
   @if (currentView() === 'landing') {
     <section class="landing-page">
@@ -15,8 +23,7 @@
             <span class="btn-icon-wrapper">
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/>
-                <path d="M3 6h18"/>
-                <path d="M16 10a4 4 0 0 1-8 0"/>
+                <path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/>
               </svg>
             </span>
             <span class="btn-text">
@@ -30,8 +37,7 @@
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="m7.5 4.27 9 5.15"/>
                 <path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/>
-                <path d="m3.3 7 8.7 5 8.7-5"/>
-                <path d="M12 22V12"/>
+                <path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/>
               </svg>
             </span>
             <span class="btn-text">
@@ -69,7 +75,6 @@
   <!-- Retail View (Por Menor) -->
   @if (currentView() === 'retail') {
     <div class="catalog-container">
-      <!-- Header -->
       <header class="section-header">
         <div class="header-top">
           <button class="back-btn" (click)="setView('landing')">
@@ -81,24 +86,24 @@
             <span class="brand-mark">✦</span>
             <h1>AromaStudio</h1>
           </div>
-          <div class="header-spacer"></div>
+          <button class="cart-btn" (click)="goToCart()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/>
+              <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/>
+            </svg>
+            @if (cart.itemCount() > 0) {
+              <span class="cart-badge">{{cart.itemCount()}}</span>
+            }
+          </button>
         </div>
       </header>
 
-      <!-- Filters Section -->
       <section class="filters-section">
         <div class="search-container">
           <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="11" cy="11" r="8"></circle>
-            <path d="m21 21-4.3-4.3"></path>
+            <circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path>
           </svg>
-          <input
-            type="text"
-            placeholder="Buscar perfume..."
-            [value]="searchQuery()"
-            (input)="onSearchChange($event)"
-            class="search-input"
-          />
+          <input type="text" placeholder="Buscar perfume..." [value]="searchQuery()" (input)="onSearchChange($event)" class="search-input" />
           @if (searchQuery()) {
             <button class="clear-search" (click)="searchQuery.set('')">
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -111,16 +116,11 @@
         <div class="filters-row">
           <div class="category-filters">
             @for (cat of categories; track cat.value) {
-              <button
-                class="category-btn"
-                [class.active]="selectedCategory() === cat.value"
-                (click)="onCategoryChange($any(cat.value))"
-              >
+              <button class="category-btn" [class.active]="selectedCategory() === cat.value" (click)="onCategoryChange($any(cat.value))">
                 {{ cat.label }}
               </button>
             }
           </div>
-
           <div class="sort-container">
             <select [value]="sortBy()" (change)="onSortChange($event)">
               @for (option of sortOptions; track option.value) {
@@ -131,50 +131,91 @@
         </div>
 
         <div class="results-info">
-          <span class="results-count">{{ totalCount() }} perfumes</span>
+          <span class="results-count">{{ retailCount() }} perfumes</span>
           @if (searchQuery() || selectedCategory() !== 'all') {
             <button class="clear-filters" (click)="clearFilters()">Limpiar</button>
           }
         </div>
       </section>
 
-      <!-- Catalog Grid -->
-      <main class="catalog-grid">
-        @for (perfume of filteredPerfumes(); track perfume.id) {
-          <div class="perfume-card-wrapper">
-            <app-perfume-card [perfume]="perfume" />
-          </div>
-        } @empty {
-          <div class="empty-state">
-            <span class="empty-icon">🔍</span>
-            <h3>No se encontraron perfumes</h3>
-            <p>Intenta con otros términos de búsqueda</p>
-            <button class="btn-reset" (click)="clearFilters()">Ver todos</button>
-          </div>
-        }
-      </main>
+      @if (loading()) {
+        <div class="loading-state">
+          <div class="spinner"></div>
+          <p>Cargando catálogo...</p>
+        </div>
+      } @else {
+        <main class="catalog-grid">
+          @for (product of filteredRetailProducts(); track product.id) {
+            <div class="perfume-card-wrapper">
+              <article class="retail-card">
+                <div class="card-image">
+                  @if (product.imageUrl) {
+                    <img [src]="product.imageUrl" [alt]="product.name" loading="lazy" />
+                  } @else {
+                    <div class="img-placeholder">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                    </div>
+                  }
+                  @if (product.isNew) {
+                    <span class="badge badge-new">NUEVO</span>
+                  }
+                  @if (product.isHighlighted && !product.isNew) {
+                    <span class="badge badge-featured">DESTACADO</span>
+                  }
+                </div>
+                <div class="card-body">
+                  <div class="card-top-row">
+                    <span class="product-brand">{{product.brand}}</span>
+                    <span class="product-ml">{{product.ml}}ml</span>
+                  </div>
+                  <h3 class="product-name">{{product.name}}</h3>
+                  @if (product.description) {
+                    <p class="product-desc">{{product.description}}</p>
+                  }
+                  <div class="card-bottom">
+                    <span class="product-price">S/ {{product.retailPricePen | number:'1.2-2'}}</span>
+                    <div class="card-actions">
+                      <a [href]="getRetailWhatsAppLink(product)" target="_blank" class="btn-whatsapp" title="Consultar por WhatsApp">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                          <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+                        </svg>
+                      </a>
+                      <button class="btn-add-cart" (click)="addToCart(product, 'retail')">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/>
+                          <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/>
+                        </svg>
+                        Agregar
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </article>
+            </div>
+          } @empty {
+            <div class="empty-state">
+              <span class="empty-icon">🔍</span>
+              <h3>No se encontraron perfumes</h3>
+              <p>Intenta con otros términos de búsqueda</p>
+              <button class="btn-reset" (click)="clearFilters()">Ver todos</button>
+            </div>
+          }
+        </main>
+      }
 
-      <!-- Variety CTA -->
       <section class="wholesale-cta">
         <div class="cta-content">
-          <p class="cta-text">¡Contamos con mucha más variedad! 🌟</p>
-          <p class="cta-subtext">Para ver todo nuestro catálogo mayorista, escríbenos</p>
-          <a href="https://wa.me/51903250695?text=%C2%A1Hola!%20Me%20interesa%20ver%20el%20cat%C3%A1logo%20completo%20de%20mayoreo" target="_blank" class="cta-whatsapp-btn">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
-            </svg>
-            Háblanos al WhatsApp
-          </a>
+          <p class="cta-text">¿Buscas precios por mayor?</p>
+          <p class="cta-subtext">Revisa nuestro catálogo consolidado con precios especiales</p>
+          <button class="cta-wholesale-btn" (click)="setView('wholesale')">
+            Ver Catálogo Consolidado
+          </button>
         </div>
       </section>
 
-      <!-- Footer -->
       <footer class="footer">
         <div class="footer-content">
-          <div class="footer-brand">
-            <span>✦</span>
-            <h2>AromaStudio</h2>
-          </div>
+          <div class="footer-brand"><span>✦</span><h2>AromaStudio</h2></div>
           <p class="footer-tagline">Perfumes Árabes Originales en Perú</p>
           <div class="footer-links">
             <a href="https://wa.me/51903250695" class="footer-link">
@@ -189,17 +230,14 @@
             <span>Envíos a todo el país</span>
           </div>
         </div>
-        <div class="footer-bottom">
-          <p>© 2025 AromaStudio</p>
-        </div>
+        <div class="footer-bottom"><p>© 2025 AromaStudio</p></div>
       </footer>
     </div>
   }
 
-  <!-- Wholesale View (Por Mayor) -->
+  <!-- Wholesale View (Consolidado) -->
   @if (currentView() === 'wholesale') {
     <div class="catalog-container wholesale-view">
-      <!-- Header -->
       <header class="section-header">
         <div class="header-top">
           <button class="back-btn" (click)="setView('landing')">
@@ -211,7 +249,15 @@
             <span class="brand-mark">✦</span>
             <h1>AromaStudio</h1>
           </div>
-          <div class="header-spacer"></div>
+          <button class="cart-btn" (click)="goToCart()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/>
+              <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/>
+            </svg>
+            @if (cart.itemCount() > 0) {
+              <span class="cart-badge">{{cart.itemCount()}}</span>
+            }
+          </button>
         </div>
         <div class="wholesale-badge">
           <span>Precio consolidado</span>
@@ -219,20 +265,12 @@
         </div>
       </header>
 
-      <!-- Wholesale Search & Filters -->
       <section class="wholesale-filters">
         <div class="wholesale-search-container">
           <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="11" cy="11" r="8"></circle>
-            <path d="m21 21-4.3-4.3"></path>
+            <circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path>
           </svg>
-          <input
-            type="text"
-            placeholder="Buscar perfume o marca..."
-            [value]="wholesaleSearch()"
-            (input)="onWholesaleSearchChange($event)"
-            class="search-input"
-          />
+          <input type="text" placeholder="Buscar perfume o marca..." [value]="wholesaleSearch()" (input)="onWholesaleSearchChange($event)" class="search-input" />
           @if (wholesaleSearch()) {
             <button class="clear-search" (click)="wholesaleSearch.set('')">
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -244,11 +282,7 @@
 
         <div class="brand-filters-scroll">
           @for (brand of wholesaleBrands(); track brand) {
-            <button
-              class="brand-chip"
-              [class.active]="wholesaleBrandFilter() === brand"
-              (click)="onWholesaleBrandChange(brand)"
-            >
+            <button class="brand-chip" [class.active]="wholesaleBrandFilter() === brand" (click)="onWholesaleBrandChange(brand)">
               {{ brand }}
             </button>
           }
@@ -260,52 +294,55 @@
         </div>
       </section>
 
-      <!-- Wholesale Grid -->
-      <main class="wholesale-grid">
-        @for (product of paginatedWholesaleProducts(); track product.id) {
-          <a [href]="getWhatsAppLink(product)" target="_blank" class="perfume-card-wrapper wholesale-card">
-            @if (product.imageUrl) {
-              <div class="card-image">
-                <img [src]="product.imageUrl" [alt]="product.name" loading="lazy" />
-              </div>
-            } @else {
-              <div class="card-image card-image-placeholder">
-                <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                  <polyline points="14 2 14 8 20 8"/>
-                  <line x1="16" y1="13" x2="8" y2="13"/>
-                  <line x1="16" y1="17" x2="8" y2="17"/>
-                  <polyline points="10 9 9 9 8 9"/>
-                </svg>
-                <span>Imagen pronto</span>
-              </div>
-            }
-            <div class="card-content">
-              <span class="product-brand">{{ product.brand }}</span>
-              <h3 class="product-name">{{ product.name }}</h3>
-              <div class="price-row">
-                <span class="price">S/ {{ product.wholesalePrice }}</span>
-                <span class="price-unit">/unidad</span>
-              </div>
-              <div class="card-cta">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
-                </svg>
-                Consultar
+      @if (loading()) {
+        <div class="loading-state">
+          <div class="spinner"></div>
+          <p>Cargando catálogo...</p>
+        </div>
+      } @else {
+        <main class="wholesale-grid">
+          @for (product of paginatedWholesaleProducts(); track product.id) {
+            <div class="wholesale-card">
+              @if (product.imageUrl) {
+                <div class="card-image">
+                  <img [src]="product.imageUrl" [alt]="product.name" loading="lazy" />
+                </div>
+              } @else {
+                <div class="card-image card-image-placeholder">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                    <polyline points="14 2 14 8 20 8"/>
+                  </svg>
+                  <span>Imagen pronto</span>
+                </div>
+              }
+              <div class="card-content">
+                <span class="product-brand">{{ product.brand }}</span>
+                <h3 class="product-name">{{ product.name }}</h3>
+                <span class="product-ml-tag">{{product.ml}}ml</span>
+                <div class="price-row">
+                  <span class="price">S/ {{ product.wholesalePricePen | number:'1.0-0' }}</span>
+                  <span class="price-unit">/unidad</span>
+                </div>
+                <button class="btn-add-wholesale" (click)="addToCart(product, 'wholesale')">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 5v14"/><path d="M5 12h14"/>
+                  </svg>
+                  Agregar
+                </button>
               </div>
             </div>
-          </a>
-        } @empty {
-          <div class="empty-state">
-            <span class="empty-icon">🔍</span>
-            <h3>No se encontraron perfumes</h3>
-            <p>Intenta con otros términos de búsqueda</p>
-            <button class="btn-reset" (click)="wholesaleSearch.set(''); wholesaleBrandFilter.set('Todos')">Ver todos</button>
-          </div>
-        }
-      </main>
+          } @empty {
+            <div class="empty-state">
+              <span class="empty-icon">🔍</span>
+              <h3>No se encontraron perfumes</h3>
+              <p>Intenta con otros términos de búsqueda</p>
+              <button class="btn-reset" (click)="wholesaleSearch.set(''); wholesaleBrandFilter.set('Todos')">Ver todos</button>
+            </div>
+          }
+        </main>
+      }
 
-      <!-- Pagination -->
       @if (wholesaleTotalPages() > 1) {
         <nav class="pagination">
           <button class="page-btn page-arrow" [disabled]="wholesalePage() === 1" (click)="goToPage(wholesalePage() - 1)">
@@ -317,9 +354,7 @@
             @if (page === -1) {
               <span class="page-ellipsis">…</span>
             } @else {
-              <button class="page-btn" [class.active]="page === wholesalePage()" (click)="goToPage(page)">
-                {{ page }}
-              </button>
+              <button class="page-btn" [class.active]="page === wholesalePage()" (click)="goToPage(page)">{{ page }}</button>
             }
           }
           <button class="page-btn page-arrow" [disabled]="wholesalePage() === wholesaleTotalPages()" (click)="goToPage(wholesalePage() + 1)">
@@ -330,11 +365,10 @@
         </nav>
       }
 
-      <!-- Variety CTA -->
       <section class="wholesale-cta">
         <div class="cta-content">
-          <p class="cta-text">¡Contamos con mucha más variedad! 🌟</p>
-          <p class="cta-subtext">Para ver todo nuestro catálogo mayorista, escríbenos</p>
+          <p class="cta-text">¿Necesitas más opciones?</p>
+          <p class="cta-subtext">Escríbenos para ver más variedades y ofertas especiales</p>
           <a href="https://wa.me/51903250695?text=%C2%A1Hola!%20Me%20interesa%20ver%20el%20cat%C3%A1logo%20completo%20de%20mayoreo" target="_blank" class="cta-whatsapp-btn">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
               <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
@@ -344,13 +378,9 @@
         </div>
       </section>
 
-      <!-- Footer -->
       <footer class="footer">
         <div class="footer-content">
-          <div class="footer-brand">
-            <span>✦</span>
-            <h2>AromaStudio</h2>
-          </div>
+          <div class="footer-brand"><span>✦</span><h2>AromaStudio</h2></div>
           <p class="footer-tagline">Perfumes Árabes Originales en Perú</p>
           <div class="footer-links">
             <a href="https://wa.me/51903250695" class="footer-link">
@@ -363,9 +393,7 @@
             <span>Lima, Perú</span>
           </div>
         </div>
-        <div class="footer-bottom">
-          <p>© 2025 AromaStudio</p>
-        </div>
+        <div class="footer-bottom"><p>© 2025 AromaStudio</p></div>
       </footer>
     </div>
   }

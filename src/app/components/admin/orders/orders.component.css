@@ -1,0 +1,81 @@
+.admin-page { min-height: 100vh; background: #0a0a0b; color: #fff; }
+.admin-nav { display: flex; align-items: center; justify-content: space-between; padding: 0.75rem 2rem; background: #111113; border-bottom: 1px solid rgba(255,255,255,0.06); flex-wrap: wrap; gap: 0.75rem; }
+.nav-brand { display: flex; align-items: center; gap: 0.5rem; }
+.brand-name { font-weight: 700; font-size: 1.1rem; color: #C9A227; }
+.brand-tag { font-size: 0.7rem; background: rgba(201,162,39,0.15); color: #C9A227; padding: 2px 8px; border-radius: 4px; }
+.nav-links { display: flex; gap: 0.25rem; flex-wrap: wrap; }
+.nav-link { padding: 0.5rem 0.75rem; color: #a1a1aa; text-decoration: none; font-size: 0.85rem; border-radius: 6px; transition: all 0.2s; }
+.nav-link:hover { color: #fff; background: rgba(255,255,255,0.05); }
+.nav-link.active { color: #C9A227; background: rgba(201,162,39,0.1); }
+
+.admin-content { padding: 2rem; max-width: 1000px; margin: 0 auto; }
+
+.page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem; }
+.page-header h1 { font-size: 1.5rem; }
+.page-header select {
+  background: #18181b; color: #fff; border: 1px solid rgba(255,255,255,0.1);
+  padding: 0.5rem 1rem; border-radius: 8px; font-size: 0.85rem;
+}
+
+.consolidado-card {
+  background: #18181b; border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 12px; padding: 1.25rem; margin-bottom: 1.5rem;
+}
+.consolidado-card.open { border-color: rgba(52,211,153,0.3); }
+
+.consolidado-header { display: flex; align-items: center; gap: 1rem; margin-bottom: 0.75rem; flex-wrap: wrap; }
+.consolidado-stats { display: flex; gap: 1.5rem; flex-wrap: wrap; font-size: 0.85rem; color: #a1a1aa; }
+.date { color: #a1a1aa; font-size: 0.8rem; }
+
+.status-badge {
+  padding: 3px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase;
+}
+.status-badge.pendiente { background: rgba(251,191,36,0.15); color: #fbbf24; }
+.status-badge.verificado { background: rgba(52,211,153,0.15); color: #34d399; }
+.status-badge.rechazado { background: rgba(239,68,68,0.15); color: #ef4444; }
+.status-badge.abierto { background: rgba(52,211,153,0.15); color: #34d399; }
+.status-badge.cerrado { background: rgba(161,161,170,0.15); color: #a1a1aa; }
+
+.close-btn {
+  margin-top: 0.75rem; background: rgba(239,68,68,0.1); color: #ef4444;
+  border: 1px solid rgba(239,68,68,0.2); padding: 0.5rem 1rem;
+  border-radius: 8px; cursor: pointer; font-size: 0.85rem;
+}
+.close-btn:hover { background: rgba(239,68,68,0.2); }
+
+.orders-list { display: flex; flex-direction: column; gap: 1rem; }
+
+.order-card {
+  background: #18181b; border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 12px; padding: 1.25rem;
+}
+.order-card.pendiente { border-left: 3px solid #fbbf24; }
+.order-card.verificado { border-left: 3px solid #34d399; }
+.order-card.rechazado { border-left: 3px solid #ef4444; }
+
+.order-header { display: flex; align-items: center; gap: 1rem; margin-bottom: 0.75rem; flex-wrap: wrap; }
+.order-id { font-weight: 700; }
+.order-date { color: #a1a1aa; font-size: 0.8rem; margin-left: auto; }
+
+.order-client { margin-bottom: 0.75rem; font-size: 0.9rem; }
+.order-client span { color: #a1a1aa; margin-left: 0.75rem; }
+
+.order-items { border-top: 1px solid rgba(255,255,255,0.06); padding-top: 0.75rem; }
+.order-item-row { display: flex; justify-content: space-between; padding: 0.25rem 0; font-size: 0.85rem; }
+
+.order-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid rgba(255,255,255,0.06); flex-wrap: wrap; gap: 0.5rem; }
+.order-total { font-weight: 700; color: #C9A227; font-size: 1.1rem; }
+
+.order-actions { display: flex; gap: 0.5rem; }
+.verify-btn { background: rgba(52,211,153,0.15); color: #34d399; border: none; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer; font-size: 0.85rem; }
+.verify-btn:hover { background: rgba(52,211,153,0.25); }
+.reject-btn { background: rgba(239,68,68,0.1); color: #ef4444; border: none; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer; font-size: 0.85rem; }
+.reject-btn:hover { background: rgba(239,68,68,0.2); }
+.yape-ref { font-size: 0.8rem; color: #a1a1aa; }
+
+.loading, .empty { text-align: center; color: #a1a1aa; padding: 3rem; }
+
+@media (max-width: 600px) {
+  .admin-content { padding: 1rem; }
+  .admin-nav { padding: 0.75rem 1rem; }
+}

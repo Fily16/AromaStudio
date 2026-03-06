@@ -1,0 +1,89 @@
+<div class="admin-page">
+  <nav class="admin-nav">
+    <div class="nav-brand">
+      <span class="brand-name">AromaStudio</span>
+      <span class="brand-tag">Admin</span>
+    </div>
+    <div class="nav-links">
+      <a routerLink="/admin" class="nav-link active">Dashboard</a>
+      <a routerLink="/admin/orders" class="nav-link">Pedidos</a>
+      <a routerLink="/admin/products" class="nav-link">Productos</a>
+      <a routerLink="/admin/inventory" class="nav-link">Inventario</a>
+      <a routerLink="/admin/config" class="nav-link">Config</a>
+    </div>
+    <div class="nav-user">
+      <span>{{adminName()}}</span>
+      <button class="logout-btn" (click)="logout()">Salir</button>
+    </div>
+  </nav>
+
+  <div class="admin-content">
+    <h1>Dashboard</h1>
+
+    @if (stats(); as s) {
+      <div class="stats-grid">
+        <div class="stat-card">
+          <span class="stat-label">Productos</span>
+          <span class="stat-value">{{s.totalProducts}}</span>
+        </div>
+        <div class="stat-card accent">
+          <span class="stat-label">Pedidos Pendientes</span>
+          <span class="stat-value">{{s.pendingOrders}}</span>
+        </div>
+        <div class="stat-card success">
+          <span class="stat-label">Pedidos Verificados</span>
+          <span class="stat-value">{{s.verifiedOrders}}</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-label">Consolidados Activos</span>
+          <span class="stat-value">{{s.activeConsolidados}}</span>
+        </div>
+      </div>
+
+      <h2>Retail (Por Menor)</h2>
+      <div class="stats-grid">
+        <div class="stat-card">
+          <span class="stat-label">Stock Disponible</span>
+          <span class="stat-value">{{s.retailStock}}</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-label">Ventas Realizadas</span>
+          <span class="stat-value">{{s.retailSalesCount}}</span>
+        </div>
+        <div class="stat-card success">
+          <span class="stat-label">Ingresos Retail</span>
+          <span class="stat-value">S/ {{s.retailRevenuePen | number:'1.2-2'}}</span>
+        </div>
+        <div class="stat-card accent">
+          <span class="stat-label">Ganancia Retail</span>
+          <span class="stat-value">S/ {{s.retailProfitPen | number:'1.2-2'}}</span>
+        </div>
+      </div>
+
+      <h2>Acciones Rápidas</h2>
+      <div class="actions-grid">
+        <a routerLink="/admin/orders" class="action-card">
+          <span class="action-icon">&#128230;</span>
+          <span>Ver Pedidos</span>
+          @if (s.pendingOrders > 0) {
+            <span class="badge">{{s.pendingOrders}}</span>
+          }
+        </a>
+        <a routerLink="/admin/products" class="action-card">
+          <span class="action-icon">&#128722;</span>
+          <span>Gestionar Productos</span>
+        </a>
+        <a routerLink="/admin/inventory" class="action-card">
+          <span class="action-icon">&#128230;</span>
+          <span>Inventario Retail</span>
+        </a>
+        <a routerLink="/admin/config" class="action-card">
+          <span class="action-icon">&#9881;</span>
+          <span>Configuración</span>
+        </a>
+      </div>
+    } @else {
+      <p class="loading">Cargando dashboard...</p>
+    }
+  </div>
+</div>

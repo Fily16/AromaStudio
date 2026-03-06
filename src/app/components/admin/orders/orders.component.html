@@ -1,0 +1,87 @@
+<div class="admin-page">
+  <nav class="admin-nav">
+    <div class="nav-brand"><span class="brand-name">AromaStudio</span><span class="brand-tag">Admin</span></div>
+    <div class="nav-links">
+      <a routerLink="/admin" class="nav-link">Dashboard</a>
+      <a routerLink="/admin/orders" class="nav-link active">Pedidos</a>
+      <a routerLink="/admin/products" class="nav-link">Productos</a>
+      <a routerLink="/admin/inventory" class="nav-link">Inventario</a>
+      <a routerLink="/admin/config" class="nav-link">Config</a>
+    </div>
+  </nav>
+
+  <div class="admin-content">
+    <div class="page-header">
+      <h1>Pedidos del Consolidado</h1>
+      <select (change)="onFilterChange($event)">
+        <option value="">Todos</option>
+        <option value="PENDIENTE">Pendientes</option>
+        <option value="VERIFICADO">Verificados</option>
+        <option value="RECHAZADO">Rechazados</option>
+      </select>
+    </div>
+
+    <!-- Consolidados summary -->
+    @for (c of consolidados(); track c.id) {
+      <div class="consolidado-card" [class.open]="c.status === 'ABIERTO'">
+        <div class="consolidado-header">
+          <span class="status-badge" [class]="c.status.toLowerCase()">{{c.status}}</span>
+          <span>Consolidado #{{c.id}}</span>
+          <span class="date">Abierto: {{c.openDate | date:'dd/MM/yyyy'}}</span>
+        </div>
+        <div class="consolidado-stats">
+          <span>Inversión: S/ {{c.totalInvestmentPen | number:'1.2-2'}}</span>
+          <span>Courier: ${{c.courierCostUsd | number:'1.2-2'}} USD</span>
+          <span>Ganancia: S/ {{c.projectedProfitPen | number:'1.2-2'}}</span>
+          <span>Peso: {{c.totalWeightG}}g</span>
+        </div>
+        @if (c.status === 'ABIERTO') {
+          <button class="close-btn" (click)="closeConsolidado(c.id)">Cerrar Consolidado</button>
+        }
+      </div>
+    }
+
+    <!-- Orders list -->
+    @if (loading()) {
+      <p class="loading">Cargando pedidos...</p>
+    } @else if (orders().length === 0) {
+      <p class="empty">No hay pedidos</p>
+    } @else {
+      <div class="orders-list">
+        @for (order of orders(); track order.id) {
+          <div class="order-card" [class]="order.paymentStatus.toLowerCase()">
+            <div class="order-header">
+              <span class="order-id">#{{order.id}}</span>
+              <span class="status-badge" [class]="order.paymentStatus.toLowerCase()">{{order.paymentStatus}}</span>
+              <span class="order-date">{{order.createdAt | date:'dd/MM HH:mm'}}</span>
+            </div>
+            <div class="order-client">
+              <strong>{{order.clientName}}</strong>
+              <span>{{order.clientPhone}}</span>
+            </div>
+            <div class="order-items">
+              @for (item of order.items; track item.id) {
+                <div class="order-item-row">
+                  <span>{{item.product.brand}} - {{item.product.name}} x{{item.quantity}}</span>
+                  <span>S/ {{item.subtotalPen | number:'1.2-2'}}</span>
+                </div>
+              }
+            </div>
+            <div class="order-footer">
+              <span class="order-total">Total: S/ {{order.totalPen | number:'1.2-2'}}</span>
+              @if (order.paymentStatus === 'PENDIENTE') {
+                <div class="order-actions">
+                  <button class="verify-btn" (click)="verify(order.id)">Verificar Yape</button>
+                  <button class="reject-btn" (click)="reject(order.id)">Rechazar</button>
+                </div>
+              }
+              @if (order.yapeReference) {
+                <span class="yape-ref">Ref: {{order.yapeReference}}</span>
+              }
+            </div>
+          </div>
+        }
+      </div>
+    }
+  </div>
+</div>

@@ -1,0 +1,133 @@
+<div class="admin-page">
+  <nav class="admin-nav">
+    <div class="nav-brand"><span class="brand-name">AromaStudio</span><span class="brand-tag">Admin</span></div>
+    <div class="nav-links">
+      <a routerLink="/admin" class="nav-link">Dashboard</a>
+      <a routerLink="/admin/orders" class="nav-link">Pedidos</a>
+      <a routerLink="/admin/products" class="nav-link">Productos</a>
+      <a routerLink="/admin/inventory" class="nav-link active">Inventario</a>
+      <a routerLink="/admin/config" class="nav-link">Config</a>
+    </div>
+  </nav>
+
+  <div class="admin-content">
+    <h1>Inventario Retail (Por Menor)</h1>
+
+    <div class="tabs">
+      <button [class.active]="tab() === 'stock'" (click)="setTab('stock')">Stock Actual</button>
+      <button [class.active]="tab() === 'add'" (click)="setTab('add')">Agregar Stock</button>
+      <button [class.active]="tab() === 'sell'" (click)="setTab('sell')">Registrar Venta</button>
+      <button [class.active]="tab() === 'sales'" (click)="setTab('sales')">Historial Ventas</button>
+    </div>
+
+    @if (message()) {
+      <div class="message">{{message()}}</div>
+    }
+
+    @if (tab() === 'stock') {
+      <div class="stock-grid">
+        @for (inv of inStockItems(); track inv.id) {
+          <div class="stock-card">
+            <div class="stock-qty">{{inv.quantity}}</div>
+            <div class="stock-info">
+              <strong>{{inv.product.brand}} - {{inv.product.name}}</strong>
+              <span>{{inv.product.ml}}ml</span>
+              @if (inv.costPerUnitPen) {
+                <span class="cost">Costo: S/ {{inv.costPerUnitPen | number:'1.2-2'}}</span>
+              }
+            </div>
+          </div>
+        } @empty {
+          <p class="empty">No hay stock registrado</p>
+        }
+      </div>
+    }
+
+    @if (tab() === 'add') {
+      <div class="form-card">
+        <h2>Agregar Perfumes Comprados</h2>
+        <div class="form-group">
+          <label>Producto</label>
+          <select (change)="setAddProductId($event)">
+            <option value="0">Seleccionar perfume...</option>
+            @for (p of products(); track p.id) {
+              <option [value]="p.id">{{p.brand}} - {{p.name}} {{p.ml}}ml</option>
+            }
+          </select>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Cantidad</label>
+            <input type="number" [value]="addQuantity()" (input)="setAddQty($event)" min="1">
+          </div>
+          <div class="form-group">
+            <label>Costo por unidad (S/)</label>
+            <input type="number" step="0.01" [value]="addCost()" (input)="setAddCost($event)">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Notas (opcional)</label>
+          <input type="text" [value]="addNotes()" (input)="setAddNotes($event)" placeholder="Ej: Comprado en consolidado #3">
+        </div>
+        <button class="submit-btn" (click)="addStock()">Agregar al Inventario</button>
+      </div>
+    }
+
+    @if (tab() === 'sell') {
+      <div class="form-card">
+        <h2>Registrar Venta</h2>
+        <div class="form-group">
+          <label>Producto</label>
+          <select (change)="setSellProductId($event)">
+            <option value="0">Seleccionar perfume...</option>
+            @for (inv of inStockItems(); track inv.id) {
+              <option [value]="inv.product.id">{{inv.product.brand}} - {{inv.product.name}} (Stock: {{inv.quantity}})</option>
+            }
+          </select>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Cantidad</label>
+            <input type="number" [value]="sellQuantity()" (input)="setSellQty($event)" min="1">
+          </div>
+          <div class="form-group">
+            <label>Precio de venta (S/)</label>
+            <input type="number" step="0.01" [value]="sellPrice()" (input)="setSellPrice($event)">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Canal</label>
+          <select (change)="setSellChannel($event)">
+            <option value="WHATSAPP">WhatsApp</option>
+            <option value="WEB">Web</option>
+            <option value="TIENDA">Tienda</option>
+            <option value="OTRO">Otro</option>
+          </select>
+        </div>
+        <button class="submit-btn" (click)="registerSale()">Registrar Venta</button>
+      </div>
+    }
+
+    @if (tab() === 'sales') {
+      <table class="sales-table">
+        <thead>
+          <tr><th>Fecha</th><th>Producto</th><th>Cant.</th><th>Precio</th><th>Ganancia</th><th>Canal</th></tr>
+        </thead>
+        <tbody>
+          @for (sale of sales(); track sale.id) {
+            <tr>
+              <td>{{sale.saleDate | date:'dd/MM HH:mm'}}</td>
+              <td>{{sale.product.brand}} - {{sale.product.name}}</td>
+              <td>{{sale.quantity}}</td>
+              <td>S/ {{sale.salePricePen | number:'1.2-2'}}</td>
+              <td class="profit">S/ {{sale.profitPen | number:'1.2-2'}}</td>
+              <td><span class="channel-badge">{{sale.channel}}</span></td>
+            </tr>
+          } @empty {
+            <tr><td colspan="6" class="empty">No hay ventas registradas</td></tr>
+          }
+        </tbody>
+      </table>
+    }
+  </div>
+</div>
