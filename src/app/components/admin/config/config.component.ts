@@ -27,7 +27,9 @@ export class ConfigComponent implements OnInit {
     perfumes_per_box: 'Perfumes por Caja',
     yape_number: 'Número de Yape',
     miami_shipping_threshold: 'Umbral Envío Miami (USD)',
-    miami_shipping_extra: 'Costo Extra Miami (USD)'
+    miami_shipping_extra: 'Costo Extra Miami (USD)',
+    wholesale_profit_per_unit: 'Ganancia por Unidad Consolidado (S/)',
+    deposit_per_unit: 'Separación por Perfume (S/)'
   };
 
   ngOnInit() { this.load(); }

@@ -5,16 +5,99 @@
       <a routerLink="/admin" class="nav-link">Dashboard</a>
       <a routerLink="/admin/orders" class="nav-link">Pedidos</a>
       <a routerLink="/admin/products" class="nav-link active">Productos</a>
+      <a routerLink="/admin/stock-purchase" class="nav-link">Compra Tienda</a>
       <a routerLink="/admin/inventory" class="nav-link">Inventario</a>
       <a routerLink="/admin/config" class="nav-link">Config</a>
     </div>
   </nav>
 
   <div class="admin-content">
+    <!-- Config bar: T/C y Courier -->
+    <div class="config-bar">
+      <div class="config-chip">
+        <span class="chip-label">T/C Dólar:</span>
+        @if (editingConfig() === 'exchange_rate') {
+          <input type="number" step="0.01" [value]="editConfigValue()" (input)="onConfigInput($event)" (keyup.enter)="saveConfigEdit('exchange_rate')" class="chip-input" autofocus>
+          <button class="chip-save" (click)="saveConfigEdit('exchange_rate')">OK</button>
+          <button class="chip-cancel" (click)="cancelConfigEdit()">X</button>
+        } @else {
+          <span class="chip-value" (click)="startConfigEdit('exchange_rate', exchangeRate())">S/ {{exchangeRate() | number:'1.2-2'}}</span>
+        }
+      </div>
+      <div class="config-chip">
+        <span class="chip-label">Courier/kg:</span>
+        @if (editingConfig() === 'courier_cost_per_kg') {
+          <input type="number" step="0.5" [value]="editConfigValue()" (input)="onConfigInput($event)" (keyup.enter)="saveConfigEdit('courier_cost_per_kg')" class="chip-input" autofocus>
+          <button class="chip-save" (click)="saveConfigEdit('courier_cost_per_kg')">OK</button>
+          <button class="chip-cancel" (click)="cancelConfigEdit()">X</button>
+        } @else {
+          <span class="chip-value" (click)="startConfigEdit('courier_cost_per_kg', courierCostPerKg())">${{courierCostPerKg() | number:'1.0-2'}}</span>
+        }
+      </div>
+    </div>
+
     <div class="page-header">
       <h1>Productos y Precios</h1>
-      <input type="text" placeholder="Buscar producto..." (input)="onSearchInput($event)" class="search-input">
+      <div class="header-actions">
+        <button class="create-btn" (click)="toggleCreate()">{{ showCreate() ? 'Cancelar' : '+ Nuevo Producto' }}</button>
+        <input type="text" placeholder="Buscar producto..." (input)="onSearchInput($event)" class="search-input">
+      </div>
     </div>
+
+    @if (createMessage()) {
+      <div class="message">{{ createMessage() }}</div>
+    }
+
+    <!-- Create product form -->
+    @if (showCreate()) {
+      <div class="create-form">
+        <h3>Nuevo Producto</h3>
+        <div class="form-grid">
+          <div class="form-field">
+            <label>SKU *</label>
+            <input type="text" [value]="newProduct().sku" (input)="updateNewProduct('sku', $event)" placeholder="LAT-001">
+          </div>
+          <div class="form-field">
+            <label>Marca *</label>
+            <input type="text" [value]="newProduct().brand" (input)="updateNewProduct('brand', $event)" placeholder="Lattafa">
+          </div>
+          <div class="form-field">
+            <label>Nombre *</label>
+            <input type="text" [value]="newProduct().name" (input)="updateNewProduct('name', $event)" placeholder="Raghba">
+          </div>
+          <div class="form-field">
+            <label>Tipo</label>
+            <select (change)="updateNewProduct('type', $event)">
+              <option value="EDP">EDP</option>
+              <option value="EDT">EDT</option>
+              <option value="Parfum">Parfum</option>
+              <option value="Body Spray">Body Spray</option>
+            </select>
+          </div>
+          <div class="form-field">
+            <label>ML</label>
+            <input type="number" [value]="newProduct().ml" (input)="updateNewProduct('ml', $event)">
+          </div>
+          <div class="form-field">
+            <label>Categoría</label>
+            <select (change)="updateNewProduct('category', $event)">
+              <option value="unisex">Unisex</option>
+              <option value="men">Hombre</option>
+              <option value="women">Mujer</option>
+            </select>
+          </div>
+          <div class="form-field">
+            <label>Precio USD</label>
+            <input type="number" step="0.01" [value]="newProduct().priceUsd" (input)="updateNewProduct('priceUsd', $event)">
+          </div>
+          <div class="form-field">
+            <label>Peso (g)</label>
+            <input type="number" [value]="newProduct().weightG" (input)="updateNewProduct('weightG', $event)">
+          </div>
+        </div>
+        <button class="submit-btn" (click)="createProduct()">Crear Producto</button>
+      </div>
+    }
 
     <div class="products-table-wrapper">
       <table class="products-table">
@@ -23,10 +106,13 @@
             <th>SKU</th>
             <th>Producto</th>
             <th>Tipo</th>
+            <th>Peso (g)</th>
             <th>Precio USD</th>
-            <th>Precio Retail (S/)</th>
-            <th>Precio Consolidado (S/)</th>
-            <th>Disponible</th>
+            <th>Puesto USD</th>
+            <th>Puesto PEN</th>
+            <th>Retail (S/)</th>
+            <th>Consolidado (S/)</th>
+            <th>Disp.</th>
             <th>Acciones</th>
           </tr>
         </thead>
@@ -38,11 +124,17 @@
               <td><span class="type-badge" [class]="p.category">{{p.category}}</span></td>
 
               @if (editingId() === p.id) {
+                <td><input type="number" step="1" [value]="editPrices().weightG" (input)="updateEditField('weightG', $event)" class="edit-input edit-sm"></td>
                 <td><input type="number" step="0.01" [value]="editPrices().priceUsd" (input)="updateEditField('priceUsd', $event)" class="edit-input"></td>
+                <td class="calc-cell">${{landedCostUsd(p) | number:'1.2-2'}}</td>
+                <td class="calc-cell">S/ {{landedCostPen(p) | number:'1.2-2'}}</td>
                 <td><input type="number" step="0.01" [value]="editPrices().retailPricePen" (input)="updateEditField('retailPricePen', $event)" class="edit-input"></td>
                 <td><input type="number" step="0.01" [value]="editPrices().wholesalePricePen" (input)="updateEditField('wholesalePricePen', $event)" class="edit-input"></td>
               } @else {
+                <td>{{p.weightG || '—'}}</td>
                 <td>${{p.priceUsd | number:'1.2-2'}}</td>
+                <td class="calc-cell">${{landedCostUsd(p) | number:'1.2-2'}}</td>
+                <td class="calc-cell">S/ {{landedCostPen(p) | number:'1.2-2'}}</td>
                 <td>{{p.retailPricePen ? 'S/ ' + (p.retailPricePen | number:'1.2-2') : '—'}}</td>
                 <td>{{p.wholesalePricePen ? 'S/ ' + (p.wholesalePricePen | number:'1.2-2') : '—'}}</td>
               }

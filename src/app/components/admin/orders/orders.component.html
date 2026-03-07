@@ -5,6 +5,7 @@
       <a routerLink="/admin" class="nav-link">Dashboard</a>
       <a routerLink="/admin/orders" class="nav-link active">Pedidos</a>
       <a routerLink="/admin/products" class="nav-link">Productos</a>
+      <a routerLink="/admin/stock-purchase" class="nav-link">Compra Tienda</a>
       <a routerLink="/admin/inventory" class="nav-link">Inventario</a>
       <a routerLink="/admin/config" class="nav-link">Config</a>
     </div>
@@ -12,31 +13,173 @@
 
   <div class="admin-content">
     <div class="page-header">
-      <h1>Pedidos del Consolidado</h1>
-      <select (change)="onFilterChange($event)">
-        <option value="">Todos</option>
-        <option value="PENDIENTE">Pendientes</option>
-        <option value="VERIFICADO">Verificados</option>
-        <option value="RECHAZADO">Rechazados</option>
-      </select>
+      <h1>Gestión de Pedidos</h1>
+      <div class="header-actions">
+        <div class="search-by-code">
+          <input type="text" placeholder="Buscar por código (AS-0001)" [value]="searchCode()" (input)="onSearchInput($event)" (keyup.enter)="searchByCode()" class="code-input">
+          <button class="search-btn" (click)="searchByCode()">Buscar</button>
+          @if (searchResult() || searchError()) {
+            <button class="clear-btn" (click)="clearSearch()">X</button>
+          }
+        </div>
+        <select (change)="onFilterChange($event)">
+          <option value="">Todos</option>
+          <option value="PENDIENTE_SEPARACION">Pend. Separación</option>
+          <option value="SEPARADO">Separados</option>
+          <option value="PENDIENTE_RESTO">Pend. Pago Final</option>
+          <option value="PAGADO">Pagados</option>
+          <option value="VERIFICADO">Verificados (Tienda)</option>
+          <option value="RECHAZADO">Rechazados</option>
+        </select>
+      </div>
     </div>
+
+    @if (message()) {
+      <div class="message">{{ message() }}</div>
+    }
+
+    <!-- Search result -->
+    @if (searchError()) {
+      <div class="search-error">{{ searchError() }}</div>
+    }
+    @if (searchResult(); as order) {
+      <div class="search-result">
+        <h3>Resultado de Búsqueda</h3>
+        <div class="order-card" [class]="order.paymentStatus.toLowerCase().replace('_', '-')">
+          <div class="order-header">
+            <span class="order-code">{{ order.orderCode }}</span>
+            <span class="status-badge" [class]="order.paymentStatus.toLowerCase().replace('_', '-')">{{ getStatusLabel(order.paymentStatus) }}</span>
+            <span class="order-date">{{ order.createdAt | date:'dd/MM/yyyy HH:mm' }}</span>
+          </div>
+          <div class="order-client">
+            <strong>{{ order.clientName }}</strong>
+            <span>{{ order.clientPhone }}</span>
+          </div>
+          <div class="order-items">
+            @for (item of order.items; track item.id) {
+              <div class="order-item-row">
+                <span>{{ item.product.brand }} - {{ item.product.name }} x{{ item.quantity }}</span>
+                <span>S/ {{ item.subtotalPen | number:'1.2-2' }}</span>
+              </div>
+            }
+          </div>
+          <div class="order-payment-info">
+            <div class="payment-row"><span>Total:</span><span class="total-value">S/ {{ order.totalPen | number:'1.2-2' }}</span></div>
+            <div class="payment-row"><span>Separación (S/20 x unidad):</span><span>S/ {{ order.depositAmountPen | number:'1.2-2' }}</span></div>
+            <div class="payment-row"><span>Resta por pagar:</span><span class="remaining-value">S/ {{ order.remainingPen | number:'1.2-2' }}</span></div>
+          </div>
+          @if (order.yapeReference) {
+            <div class="yape-ref">Ref Yape: {{ order.yapeReference }}</div>
+          }
+        </div>
+      </div>
+    }
 
     <!-- Consolidados summary -->
     @for (c of consolidados(); track c.id) {
-      <div class="consolidado-card" [class.open]="c.status === 'ABIERTO'">
+      <div class="consolidado-card" [class.open]="c.status === 'ABIERTO'" [class.entregado]="c.status === 'ENTREGADO'">
         <div class="consolidado-header">
-          <span class="status-badge" [class]="c.status.toLowerCase()">{{c.status}}</span>
-          <span>Consolidado #{{c.id}}</span>
-          <span class="date">Abierto: {{c.openDate | date:'dd/MM/yyyy'}}</span>
+          <span class="status-badge" [class]="c.status.toLowerCase()">{{ c.status }}</span>
+          <span>Consolidado #{{ c.id }}</span>
+          <span class="date">Abierto: {{ c.openDate | date:'dd/MM/yyyy' }}</span>
         </div>
         <div class="consolidado-stats">
-          <span>Inversión: S/ {{c.totalInvestmentPen | number:'1.2-2'}}</span>
-          <span>Courier: ${{c.courierCostUsd | number:'1.2-2'}} USD</span>
-          <span>Ganancia: S/ {{c.projectedProfitPen | number:'1.2-2'}}</span>
-          <span>Peso: {{c.totalWeightG}}g</span>
+          <span>Inversión: S/ {{ c.totalInvestmentPen | number:'1.2-2' }}</span>
+          <span>Courier: ${{ c.courierCostUsd | number:'1.2-2' }} USD</span>
+          <span>Ganancia: S/ {{ c.projectedProfitPen | number:'1.2-2' }}</span>
+          <span>Peso: {{ c.totalWeightG }}g</span>
         </div>
-        @if (c.status === 'ABIERTO') {
-          <button class="close-btn" (click)="closeConsolidado(c.id)">Cerrar Consolidado</button>
+        <div class="consolidado-actions">
+          <button class="breakdown-btn" (click)="toggleBreakdown(c.id)">
+            {{ breakdownConsolidadoId() === c.id ? 'Ocultar Desglose' : 'Ver Desglose' }}
+          </button>
+          @if (c.status === 'ABIERTO') {
+            <button class="close-btn" (click)="closeConsolidado(c.id)">Cerrar Consolidado</button>
+          }
+          @if (c.status === 'CERRADO') {
+            <button class="enable-btn" (click)="enableMerchandise(c.id)">Habilitar Mercancía</button>
+          }
+        </div>
+
+        @if (breakdownConsolidadoId() === c.id && breakdown()) {
+          <div class="breakdown-grid">
+            <!-- Consolidado (Clientes) -->
+            <div class="breakdown-card">
+              <h4>Consolidado <span class="card-subtitle">(Clientes)</span></h4>
+              <div class="bd-row"><span>Pedidos</span><span>{{ breakdown()!.consolidado.orderCount }}</span></div>
+              <div class="bd-row"><span>Unidades</span><span>{{ breakdown()!.consolidado.totalUnits }}</span></div>
+              <div class="bd-row"><span>Peso perfumes</span><span>{{ (breakdown()!.consolidado.weightPerfumesG / 1000) | number:'1.1-1' }} kg</span></div>
+              <div class="bd-row"><span>Cajas</span><span>{{ breakdown()!.consolidado.boxesNeeded }}</span></div>
+              <div class="bd-row"><span>Peso cajas</span><span>{{ (breakdown()!.consolidado.weightBoxesG / 1000) | number:'1.1-1' }} kg</span></div>
+              <div class="bd-row hl"><span>Peso total</span><span>{{ (breakdown()!.consolidado.totalWeightG / 1000) | number:'1.1-1' }} kg</span></div>
+              <div class="bd-divider"></div>
+              <div class="bd-row"><span>Productos</span><span>${{ breakdown()!.consolidado.subtotalProductsUsd | number:'1.2-2' }}</span></div>
+              <div class="bd-row"><span>Courier</span><span>${{ breakdown()!.consolidado.courierCostUsd | number:'1.2-2' }}</span></div>
+              @if (breakdown()!.consolidado.extraMiamiUsd > 0) {
+                <div class="bd-row"><span>Extra Miami</span><span>${{ breakdown()!.consolidado.extraMiamiUsd | number:'1.2-2' }}</span></div>
+              }
+              <div class="bd-row hl"><span>Total USD</span><span>${{ breakdown()!.consolidado.totalCostUsd | number:'1.2-2' }}</span></div>
+              <div class="bd-divider"></div>
+              <div class="bd-row"><span>T/C</span><span>{{ breakdown()!.consolidado.exchangeRate | number:'1.2-2' }}</span></div>
+              <div class="bd-row hl"><span>Inversión</span><span>S/ {{ breakdown()!.consolidado.totalInvestmentPen | number:'1.2-2' }}</span></div>
+              <div class="bd-divider"></div>
+              <div class="bd-row"><span>Ingresos</span><span>S/ {{ breakdown()!.consolidado.totalRevenuePen | number:'1.2-2' }}</span></div>
+              <div class="bd-row profit"><span>Ganancia</span><span>S/ {{ breakdown()!.consolidado.profitPen | number:'1.2-2' }}</span></div>
+              @if (breakdown()!.consolidado.marginPercent !== null) {
+                <div class="bd-row"><span>Margen</span><span>{{ breakdown()!.consolidado.marginPercent | number:'1.1-1' }}%</span></div>
+              }
+            </div>
+
+            <!-- Mi Compra -->
+            <div class="breakdown-card">
+              <h4>Mi Compra <span class="card-subtitle">(Para tienda)</span></h4>
+              <div class="bd-row"><span>Pedidos</span><span>{{ breakdown()!.miCompra.orderCount }}</span></div>
+              <div class="bd-row"><span>Unidades</span><span>{{ breakdown()!.miCompra.totalUnits }}</span></div>
+              <div class="bd-row"><span>Peso perfumes</span><span>{{ (breakdown()!.miCompra.weightPerfumesG / 1000) | number:'1.1-1' }} kg</span></div>
+              <div class="bd-row"><span>Cajas</span><span>{{ breakdown()!.miCompra.boxesNeeded }}</span></div>
+              <div class="bd-row"><span>Peso cajas</span><span>{{ (breakdown()!.miCompra.weightBoxesG / 1000) | number:'1.1-1' }} kg</span></div>
+              <div class="bd-row hl"><span>Peso total</span><span>{{ (breakdown()!.miCompra.totalWeightG / 1000) | number:'1.1-1' }} kg</span></div>
+              <div class="bd-divider"></div>
+              <div class="bd-row"><span>Productos</span><span>${{ breakdown()!.miCompra.subtotalProductsUsd | number:'1.2-2' }}</span></div>
+              <div class="bd-row"><span>Courier</span><span>${{ breakdown()!.miCompra.courierCostUsd | number:'1.2-2' }}</span></div>
+              @if (breakdown()!.miCompra.extraMiamiUsd > 0) {
+                <div class="bd-row"><span>Extra Miami</span><span>${{ breakdown()!.miCompra.extraMiamiUsd | number:'1.2-2' }}</span></div>
+              }
+              <div class="bd-row hl"><span>Total USD</span><span>${{ breakdown()!.miCompra.totalCostUsd | number:'1.2-2' }}</span></div>
+              <div class="bd-divider"></div>
+              <div class="bd-row"><span>T/C</span><span>{{ breakdown()!.miCompra.exchangeRate | number:'1.2-2' }}</span></div>
+              <div class="bd-row hl"><span>Inversión</span><span>S/ {{ breakdown()!.miCompra.totalInvestmentPen | number:'1.2-2' }}</span></div>
+              <div class="bd-no-profit">(sin ganancia)</div>
+            </div>
+
+            <!-- Total -->
+            <div class="breakdown-card total-card">
+              <h4>Total <span class="card-subtitle">(Todo junto)</span></h4>
+              <div class="bd-row"><span>Pedidos</span><span>{{ breakdown()!.total.orderCount }}</span></div>
+              <div class="bd-row"><span>Unidades</span><span>{{ breakdown()!.total.totalUnits }}</span></div>
+              <div class="bd-row"><span>Peso perfumes</span><span>{{ (breakdown()!.total.weightPerfumesG / 1000) | number:'1.1-1' }} kg</span></div>
+              <div class="bd-row"><span>Cajas</span><span>{{ breakdown()!.total.boxesNeeded }}</span></div>
+              <div class="bd-row"><span>Peso cajas</span><span>{{ (breakdown()!.total.weightBoxesG / 1000) | number:'1.1-1' }} kg</span></div>
+              <div class="bd-row hl"><span>Peso total</span><span>{{ (breakdown()!.total.totalWeightG / 1000) | number:'1.1-1' }} kg</span></div>
+              <div class="bd-divider"></div>
+              <div class="bd-row"><span>Productos</span><span>${{ breakdown()!.total.subtotalProductsUsd | number:'1.2-2' }}</span></div>
+              <div class="bd-row"><span>Courier</span><span>${{ breakdown()!.total.courierCostUsd | number:'1.2-2' }}</span></div>
+              @if (breakdown()!.total.extraMiamiUsd > 0) {
+                <div class="bd-row"><span>Extra Miami</span><span>${{ breakdown()!.total.extraMiamiUsd | number:'1.2-2' }}</span></div>
+              }
+              <div class="bd-row hl"><span>Total USD</span><span>${{ breakdown()!.total.totalCostUsd | number:'1.2-2' }}</span></div>
+              <div class="bd-divider"></div>
+              <div class="bd-row"><span>T/C</span><span>{{ breakdown()!.total.exchangeRate | number:'1.2-2' }}</span></div>
+              <div class="bd-row hl"><span>Inversión</span><span>S/ {{ breakdown()!.total.totalInvestmentPen | number:'1.2-2' }}</span></div>
+              <div class="bd-divider"></div>
+              @if (breakdown()!.total.totalRevenuePen !== null) {
+                <div class="bd-row"><span>Ingresos</span><span>S/ {{ breakdown()!.total.totalRevenuePen | number:'1.2-2' }}</span></div>
+              }
+              @if (breakdown()!.total.profitPen !== null) {
+                <div class="bd-row profit"><span>Ganancia</span><span>S/ {{ breakdown()!.total.profitPen | number:'1.2-2' }}</span></div>
+              }
+            </div>
+          </div>
         }
       </div>
     }
@@ -49,34 +192,74 @@
     } @else {
       <div class="orders-list">
         @for (order of orders(); track order.id) {
-          <div class="order-card" [class]="order.paymentStatus.toLowerCase()">
+          <div class="order-card" [class]="order.paymentStatus.toLowerCase().replace('_', '-')">
             <div class="order-header">
-              <span class="order-id">#{{order.id}}</span>
-              <span class="status-badge" [class]="order.paymentStatus.toLowerCase()">{{order.paymentStatus}}</span>
-              <span class="order-date">{{order.createdAt | date:'dd/MM HH:mm'}}</span>
+              <span class="order-code">{{ order.orderCode || '#' + order.id }}</span>
+              <span class="status-badge" [class]="order.paymentStatus.toLowerCase().replace('_', '-')">{{ getStatusLabel(order.paymentStatus) }}</span>
+              <span class="order-date">{{ order.createdAt | date:'dd/MM HH:mm' }}</span>
             </div>
             <div class="order-client">
-              <strong>{{order.clientName}}</strong>
-              <span>{{order.clientPhone}}</span>
+              <strong>{{ order.clientName }}</strong>
+              <span>{{ order.clientPhone }}</span>
             </div>
             <div class="order-items">
               @for (item of order.items; track item.id) {
                 <div class="order-item-row">
-                  <span>{{item.product.brand}} - {{item.product.name}} x{{item.quantity}}</span>
-                  <span>S/ {{item.subtotalPen | number:'1.2-2'}}</span>
+                  <span>{{ item.product.brand }} - {{ item.product.name }} x{{ item.quantity }}</span>
+                  <span>S/ {{ item.subtotalPen | number:'1.2-2' }}</span>
                 </div>
               }
             </div>
             <div class="order-footer">
-              <span class="order-total">Total: S/ {{order.totalPen | number:'1.2-2'}}</span>
-              @if (order.paymentStatus === 'PENDIENTE') {
-                <div class="order-actions">
-                  <button class="verify-btn" (click)="verify(order.id)">Verificar Yape</button>
-                  <button class="reject-btn" (click)="reject(order.id)">Rechazar</button>
-                </div>
+              <div class="order-totals">
+                <span class="order-total">Total: S/ {{ order.totalPen | number:'1.2-2' }}</span>
+                @if (order.depositAmountPen > 0 && order.clientName !== 'COMPRA TIENDA') {
+                  <span class="order-deposit">Separación: S/ {{ order.depositAmountPen | number:'1.2-2' }}</span>
+                  <span class="order-remaining">Resta: S/ {{ order.remainingPen | number:'1.2-2' }}</span>
+                }
+              </div>
+
+              <!-- Action buttons based on status -->
+              @if (order.paymentStatus === 'PENDIENTE_SEPARACION') {
+                @if (activeActionOrderId() === order.id && activeActionType() === 'deposit') {
+                  <div class="inline-action">
+                    <input type="text" placeholder="Ref. Yape (opcional)" [value]="yapeRefInput()" (input)="onYapeRefInput($event)" class="yape-input">
+                    <button class="verify-btn" (click)="confirmAction()">Confirmar</button>
+                    <button class="cancel-action-btn" (click)="cancelAction()">X</button>
+                  </div>
+                } @else {
+                  <div class="order-actions">
+                    <button class="verify-btn" (click)="startAction(order.id, 'deposit')">Verificar Separación</button>
+                    <button class="reject-btn" (click)="reject(order.id)">Rechazar</button>
+                  </div>
+                }
               }
+
+              @if (order.paymentStatus === 'SEPARADO') {
+                <div class="status-info">Esperando llegada de mercancía</div>
+              }
+
+              @if (order.paymentStatus === 'PENDIENTE_RESTO') {
+                @if (activeActionOrderId() === order.id && activeActionType() === 'rest') {
+                  <div class="inline-action">
+                    <input type="text" placeholder="Ref. Yape (opcional)" [value]="yapeRefInput()" (input)="onYapeRefInput($event)" class="yape-input">
+                    <button class="verify-btn" (click)="confirmAction()">Confirmar</button>
+                    <button class="cancel-action-btn" (click)="cancelAction()">X</button>
+                  </div>
+                } @else {
+                  <div class="order-actions">
+                    <button class="verify-btn" (click)="startAction(order.id, 'rest')">Verificar Pago Final</button>
+                    <button class="reject-btn" (click)="reject(order.id)">Rechazar</button>
+                  </div>
+                }
+              }
+
+              @if (order.paymentStatus === 'PAGADO') {
+                <div class="status-info completed">Pago completo</div>
+              }
+
               @if (order.yapeReference) {
-                <span class="yape-ref">Ref: {{order.yapeReference}}</span>
+                <span class="yape-ref">Ref: {{ order.yapeReference }}</span>
               }
             </div>
           </div>

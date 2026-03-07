@@ -4,7 +4,8 @@ import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
 import {
   Product, Order, Consolidado, RetailInventory, RetailSale,
-  DashboardStats, AppConfig, PublicConfig, OrderRequest, LoginResponse
+  DashboardStats, AppConfig, PublicConfig, OrderRequest, LoginResponse,
+  StockPurchaseRequest, BreakdownSection, FullBreakdownResponse
 } from '../models/api.models';
 
 @Injectable({ providedIn: 'root' })
@@ -44,7 +45,7 @@ export class ApiService {
     return this.http.put<Product>(`${this.url}/products/${id}`, product, { headers: this.authHeaders() });
   }
 
-  updateProductPrices(id: number, prices: { retailPricePen?: number; wholesalePricePen?: number; priceUsd?: number }): Observable<Product> {
+  updateProductPrices(id: number, prices: { retailPricePen?: number; wholesalePricePen?: number; priceUsd?: number; weightG?: number }): Observable<Product> {
     return this.http.put<Product>(`${this.url}/products/${id}/prices`, prices, { headers: this.authHeaders() });
   }
 
@@ -52,9 +53,13 @@ export class ApiService {
     return this.http.delete<void>(`${this.url}/products/${id}`, { headers: this.authHeaders() });
   }
 
-  // --- Orders (public: create) ---
+  // --- Orders (public) ---
   createOrder(order: OrderRequest): Observable<Order> {
     return this.http.post<Order>(`${this.url}/orders`, order);
+  }
+
+  getOrderByCode(code: string): Observable<Order> {
+    return this.http.get<Order>(`${this.url}/orders/code/${code}`);
   }
 
   // --- Orders (admin) ---
@@ -64,12 +69,24 @@ export class ApiService {
     return this.http.get<Order[]>(`${this.url}/orders`, { params: p, headers: this.authHeaders() });
   }
 
+  verifyDeposit(orderId: number, yapeReference: string): Observable<Order> {
+    return this.http.put<Order>(`${this.url}/orders/${orderId}/verify-deposit`, { yapeReference }, { headers: this.authHeaders() });
+  }
+
+  verifyRestPayment(orderId: number, yapeReference: string): Observable<Order> {
+    return this.http.put<Order>(`${this.url}/orders/${orderId}/verify-rest`, { yapeReference }, { headers: this.authHeaders() });
+  }
+
   verifyPayment(orderId: number, yapeReference: string): Observable<Order> {
     return this.http.put<Order>(`${this.url}/orders/${orderId}/verify`, { yapeReference }, { headers: this.authHeaders() });
   }
 
   rejectPayment(orderId: number): Observable<Order> {
     return this.http.put<Order>(`${this.url}/orders/${orderId}/reject`, {}, { headers: this.authHeaders() });
+  }
+
+  enableMerchandise(consolidadoId: number): Observable<any> {
+    return this.http.post(`${this.url}/admin/enable-merchandise/${consolidadoId}`, {}, { headers: this.authHeaders() });
   }
 
   // --- Consolidados ---
@@ -127,5 +144,19 @@ export class ApiService {
 
   getPublicConfig(): Observable<PublicConfig> {
     return this.http.get<PublicConfig>(`${this.url}/config/public`);
+  }
+
+  // --- Stock Purchase ---
+  previewStockPurchase(request: StockPurchaseRequest): Observable<BreakdownSection> {
+    return this.http.post<BreakdownSection>(`${this.url}/admin/stock-purchase/preview`, request, { headers: this.authHeaders() });
+  }
+
+  createStockPurchase(request: StockPurchaseRequest): Observable<Order> {
+    return this.http.post<Order>(`${this.url}/admin/stock-purchase`, request, { headers: this.authHeaders() });
+  }
+
+  // --- Full Breakdown ---
+  getFullBreakdown(consolidadoId: number): Observable<FullBreakdownResponse> {
+    return this.http.get<FullBreakdownResponse>(`${this.url}/consolidados/${consolidadoId}/full-breakdown`, { headers: this.authHeaders() });
   }
 }

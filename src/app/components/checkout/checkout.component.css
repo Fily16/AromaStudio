@@ -153,6 +153,81 @@
   color: var(--text-secondary, #a1a1aa);
 }
 
+/* Deposit preview in form */
+.summary-deposit {
+  display: flex;
+  justify-content: space-between;
+  padding-top: 0.5rem;
+  font-size: 0.9rem;
+  color: #3b82f6;
+  font-weight: 600;
+}
+
+/* Order code display */
+.order-code-display {
+  text-align: center;
+  background: rgba(201,162,39,0.08);
+  border: 2px solid rgba(201,162,39,0.3);
+  border-radius: 12px;
+  padding: 1.25rem;
+  margin-bottom: 1.25rem;
+}
+
+.code-label {
+  display: block;
+  font-size: 0.8rem;
+  color: var(--text-secondary, #a1a1aa);
+  margin-bottom: 0.4rem;
+}
+
+.code-value {
+  display: block;
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--accent, #C9A227);
+  font-family: monospace;
+  letter-spacing: 3px;
+}
+
+.code-hint {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--text-secondary, #a1a1aa);
+  margin-top: 0.4rem;
+}
+
+/* Remaining info */
+.yape-remaining-info {
+  background: rgba(59,130,246,0.08);
+  border: 1px solid rgba(59,130,246,0.2);
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  margin-bottom: 1rem;
+  font-size: 0.85rem;
+  color: #93c5fd;
+  text-align: center;
+}
+
+/* Done info */
+.done-info {
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+.done-info p {
+  padding: 0.3rem 0;
+  font-size: 0.9rem;
+  color: var(--text-secondary, #a1a1aa);
+}
+
+.done-detail {
+  color: #fff !important;
+}
+
+/* Closed card */
+.closed-card { text-align: center; }
+.closed-icon { margin-bottom: 1.5rem; }
+
 /* Success card */
 .success-card { text-align: center; }
 .success-icon { margin-bottom: 1.5rem; }
@@ -160,4 +235,5 @@
 @media (max-width: 500px) {
   .checkout-page { padding: 1rem; }
   .checkout-card { padding: 1.5rem; }
+  .code-value { font-size: 1.5rem; }
 }

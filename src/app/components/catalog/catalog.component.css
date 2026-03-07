@@ -264,6 +264,21 @@
   width: 40px;
 }
 
+/* Admin link - subtle */
+.admin-link {
+  position: fixed;
+  bottom: 12px;
+  right: 12px;
+  color: rgba(255, 255, 255, 0.12);
+  font-size: 0.7rem;
+  text-decoration: none;
+  z-index: 10;
+  transition: color 0.3s;
+}
+.admin-link:hover {
+  color: rgba(201, 162, 39, 0.6);
+}
+
 /* Cart button in header */
 .cart-btn {
   position: relative;

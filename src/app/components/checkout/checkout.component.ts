@@ -20,8 +20,12 @@ export class CheckoutComponent implements OnInit {
   clientName = signal('');
   clientPhone = signal('');
   yapeNumber = signal('903250695');
-  step = signal<'form' | 'yape' | 'done'>('form');
+  step = signal<'form' | 'yape' | 'done' | 'closed'>('form');
   orderId = signal<number | null>(null);
+  orderCode = signal('');
+  depositAmount = signal(0);
+  remainingAmount = signal(0);
+  totalAmount = signal(0);
   loading = signal(false);
   error = signal('');
 
@@ -30,9 +34,28 @@ export class CheckoutComponent implements OnInit {
       this.router.navigate(['/cart']);
       return;
     }
-    this.api.getPublicConfig().subscribe(config => {
-      this.yapeNumber.set(config.yapeNumber);
+
+    // Check if consolidado is open
+    this.api.getActiveConsolidado().subscribe({
+      next: () => {
+        // Consolidado is open, proceed
+        this.api.getPublicConfig().subscribe(config => {
+          this.yapeNumber.set(config.yapeNumber);
+        });
+      },
+      error: () => {
+        // No active consolidado
+        this.step.set('closed');
+      }
     });
+  }
+
+  get totalUnits(): number {
+    return this.cart.cartItems().reduce((sum, item) => sum + item.quantity, 0);
+  }
+
+  get depositPreview(): number {
+    return this.totalUnits * 20;
   }
 
   submitOrder() {
@@ -51,11 +74,16 @@ export class CheckoutComponent implements OnInit {
     }).subscribe({
       next: (order) => {
         this.orderId.set(order.id);
+        this.orderCode.set(order.orderCode);
+        this.depositAmount.set(order.depositAmountPen);
+        this.remainingAmount.set(order.remainingPen);
+        this.totalAmount.set(order.totalPen);
         this.step.set('yape');
         this.loading.set(false);
       },
       error: (err) => {
-        this.error.set('Error al crear el pedido. Intenta de nuevo.');
+        const msg = err.error?.message || 'Error al crear el pedido. Intenta de nuevo.';
+        this.error.set(msg);
         this.loading.set(false);
       }
     });

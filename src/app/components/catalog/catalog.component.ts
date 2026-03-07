@@ -1,6 +1,6 @@
 import { Component, computed, inject, signal, AfterViewInit, OnDestroy, OnInit, PLATFORM_ID, effect } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { DecimalPipe } from '@angular/common';
 import { ApiService } from '../../services/api.service';
@@ -14,7 +14,7 @@ gsap.registerPlugin(ScrollTrigger);
 @Component({
   selector: 'app-catalog',
   standalone: true,
-  imports: [FormsModule, DecimalPipe],
+  imports: [FormsModule, DecimalPipe, RouterLink],
   templateUrl: './catalog.component.html',
   styleUrl: './catalog.component.css'
 })

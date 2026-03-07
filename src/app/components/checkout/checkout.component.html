@@ -1,5 +1,16 @@
 <div class="checkout-page">
 
+  @if (step() === 'closed') {
+    <div class="checkout-card closed-card">
+      <div class="closed-icon">
+        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#f97316" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      </div>
+      <h1>Consolidado no disponible</h1>
+      <p class="subtitle">No hay un consolidado abierto en este momento. Puedes ver los productos del catálogo pero no realizar pedidos hasta que se abra uno nuevo.</p>
+      <button class="submit-btn" (click)="goHome()">Volver al catálogo</button>
+    </div>
+  }
+
   @if (step() === 'form') {
     <div class="checkout-card">
       <h1>Finalizar Pedido</h1>
@@ -14,8 +25,12 @@
           </div>
         }
         <div class="summary-total">
-          <span>Total</span>
+          <span>Total del pedido</span>
           <span>S/ {{cart.totalPen() | number:'1.2-2'}}</span>
+        </div>
+        <div class="summary-deposit">
+          <span>Pago de separación (S/20 x {{totalUnits}} perfume{{totalUnits > 1 ? 's' : ''}})</span>
+          <span>S/ {{depositPreview | number:'1.2-2'}}</span>
         </div>
       </div>
 
@@ -48,12 +63,22 @@
       <div class="yape-icon">
         <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
       </div>
-      <h1>Paga con Yape</h1>
-      <p class="subtitle">Tu pedido #{{orderId()}} fue registrado. Ahora realiza el pago por Yape.</p>
+      <h1>Paga la Separación</h1>
+      <p class="subtitle">Tu pedido fue registrado. Ahora realiza el pago de separación por Yape.</p>
+
+      <div class="order-code-display">
+        <span class="code-label">Tu código de pedido</span>
+        <span class="code-value">{{orderCode()}}</span>
+        <span class="code-hint">Guarda este código para consultas</span>
+      </div>
 
       <div class="yape-amount">
-        <span class="label">Monto a pagar</span>
-        <span class="amount">S/ {{cart.totalPen() | number:'1.2-2'}}</span>
+        <span class="label">Monto de separación</span>
+        <span class="amount">S/ {{depositAmount() | number:'1.2-2'}}</span>
+      </div>
+
+      <div class="yape-remaining-info">
+        El resto <strong>S/ {{remainingAmount() | number:'1.2-2'}}</strong> lo pagarás cuando la mercancía llegue a Perú.
       </div>
 
       <div class="yape-number">
@@ -64,7 +89,7 @@
       <div class="yape-instructions">
         <p>1. Abre tu app de Yape</p>
         <p>2. Yapea al número <strong>{{yapeNumber()}}</strong></p>
-        <p>3. Monto exacto: <strong>S/ {{cart.totalPen() | number:'1.2-2'}}</strong></p>
+        <p>3. Monto exacto: <strong>S/ {{depositAmount() | number:'1.2-2'}}</strong></p>
         <p>4. Una vez realizado el pago, haz clic en el botón de abajo</p>
       </div>
 
@@ -78,7 +103,19 @@
         <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#34d399" stroke-width="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
       </div>
       <h1>Pedido Registrado</h1>
-      <p class="subtitle">Tu pedido #{{orderId()}} está pendiente de verificación. Te contactaremos por WhatsApp una vez confirmado el Yape.</p>
+
+      <div class="order-code-display">
+        <span class="code-label">Tu código de pedido</span>
+        <span class="code-value">{{orderCode()}}</span>
+      </div>
+
+      <div class="done-info">
+        <p>Tu pedido está pendiente de verificación de pago.</p>
+        <p>Envía tu código <strong>{{orderCode()}}</strong> por WhatsApp para confirmar.</p>
+        <p class="done-detail">Separación pagada: <strong>S/ {{depositAmount() | number:'1.2-2'}}</strong></p>
+        <p class="done-detail">Pendiente (al llegar a Perú): <strong>S/ {{remainingAmount() | number:'1.2-2'}}</strong></p>
+      </div>
+
       <button class="submit-btn" (click)="goHome()">Volver al catálogo</button>
     </div>
   }

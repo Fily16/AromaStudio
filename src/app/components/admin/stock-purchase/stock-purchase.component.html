@@ -1,0 +1,139 @@
+<div class="admin-page">
+  <nav class="admin-nav">
+    <div class="nav-brand"><span class="brand-name">AromaStudio</span><span class="brand-tag">Admin</span></div>
+    <div class="nav-links">
+      <a routerLink="/admin" class="nav-link">Dashboard</a>
+      <a routerLink="/admin/orders" class="nav-link">Pedidos</a>
+      <a routerLink="/admin/products" class="nav-link">Productos</a>
+      <a routerLink="/admin/stock-purchase" class="nav-link active">Compra Tienda</a>
+      <a routerLink="/admin/inventory" class="nav-link">Inventario</a>
+      <a routerLink="/admin/config" class="nav-link">Config</a>
+    </div>
+  </nav>
+
+  <div class="admin-content">
+    <div class="page-header">
+      <h1>Compra para Tienda</h1>
+      <input type="text" placeholder="Buscar producto..." (input)="onSearchInput($event)" class="search-input">
+    </div>
+
+    @if (message()) {
+      <div class="message">{{ message() }}</div>
+    }
+
+    <div class="layout">
+      <!-- Products list -->
+      <div class="products-table-wrapper">
+        <table class="products-table">
+          <thead>
+            <tr>
+              <th>SKU</th>
+              <th>Producto</th>
+              <th>Precio USD</th>
+              <th>Peso (g)</th>
+              <th>Puesto PEN</th>
+              <th>Cant.</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (p of filteredProducts(); track p.id) {
+              <tr>
+                <td class="sku">{{ p.sku }}</td>
+                <td><strong>{{ p.brand }}</strong> - {{ p.name }} {{ p.ml }}ml</td>
+                <td>${{ p.priceUsd | number:'1.2-2' }}</td>
+                <td>{{ p.weightG || '—' }}</td>
+                <td class="cost-cell">S/ {{ landedCostPen(p) | number:'1.2-2' }}</td>
+                <td>
+                  <input type="number" min="0" class="qty-input"
+                    [value]="getCartQty(p.id)"
+                    (change)="updateQty(p, $event)">
+                </td>
+                <td>
+                  <button class="add-btn" (click)="addToCart(p)">+</button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Sidebar: Cart + Preview -->
+      <div class="sidebar">
+        <div class="cart-card">
+          <h3>Mi Compra ({{ cartTotal() }} unidades)</h3>
+
+          @if (cartItems().length === 0) {
+            <div class="empty-cart">Agrega productos a tu compra</div>
+          } @else {
+            @for (item of cartItems(); track item.product.id) {
+              <div class="cart-item">
+                <div class="cart-item-info">
+                  <div class="cart-item-name">{{ item.product.brand }} - {{ item.product.name }}</div>
+                  <div class="cart-item-qty">x{{ item.quantity }} &middot; S/ {{ landedCostPen(item.product) | number:'1.2-2' }} c/u</div>
+                </div>
+                <button class="remove-btn" (click)="removeFromCart(item.product.id)">X</button>
+              </div>
+            }
+
+            <button class="btn-preview" (click)="previewPurchase()" [disabled]="loading()">
+              {{ loading() ? 'Calculando...' : 'Ver Desglose' }}
+            </button>
+          }
+        </div>
+
+        @if (preview()) {
+          <div class="preview-card">
+            <h3>Desglose de Compra</h3>
+
+            <div class="breakdown-row">
+              <span>Unidades</span><span>{{ preview()!.totalUnits }}</span>
+            </div>
+            <div class="breakdown-row">
+              <span>Peso perfumes</span><span>{{ (preview()!.weightPerfumesG / 1000) | number:'1.1-1' }} kg</span>
+            </div>
+            <div class="breakdown-row">
+              <span>Cajas necesarias</span><span>{{ preview()!.boxesNeeded }}</span>
+            </div>
+            <div class="breakdown-row">
+              <span>Peso cajas</span><span>{{ (preview()!.weightBoxesG / 1000) | number:'1.1-1' }} kg</span>
+            </div>
+            <div class="breakdown-row highlight">
+              <span>Peso total</span><span>{{ (preview()!.totalWeightG / 1000) | number:'1.1-1' }} kg</span>
+            </div>
+
+            <div class="breakdown-divider"></div>
+
+            <div class="breakdown-row">
+              <span>Productos</span><span>${{ preview()!.subtotalProductsUsd | number:'1.2-2' }}</span>
+            </div>
+            <div class="breakdown-row">
+              <span>Courier</span><span>${{ preview()!.courierCostUsd | number:'1.2-2' }}</span>
+            </div>
+            @if (preview()!.extraMiamiUsd > 0) {
+              <div class="breakdown-row">
+                <span>Extra Miami</span><span>${{ preview()!.extraMiamiUsd | number:'1.2-2' }}</span>
+              </div>
+            }
+            <div class="breakdown-row highlight">
+              <span>Total USD</span><span>${{ preview()!.totalCostUsd | number:'1.2-2' }}</span>
+            </div>
+
+            <div class="breakdown-divider"></div>
+
+            <div class="breakdown-row">
+              <span>T/C</span><span>{{ preview()!.exchangeRate | number:'1.2-2' }}</span>
+            </div>
+            <div class="breakdown-row highlight">
+              <span>Inversión PEN</span><span>S/ {{ preview()!.totalInvestmentPen | number:'1.2-2' }}</span>
+            </div>
+
+            <button class="btn-confirm" (click)="confirmPurchase()" [disabled]="loading()">
+              Confirmar Compra
+            </button>
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+</div>
