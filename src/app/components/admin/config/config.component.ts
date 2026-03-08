@@ -54,14 +54,26 @@ export class ConfigComponent implements OnInit {
 
   saveEdit(key: string) {
     const value = this.editValue();
+    if (!value.trim()) {
+      this.message.set('⚠ El valor no puede estar vacío');
+      setTimeout(() => this.message.set(''), 3000);
+      return;
+    }
     this.api.updateConfig(key, value).subscribe({
       next: () => {
-        this.message.set('Configuración actualizada');
+        this.message.set('✓ Configuración actualizada');
         this.editing.set(null);
         this.load();
         setTimeout(() => this.message.set(''), 3000);
       },
-      error: () => this.message.set('Error al actualizar')
+      error: (err) => {
+        console.error('Error saving config:', err);
+        const detail = err.status === 401 || err.status === 403
+          ? 'Sesión expirada — vuelve a iniciar sesión'
+          : (err.error?.message || 'Error de red');
+        this.message.set('✗ ' + detail);
+        setTimeout(() => this.message.set(''), 5000);
+      }
     });
   }
 

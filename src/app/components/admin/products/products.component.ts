@@ -27,6 +27,7 @@ export class ProductsComponent implements OnInit {
   courierCostPerKg = signal(7);
   editingConfig = signal<string | null>(null);
   editConfigValue = signal('');
+  configMessage = signal('');
 
   // Create product
   showCreate = signal(false);
@@ -46,10 +47,17 @@ export class ProductsComponent implements OnInit {
   }
 
   loadConfig() {
-    this.api.getConfig().subscribe(configs => {
-      for (const c of configs) {
-        if (c.configKey === 'exchange_rate') this.exchangeRate.set(+c.configValue);
-        if (c.configKey === 'courier_cost_per_kg') this.courierCostPerKg.set(+c.configValue);
+    this.api.getConfig().subscribe({
+      next: (configs) => {
+        for (const c of configs) {
+          if (c.configKey === 'exchange_rate') this.exchangeRate.set(+c.configValue);
+          if (c.configKey === 'courier_cost_per_kg') this.courierCostPerKg.set(+c.configValue);
+        }
+      },
+      error: (err) => {
+        console.error('Error loading config:', err);
+        this.configMessage.set('⚠ No se pudo cargar configuración del servidor');
+        setTimeout(() => this.configMessage.set(''), 5000);
       }
     });
   }
@@ -81,9 +89,27 @@ export class ProductsComponent implements OnInit {
   cancelConfigEdit() { this.editingConfig.set(null); }
 
   saveConfigEdit(key: string) {
-    this.api.updateConfig(key, this.editConfigValue()).subscribe(() => {
-      this.editingConfig.set(null);
-      this.loadConfig();
+    const newValue = this.editConfigValue();
+    if (!newValue || isNaN(Number(newValue))) {
+      this.configMessage.set('⚠ Valor inválido');
+      setTimeout(() => this.configMessage.set(''), 3000);
+      return;
+    }
+    this.api.updateConfig(key, newValue).subscribe({
+      next: () => {
+        // Update local signal immediately so prices recalculate
+        if (key === 'exchange_rate') this.exchangeRate.set(Number(newValue));
+        if (key === 'courier_cost_per_kg') this.courierCostPerKg.set(Number(newValue));
+        this.editingConfig.set(null);
+        this.configMessage.set('✓ Configuración guardada');
+        this.loadConfig(); // Also reload from server to confirm
+        setTimeout(() => this.configMessage.set(''), 3000);
+      },
+      error: (err) => {
+        console.error('Error saving config:', err);
+        this.configMessage.set('✗ Error al guardar: ' + (err.status === 401 || err.status === 403 ? 'Sesión expirada, vuelve a iniciar sesión' : err.error?.message || 'Error de red'));
+        setTimeout(() => this.configMessage.set(''), 5000);
+      }
     });
   }
 

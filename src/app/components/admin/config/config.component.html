@@ -15,7 +15,7 @@
     <h1>Configuración del Sistema</h1>
 
     @if (message()) {
-      <div class="message">{{message()}}</div>
+      <div class="message" [class.error]="message().startsWith('✗') || message().startsWith('⚠')">{{message()}}</div>
     }
 
     <div class="config-list">

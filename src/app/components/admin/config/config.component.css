@@ -15,6 +15,9 @@
   background: rgba(52,211,153,0.1); color: #34d399; border: 1px solid rgba(52,211,153,0.2);
   padding: 0.75rem 1rem; border-radius: 8px; margin-bottom: 1rem; font-size: 0.9rem;
 }
+.message.error {
+  background: rgba(239,68,68,0.1); color: #ef4444; border-color: rgba(239,68,68,0.2);
+}
 
 .config-list { display: flex; flex-direction: column; gap: 0.75rem; }
 

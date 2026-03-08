@@ -17,7 +17,7 @@
       <div class="config-chip">
         <span class="chip-label">T/C Dólar:</span>
         @if (editingConfig() === 'exchange_rate') {
-          <input type="number" step="0.01" [value]="editConfigValue()" (input)="onConfigInput($event)" (keyup.enter)="saveConfigEdit('exchange_rate')" class="chip-input" autofocus>
+          <input type="text" inputmode="decimal" [value]="editConfigValue()" (input)="onConfigInput($event)" (keyup.enter)="saveConfigEdit('exchange_rate')" class="chip-input" autofocus>
           <button class="chip-save" (click)="saveConfigEdit('exchange_rate')">OK</button>
           <button class="chip-cancel" (click)="cancelConfigEdit()">X</button>
         } @else {
@@ -27,13 +27,16 @@
       <div class="config-chip">
         <span class="chip-label">Courier/kg:</span>
         @if (editingConfig() === 'courier_cost_per_kg') {
-          <input type="number" step="0.5" [value]="editConfigValue()" (input)="onConfigInput($event)" (keyup.enter)="saveConfigEdit('courier_cost_per_kg')" class="chip-input" autofocus>
+          <input type="text" inputmode="decimal" [value]="editConfigValue()" (input)="onConfigInput($event)" (keyup.enter)="saveConfigEdit('courier_cost_per_kg')" class="chip-input" autofocus>
           <button class="chip-save" (click)="saveConfigEdit('courier_cost_per_kg')">OK</button>
           <button class="chip-cancel" (click)="cancelConfigEdit()">X</button>
         } @else {
           <span class="chip-value" (click)="startConfigEdit('courier_cost_per_kg', courierCostPerKg())">${{courierCostPerKg() | number:'1.0-2'}}</span>
         }
       </div>
+      @if (configMessage()) {
+        <span class="config-msg" [class.error]="configMessage().startsWith('✗')">{{configMessage()}}</span>
+      }
     </div>
 
     <div class="page-header">
