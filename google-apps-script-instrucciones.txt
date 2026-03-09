@@ -1,0 +1,119 @@
+============================================
+ INSTRUCCIONES: Conectar tu web con Google Sheets
+ AromaStudio - Sistema de Pedidos Automatizado
+============================================
+
+PASO 1: Crear el Google Sheet
+------------------------------
+1. Ve a https://sheets.google.com
+2. Crea una nueva hoja de calculo
+3. En la primera fila, escribe estos encabezados:
+   A1: Fecha
+   B1: Nombre
+   C1: WhatsApp
+   D1: Productos
+   E1: Cantidad Total
+   F1: Monto Total
+   G1: N° Operacion Yape
+   H1: Estado
+
+4. Nombra la hoja como "Pedidos Consolidado"
+
+
+PASO 2: Crear el Google Apps Script
+-------------------------------------
+1. Dentro del Google Sheet, ve a: Extensiones > Apps Script
+2. Borra todo el codigo que aparece
+3. Pega el siguiente codigo:
+
+----- COPIAR DESDE AQUI -----
+
+function doPost(e) {
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  var data = JSON.parse(e.postData.contents);
+
+  // Formatear la fecha
+  var fecha = new Date();
+  var fechaFormateada = Utilities.formatDate(fecha, 'America/Lima', 'dd/MM/yyyy HH:mm');
+
+  // Agregar la fila con los datos del pedido
+  sheet.appendRow([
+    fechaFormateada,
+    data.nombre,
+    data.whatsapp,
+    data.productos,
+    data.cantidadTotal,
+    'S/ ' + data.montoTotal,
+    data.operacionYape || '',
+    'Pendiente'
+  ]);
+
+  // Retornar respuesta exitosa
+  return ContentService
+    .createTextOutput(JSON.stringify({ status: 'ok' }))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+// Funcion para probar que funciona
+function doGet(e) {
+  return ContentService
+    .createTextOutput(JSON.stringify({ status: 'El script esta funcionando correctamente' }))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+----- COPIAR HASTA AQUI -----
+
+4. Guarda el archivo (Ctrl+S)
+5. Nombra el proyecto como "Pedidos AromaStudio"
+
+
+PASO 3: Desplegar como aplicacion web
+----------------------------------------
+1. Haz clic en "Implementar" > "Nueva implementacion"
+2. En "Tipo", selecciona "Aplicacion web"
+3. Configuracion:
+   - Descripcion: "Pedidos AromaStudio"
+   - Ejecutar como: "Yo" (tu cuenta)
+   - Quien tiene acceso: "Cualquier persona"
+4. Haz clic en "Implementar"
+5. Autoriza los permisos cuando te lo pida
+6. COPIA LA URL que te da (se ve algo asi):
+   https://script.google.com/macros/s/AKfycbx.../exec
+
+
+PASO 4: Pegar la URL en tu pagina web
+----------------------------------------
+1. Abre el archivo: src/app/components/catalog/catalog.component.ts
+2. Busca la linea que dice:
+   private GOOGLE_SCRIPT_URL = '';
+3. Pega tu URL ahi:
+   private GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/TU_ID_AQUI/exec';
+4. Guarda el archivo
+
+
+PASO 5: Agregar tu QR de Yape
+-------------------------------
+1. Toma una captura de pantalla de tu QR de Yape
+2. Guardala como "yape-qr.png"
+3. Coloca el archivo en: src/public/yape-qr.png
+
+
+PASO 6: Probar
+---------------
+1. Ejecuta tu pagina: ng serve
+2. Ve a Consolidado
+3. Agrega productos al carrito
+4. Haz clic en "Confirmar Pedido"
+5. Llena tus datos y envia
+6. Revisa tu Google Sheet - deberia aparecer el pedido
+
+
+NOTAS IMPORTANTES:
+-------------------
+- Si cambias el codigo del Apps Script, necesitas hacer una NUEVA implementacion
+  (no actualizar la existente)
+- Los pedidos se registran en la zona horaria de Lima (America/Lima)
+- El campo "Estado" se inicia como "Pendiente". Tu lo cambias a "Pagado"
+  manualmente en el Sheet cuando confirmes el pago en Yape
+- Si la URL de Apps Script no funciona, verifica que los permisos estan como
+  "Cualquier persona"

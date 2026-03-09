@@ -1,0 +1,109 @@
+<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+<head>
+<meta charset="UTF-8">
+<!--[if gte mso 9]>
+<xml>
+<x:ExcelWorkbook>
+<x:ExcelWorksheets>
+<x:ExcelWorksheet>
+<x:Name>Pedidos Consolidado</x:Name>
+<x:WorksheetOptions>
+<x:DisplayGridlines/>
+<x:FreezePanes/>
+<x:FrozenNoSplit/>
+<x:SplitHorizontal>3</x:SplitHorizontal>
+<x:TopRowBottomPane>3</x:TopRowBottomPane>
+</x:WorksheetOptions>
+</x:ExcelWorksheet>
+</x:ExcelWorksheets>
+</x:ExcelWorkbook>
+</xml>
+<![endif]-->
+<style>
+  table { border-collapse: collapse; width: 100%; }
+  td, th { border: 1px solid #d4d4d8; padding: 10px 14px; font-family: Calibri, Arial, sans-serif; font-size: 11pt; }
+  .title-row td { background: #0a0a0b; color: #C9A227; font-size: 16pt; font-weight: bold; border: none; padding: 16px 14px; text-align: center; }
+  .subtitle-row td { background: #18181b; color: #a1a1aa; font-size: 9pt; border: none; padding: 4px 14px; text-align: center; }
+  .header th { background: #C9A227; color: #0a0a0b; font-weight: bold; font-size: 10pt; text-align: center; white-space: nowrap; }
+  .data td { background: #ffffff; color: #27272a; vertical-align: middle; }
+  .data:nth-child(even) td { background: #fafafa; }
+  .pendiente { background: #fef3c7 !important; color: #92400e; font-weight: bold; text-align: center; }
+  .pagado { background: #d1fae5 !important; color: #065f46; font-weight: bold; text-align: center; }
+  .cancelado { background: #fee2e2 !important; color: #991b1b; font-weight: bold; text-align: center; }
+  .center { text-align: center; }
+  .right { text-align: right; }
+  .example td { color: #a1a1aa; font-style: italic; }
+</style>
+</head>
+<body>
+<table>
+  <!-- Titulo -->
+  <tr class="title-row">
+    <td colspan="8">AromaStudio - Pedidos Consolidado</td>
+  </tr>
+  <tr class="subtitle-row">
+    <td colspan="8">Los pedidos de la web se registran automaticamente aqui | Cambia el Estado manualmente cuando confirmes el pago</td>
+  </tr>
+
+  <!-- Encabezados -->
+  <tr class="header">
+    <th style="width:140px">Fecha</th>
+    <th style="width:160px">Nombre</th>
+    <th style="width:120px">WhatsApp</th>
+    <th style="width:400px">Productos</th>
+    <th style="width:80px">Cant. Total</th>
+    <th style="width:100px">Monto Total</th>
+    <th style="width:140px">N° Op. Yape</th>
+    <th style="width:100px">Estado</th>
+  </tr>
+
+  <!-- Ejemplo 1 -->
+  <tr class="data example">
+    <td class="center">26/02/2026 14:30</td>
+    <td>Maria Lopez (ejemplo)</td>
+    <td class="center">912345678</td>
+    <td>9PM Tester (Afnan) x2 = S/184
+Sublime (Lattafa) x1 = S/92</td>
+    <td class="center">3</td>
+    <td class="right">S/ 276</td>
+    <td class="center">YP-849271</td>
+    <td class="pagado">Pagado</td>
+  </tr>
+
+  <!-- Ejemplo 2 -->
+  <tr class="data example">
+    <td class="center">26/02/2026 15:45</td>
+    <td>Carlos Rios (ejemplo)</td>
+    <td class="center">987654321</td>
+    <td>Khamrah Clasico (Lattafa) x3 = S/300
+Hawas (Rasasi) x1 = S/100</td>
+    <td class="center">4</td>
+    <td class="right">S/ 400</td>
+    <td class="center"></td>
+    <td class="pendiente">Pendiente</td>
+  </tr>
+
+  <!-- Filas vacias para que se vea la estructura -->
+  <tr class="data"><td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+  <tr class="data"><td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+  <tr class="data"><td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+  <tr class="data"><td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+  <tr class="data"><td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+  <tr class="data"><td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+  <tr class="data"><td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+  <tr class="data"><td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+  <tr class="data"><td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+  <tr class="data"><td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+  <tr class="data"><td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+  <tr class="data"><td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+  <tr class="data"><td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+  <tr class="data"><td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+  <tr class="data"><td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+  <tr class="data"><td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+  <tr class="data"><td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+  <tr class="data"><td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+  <tr class="data"><td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+  <tr class="data"><td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+</table>
+</body>
+</html>

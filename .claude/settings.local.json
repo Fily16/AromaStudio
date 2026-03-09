@@ -1,0 +1,30 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:www.fragrantica.com)",
+      "WebFetch(domain:lattafa.com)",
+      "WebFetch(domain:www.lattafa-usa.com)",
+      "Bash(curl -L -o \"fakhar rose.png\" \"https://www.lattafa-usa.com/cdn/shop/files/1_aef6a220-3fcb-4b87-838d-7f704806476f.png?v=1750614271\")",
+      "Bash(curl -L -o \"asad elixir.jpg\" \"https://lattafa.com/wp-content/uploads/2025/10/Asad-Elixir-copy-scaled.jpg\")",
+      "Bash(curl -L -o \"yara elixir.jpg\" \"https://lattafa.com/wp-content/uploads/2025/10/Yara-Elixir-Bottle-scaled.jpg\")",
+      "Bash(curl -L -o \"jasoor.jpg\" \"https://lattafa.com/wp-content/uploads/2024/05/2-59.jpg\")",
+      "Bash(curl -L -o \"atlas.png\" \"https://lattafa.com/wp-content/uploads/2024/09/Bottle.png\")",
+      "Bash(curl -L -o \"fire on ice.jpg\" \"https://lattafa.com/wp-content/uploads/2025/07/Fire-on-Ice-Bottle-copy-scaled.jpg\")",
+      "Bash(curl -L -o \"pisa pride.png\" \"https://www.lattafa-usa.com/cdn/shop/files/1_60a38398-ea52-430f-9137-fa446e93aa54.png?v=1747548376\")",
+      "WebFetch(domain:shop-gulforchid.com)",
+      "Bash(curl -L -o \"mango ice.jpg\" \"https://shop-gulforchid.com/cdn/shop/files/Mango_ice__gulf_orchid_perufmes.jpg?v=1763129304\")",
+      "WebFetch(domain:armaf.com)",
+      "WebFetch(domain:www.amazon.com)",
+      "WebFetch(domain:armafperfume.com)",
+      "Bash(curl -s http://localhost:420)",
+      "Bash(curl -s http://localhost:4200)",
+      "mcp__Claude_Preview__preview_start",
+      "Bash(kill %1)",
+      "Bash(netstat -ano)",
+      "Bash(taskkill //PID 8364 //F)",
+      "Bash(node -e \":*)",
+      "Bash(dir \"C:\\\\Users\\\\Fily\\\\Negocios\\\\PERFUMES\\\\paginaweb\\\\PedidosConsolidado.xls\")",
+      "Bash(node generate-catalog-pdf.js)"
+    ]
+  }
+}

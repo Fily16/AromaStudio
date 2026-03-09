@@ -1,0 +1,5534 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AromaStudio - Catálogo de Perfumes 2026</title>
+  <style>
+    @page {
+      size: A4 portrait;
+      margin: 0;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+      background: #f5f5f5;
+      color: #1a1a1a;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+
+    .page {
+      width: 210mm;
+      height: 297mm;
+      margin: 0 auto;
+      background: #fff;
+      position: relative;
+      overflow: hidden;
+      page-break-after: always;
+      display: flex;
+      flex-direction: column;
+    }
+
+    @media screen {
+      .page {
+        margin: 20px auto;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+      }
+    }
+
+    /* ═══ HEADER ═══ */
+    .page-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12mm 15mm 8mm 15mm;
+      border-bottom: 2px solid #C9A227;
+    }
+
+    .brand-name {
+      font-size: 11pt;
+      font-weight: 600;
+      color: #C9A227;
+      text-transform: uppercase;
+      letter-spacing: 3px;
+    }
+
+    .page-number {
+      font-size: 9pt;
+      color: #999;
+    }
+
+    /* ═══ CONTENT ═══ */
+    .product-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 8mm 15mm;
+      gap: 6mm;
+    }
+
+    /* ═══ IMAGE ═══ */
+    .image-container {
+      width: 100%;
+      height: 140mm;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #fafafa 0%, #f0ede6 100%);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .image-container img {
+      max-width: 90%;
+      max-height: 130mm;
+      object-fit: contain;
+      filter: drop-shadow(0 4px 12px rgba(0,0,0,0.15));
+    }
+
+    .no-image {
+      color: #ccc;
+      font-size: 14pt;
+      text-align: center;
+    }
+
+    /* ═══ PRODUCT INFO ═══ */
+    .product-info {
+      width: 100%;
+      text-align: center;
+    }
+
+    .product-name {
+      font-size: 22pt;
+      font-weight: 700;
+      color: #1a1a1a;
+      margin-bottom: 2mm;
+      line-height: 1.2;
+    }
+
+    .product-brand {
+      font-size: 11pt;
+      color: #C9A227;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      margin-bottom: 3mm;
+    }
+
+    .meta-row {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      margin-bottom: 3mm;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 2px 12px;
+      border-radius: 20px;
+      font-size: 8pt;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .badge-category {
+      background: #f0ede6;
+      color: #8a7a55;
+      border: 1px solid #d4c9a8;
+    }
+
+    .badge-size {
+      background: #e8f4f8;
+      color: #2a7a9b;
+      border: 1px solid #b8dce8;
+    }
+
+    .badge-wholesale {
+      background: #e6f0e8;
+      color: #2a7a3b;
+      border: 1px solid #a8d4b0;
+    }
+
+    .description {
+      font-size: 9.5pt;
+      color: #555;
+      line-height: 1.5;
+      margin-bottom: 4mm;
+      max-width: 150mm;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    /* ═══ PRICES ═══ */
+    .prices-box {
+      background: #faf8f2;
+      border: 1px solid #e8e0cc;
+      border-radius: 8px;
+      padding: 3mm 6mm;
+      display: inline-flex;
+      gap: 6mm;
+      margin-bottom: 3mm;
+    }
+
+    .price-row {
+      text-align: center;
+      padding: 0 4mm;
+    }
+
+    .price-row + .price-row {
+      border-left: 1px solid #e0d8c4;
+    }
+
+    .price-label {
+      display: block;
+      font-size: 7pt;
+      color: #999;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 1mm;
+    }
+
+    .price-value {
+      font-size: 16pt;
+      font-weight: 700;
+      color: #1a1a1a;
+    }
+
+    .price-original .price-value {
+      font-size: 13pt;
+      color: #888;
+    }
+
+    .price-wholesale .price-value {
+      color: #C9A227;
+    }
+
+    /* ═══ NOTES ═══ */
+    .notes-section {
+      margin-top: 2mm;
+    }
+
+    .notes-section h3 {
+      font-size: 8pt;
+      color: #aaa;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      margin-bottom: 2mm;
+    }
+
+    .notes-grid {
+      display: flex;
+      justify-content: center;
+      gap: 8mm;
+    }
+
+    .note-group {
+      text-align: center;
+    }
+
+    .note-label {
+      font-size: 7pt;
+      font-weight: 700;
+      color: #C9A227;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      margin-bottom: 1mm;
+    }
+
+    .note-items {
+      font-size: 8pt;
+      color: #666;
+      max-width: 50mm;
+      line-height: 1.4;
+    }
+
+    /* ═══ FOOTER ═══ */
+    .page-footer {
+      display: flex;
+      justify-content: space-between;
+      padding: 4mm 15mm 10mm 15mm;
+      border-top: 1px solid #eee;
+      font-size: 8pt;
+      color: #bbb;
+    }
+
+    /* ═══ COVER PAGE ═══ */
+    .cover {
+      width: 210mm;
+      height: 297mm;
+      margin: 0 auto;
+      background: linear-gradient(135deg, #0a0a0b 0%, #1a1a1b 40%, #0a0a0b 100%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      page-break-after: always;
+      position: relative;
+      overflow: hidden;
+    }
+
+    @media screen {
+      .cover {
+        margin: 20px auto;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+      }
+    }
+
+    .cover::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background:
+        radial-gradient(ellipse at 30% 20%, rgba(201,162,39,0.08) 0%, transparent 50%),
+        radial-gradient(ellipse at 70% 80%, rgba(201,162,39,0.05) 0%, transparent 50%);
+    }
+
+    .cover-content {
+      position: relative;
+      z-index: 1;
+      text-align: center;
+    }
+
+    .cover-logo {
+      font-size: 42pt;
+      font-weight: 300;
+      color: #C9A227;
+      letter-spacing: 12px;
+      text-transform: uppercase;
+      margin-bottom: 5mm;
+    }
+
+    .cover-subtitle {
+      font-size: 12pt;
+      color: rgba(255,255,255,0.5);
+      letter-spacing: 6px;
+      text-transform: uppercase;
+      margin-bottom: 20mm;
+    }
+
+    .cover-year {
+      font-size: 48pt;
+      font-weight: 100;
+      color: rgba(201,162,39,0.3);
+      letter-spacing: 15px;
+    }
+
+    .cover-line {
+      width: 80mm;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, #C9A227, transparent);
+      margin: 8mm auto;
+    }
+
+    .cover-count {
+      font-size: 10pt;
+      color: rgba(255,255,255,0.4);
+      letter-spacing: 3px;
+      margin-top: 15mm;
+    }
+
+    .cover-contact {
+      position: absolute;
+      bottom: 20mm;
+      left: 0;
+      right: 0;
+      text-align: center;
+      font-size: 9pt;
+      color: rgba(255,255,255,0.3);
+      letter-spacing: 2px;
+    }
+
+    /* ═══ PRINT ═══ */
+    @media print {
+      body { background: white; }
+      .page, .cover { margin: 0; box-shadow: none; }
+      .no-print { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <!-- ═══ COVER PAGE ═══ -->
+  <div class="cover">
+    <div class="cover-content">
+      <div class="cover-logo">AromaStudio</div>
+      <div class="cover-subtitle">Catálogo de Perfumes</div>
+      <div class="cover-line"></div>
+      <div class="cover-year">2026</div>
+      <div class="cover-count">89 FRAGANCIAS</div>
+    </div>
+    <div class="cover-contact">WhatsApp: 903 250 695</div>
+  </div>
+
+  <!-- ═══ PRODUCT PAGES ═══ -->
+  
+    <div class="page">
+      <div class="page-header">
+        <div class="brand-name">Lattafa</div>
+        <div class="page-number">1 / 89</div>
+      </div>
+
+      <div class="product-content">
+        <div class="image-container">
+          <img src="Imagenes perfumes/lattafa khamrah.jpg" alt="Khamrah" onerror="this.parentElement.innerHTML='<div class=\'no-image\'>Imagen no disponible</div>'" />
+        </div>
+
+        <div class="product-info">
+          <h1 class="product-name">Khamrah</h1>
+          <div class="product-brand">Lattafa</div>
+
+          <div class="meta-row">
+            <span class="badge badge-category">Unisex</span>
+            <span class="badge badge-size">100ml</span>
+          </div>
+
+          <p class="description">Perfume oriental-especiado unisex con notas de canela, bergamota, praliné, vainilla y oud.</p>
+
+          <div class="prices-box">
+            <div class="price-row">
+              <span class="price-label">Precio Retail</span>
+              <span class="price-value">S/ 145.00</span>
+            </div>
+            <div class="price-row price-original">
+              <span class="price-label">Precio Original</span>
+              <span class="price-value">S/ 125.00</span>
+            </div>
+            <div class="price-row price-wholesale">
+              <span class="price-label">Precio Mayoreo</span>
+              <span class="price-value">S/ 100.00</span>
+            </div>
+          </div>
+
+          
+          <div class="notes-section">
+            <h3>Notas Olfativas</h3>
+            <div class="notes-grid">
+              <div class="note-group">
+                <div class="note-label">SALIDA</div>
+                <div class="note-items">Canela · Nuez moscada · Bergamota</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">CORAZON</div>
+                <div class="note-items">Dátiles · Praliné · Tuberosa</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">BASE</div>
+                <div class="note-items">Vainilla · Tonka · Oud · Ámbar</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="page-footer">
+        <span>AromaStudio</span>
+        <span>WhatsApp: 903 250 695</span>
+      </div>
+    </div>
+    <div class="page">
+      <div class="page-header">
+        <div class="brand-name">Lattafa</div>
+        <div class="page-number">2 / 89</div>
+      </div>
+
+      <div class="product-content">
+        <div class="image-container">
+          <img src="https://fimgs.net/mdimg/perfume/375x500.88175.jpg" alt="Khamrah Qahwa" onerror="this.parentElement.innerHTML='<div class=\'no-image\'>Imagen no disponible</div>'" />
+        </div>
+
+        <div class="product-info">
+          <h1 class="product-name">Khamrah Qahwa</h1>
+          <div class="product-brand">Lattafa</div>
+
+          <div class="meta-row">
+            <span class="badge badge-category">Unisex</span>
+            <span class="badge badge-size">100ml</span>
+          </div>
+
+          <p class="description">Versión café del Khamrah. Fragancia oriental-vainilla con café, canela y notas dulces.</p>
+
+          <div class="prices-box">
+            <div class="price-row">
+              <span class="price-label">Precio Retail</span>
+              <span class="price-value">S/ 145.00</span>
+            </div>
+            <div class="price-row price-original">
+              <span class="price-label">Precio Original</span>
+              <span class="price-value">S/ 125.00</span>
+            </div>
+            <div class="price-row price-wholesale">
+              <span class="price-label">Precio Mayoreo</span>
+              <span class="price-value">S/ 100.00</span>
+            </div>
+          </div>
+
+          
+          <div class="notes-section">
+            <h3>Notas Olfativas</h3>
+            <div class="notes-grid">
+              <div class="note-group">
+                <div class="note-label">SALIDA</div>
+                <div class="note-items">Canela · Cardamomo · Jengibre</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">CORAZON</div>
+                <div class="note-items">Praliné · Frutas confitadas · Flores blancas</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">BASE</div>
+                <div class="note-items">Vainilla · Café · Tonka · Benzoin</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="page-footer">
+        <span>AromaStudio</span>
+        <span>WhatsApp: 903 250 695</span>
+      </div>
+    </div>
+    <div class="page">
+      <div class="page-header">
+        <div class="brand-name">Lattafa</div>
+        <div class="page-number">3 / 89</div>
+      </div>
+
+      <div class="product-content">
+        <div class="image-container">
+          <img src="Imagenes perfumes/khamrah dukhan.webp" alt="Khamrah Dukhan" onerror="this.parentElement.innerHTML='<div class=\'no-image\'>Imagen no disponible</div>'" />
+        </div>
+
+        <div class="product-info">
+          <h1 class="product-name">Khamrah Dukhan</h1>
+          <div class="product-brand">Lattafa</div>
+
+          <div class="meta-row">
+            <span class="badge badge-category">Unisex</span>
+            <span class="badge badge-size">100ml</span>
+          </div>
+
+          <p class="description">Variante ahumada del Khamrah con notas de tabaco, especias y ámbar oscuro.</p>
+
+          <div class="prices-box">
+            <div class="price-row">
+              <span class="price-label">Precio Retail</span>
+              <span class="price-value">S/ 169.00</span>
+            </div>
+            <div class="price-row price-original">
+              <span class="price-label">Precio Original</span>
+              <span class="price-value">S/ 149.00</span>
+            </div>
+            <div class="price-row price-wholesale">
+              <span class="price-label">Precio Mayoreo</span>
+              <span class="price-value">S/ 100.00</span>
+            </div>
+          </div>
+
+          
+          <div class="notes-section">
+            <h3>Notas Olfativas</h3>
+            <div class="notes-grid">
+              <div class="note-group">
+                <div class="note-label">SALIDA</div>
+                <div class="note-items">Canela · Cardamomo</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">CORAZON</div>
+                <div class="note-items">Tabaco · Praliné</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">BASE</div>
+                <div class="note-items">Vainilla · Oud · Ámbar</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="page-footer">
+        <span>AromaStudio</span>
+        <span>WhatsApp: 903 250 695</span>
+      </div>
+    </div>
+    <div class="page">
+      <div class="page-header">
+        <div class="brand-name">Lattafa</div>
+        <div class="page-number">4 / 89</div>
+      </div>
+
+      <div class="product-content">
+        <div class="image-container">
+          <img src="Imagenes perfumes/the kingdom Men.webp" alt="The Kingdom Men" onerror="this.parentElement.innerHTML='<div class=\'no-image\'>Imagen no disponible</div>'" />
+        </div>
+
+        <div class="product-info">
+          <h1 class="product-name">The Kingdom Men</h1>
+          <div class="product-brand">Lattafa</div>
+
+          <div class="meta-row">
+            <span class="badge badge-category">Masculino</span>
+            <span class="badge badge-size">100ml</span>
+          </div>
+
+          <p class="description">Fragancia masculina elegante con notas amaderadas y especiadas.</p>
+
+          <div class="prices-box">
+            <div class="price-row">
+              <span class="price-label">Precio Retail</span>
+              <span class="price-value">S/ 142.00</span>
+            </div>
+            <div class="price-row price-original">
+              <span class="price-label">Precio Original</span>
+              <span class="price-value">S/ 122.00</span>
+            </div>
+            <div class="price-row price-wholesale">
+              <span class="price-label">Precio Mayoreo</span>
+              <span class="price-value">S/ 100.00</span>
+            </div>
+          </div>
+
+          
+          <div class="notes-section">
+            <h3>Notas Olfativas</h3>
+            <div class="notes-grid">
+              <div class="note-group">
+                <div class="note-label">SALIDA</div>
+                <div class="note-items">Bergamota · Pimienta</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">CORAZON</div>
+                <div class="note-items">Iris · Lavanda</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">BASE</div>
+                <div class="note-items">Ámbar · Cedro · Almizcle</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="page-footer">
+        <span>AromaStudio</span>
+        <span>WhatsApp: 903 250 695</span>
+      </div>
+    </div>
+    <div class="page">
+      <div class="page-header">
+        <div class="brand-name">Lattafa</div>
+        <div class="page-number">5 / 89</div>
+      </div>
+
+      <div class="product-content">
+        <div class="image-container">
+          <img src="Imagenes perfumes/lattafa sublime.webp" alt="Sublime" onerror="this.parentElement.innerHTML='<div class=\'no-image\'>Imagen no disponible</div>'" />
+        </div>
+
+        <div class="product-info">
+          <h1 class="product-name">Sublime</h1>
+          <div class="product-brand">Lattafa</div>
+
+          <div class="meta-row">
+            <span class="badge badge-category">Femenino</span>
+            <span class="badge badge-size">100ml</span>
+          </div>
+
+          <p class="description">Fragancia floral frutal femenina con notas dulces y elegantes.</p>
+
+          <div class="prices-box">
+            <div class="price-row">
+              <span class="price-label">Precio Retail</span>
+              <span class="price-value">S/ 133.00</span>
+            </div>
+            <div class="price-row price-original">
+              <span class="price-label">Precio Original</span>
+              <span class="price-value">S/ 113.00</span>
+            </div>
+            <div class="price-row price-wholesale">
+              <span class="price-label">Precio Mayoreo</span>
+              <span class="price-value">S/ 92.00</span>
+            </div>
+          </div>
+
+          
+          <div class="notes-section">
+            <h3>Notas Olfativas</h3>
+            <div class="notes-grid">
+              <div class="note-group">
+                <div class="note-label">SALIDA</div>
+                <div class="note-items">Pera · Bergamota</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">CORAZON</div>
+                <div class="note-items">Jazmín · Rosa</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">BASE</div>
+                <div class="note-items">Vainilla · Sándalo · Almizcle</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="page-footer">
+        <span>AromaStudio</span>
+        <span>WhatsApp: 903 250 695</span>
+      </div>
+    </div>
+    <div class="page">
+      <div class="page-header">
+        <div class="brand-name">Lattafa</div>
+        <div class="page-number">6 / 89</div>
+      </div>
+
+      <div class="product-content">
+        <div class="image-container">
+          <img src="Imagenes perfumes/honos and glory.jpg" alt="Honor and Glory" onerror="this.parentElement.innerHTML='<div class=\'no-image\'>Imagen no disponible</div>'" />
+        </div>
+
+        <div class="product-info">
+          <h1 class="product-name">Honor and Glory</h1>
+          <div class="product-brand">Lattafa</div>
+
+          <div class="meta-row">
+            <span class="badge badge-category">Masculino</span>
+            <span class="badge badge-size">100ml</span>
+          </div>
+
+          <p class="description">Perfume masculino intenso con oud y especias.</p>
+
+          <div class="prices-box">
+            <div class="price-row">
+              <span class="price-label">Precio Retail</span>
+              <span class="price-value">S/ 133.00</span>
+            </div>
+            <div class="price-row price-original">
+              <span class="price-label">Precio Original</span>
+              <span class="price-value">S/ 113.00</span>
+            </div>
+            <div class="price-row price-wholesale">
+              <span class="price-label">Precio Mayoreo</span>
+              <span class="price-value">S/ 92.00</span>
+            </div>
+          </div>
+
+          
+          <div class="notes-section">
+            <h3>Notas Olfativas</h3>
+            <div class="notes-grid">
+              <div class="note-group">
+                <div class="note-label">SALIDA</div>
+                <div class="note-items">Azafrán · Nuez moscada</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">CORAZON</div>
+                <div class="note-items">Oud · Rosa</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">BASE</div>
+                <div class="note-items">Ámbar · Almizcle · Gaiac</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="page-footer">
+        <span>AromaStudio</span>
+        <span>WhatsApp: 903 250 695</span>
+      </div>
+    </div>
+    <div class="page">
+      <div class="page-header">
+        <div class="brand-name">Lattafa</div>
+        <div class="page-number">7 / 89</div>
+      </div>
+
+      <div class="product-content">
+        <div class="image-container">
+          <img src="Imagenes perfumes/lattafa oud for glory.jpg" alt="Oud for Glory" onerror="this.parentElement.innerHTML='<div class=\'no-image\'>Imagen no disponible</div>'" />
+        </div>
+
+        <div class="product-info">
+          <h1 class="product-name">Oud for Glory</h1>
+          <div class="product-brand">Lattafa</div>
+
+          <div class="meta-row">
+            <span class="badge badge-category">Unisex</span>
+            <span class="badge badge-size">100ml</span>
+          </div>
+
+          <p class="description">Fragancia intensa de oud con especias orientales.</p>
+
+          <div class="prices-box">
+            <div class="price-row">
+              <span class="price-label">Precio Retail</span>
+              <span class="price-value">S/ 133.00</span>
+            </div>
+            <div class="price-row price-original">
+              <span class="price-label">Precio Original</span>
+              <span class="price-value">S/ 113.00</span>
+            </div>
+            <div class="price-row price-wholesale">
+              <span class="price-label">Precio Mayoreo</span>
+              <span class="price-value">S/ 92.00</span>
+            </div>
+          </div>
+
+          
+          <div class="notes-section">
+            <h3>Notas Olfativas</h3>
+            <div class="notes-grid">
+              <div class="note-group">
+                <div class="note-label">SALIDA</div>
+                <div class="note-items">Azafrán · Lavanda</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">CORAZON</div>
+                <div class="note-items">Oud · Praline</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">BASE</div>
+                <div class="note-items">Ámbar · Vainilla</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="page-footer">
+        <span>AromaStudio</span>
+        <span>WhatsApp: 903 250 695</span>
+      </div>
+    </div>
+    <div class="page">
+      <div class="page-header">
+        <div class="brand-name">Lattafa</div>
+        <div class="page-number">8 / 89</div>
+      </div>
+
+      <div class="product-content">
+        <div class="image-container">
+          <img src="Imagenes perfumes/lattafa asad.webp" alt="Asad" onerror="this.parentElement.innerHTML='<div class=\'no-image\'>Imagen no disponible</div>'" />
+        </div>
+
+        <div class="product-info">
+          <h1 class="product-name">Asad</h1>
+          <div class="product-brand">Lattafa</div>
+
+          <div class="meta-row">
+            <span class="badge badge-category">Masculino</span>
+            <span class="badge badge-size">100ml</span>
+          </div>
+
+          <p class="description">Perfume masculino poderoso con notas de tabaco, vainilla y especias.</p>
+
+          <div class="prices-box">
+            <div class="price-row">
+              <span class="price-label">Precio Retail</span>
+              <span class="price-value">S/ 132.00</span>
+            </div>
+            <div class="price-row price-original">
+              <span class="price-label">Precio Original</span>
+              <span class="price-value">S/ 112.00</span>
+            </div>
+            <div class="price-row price-wholesale">
+              <span class="price-label">Precio Mayoreo</span>
+              <span class="price-value">S/ 92.00</span>
+            </div>
+          </div>
+
+          
+          <div class="notes-section">
+            <h3>Notas Olfativas</h3>
+            <div class="notes-grid">
+              <div class="note-group">
+                <div class="note-label">SALIDA</div>
+                <div class="note-items">Pimienta negra · Tabaco</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">CORAZON</div>
+                <div class="note-items">Café · Iris</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">BASE</div>
+                <div class="note-items">Vainilla · Ámbar · Benjuí</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="page-footer">
+        <span>AromaStudio</span>
+        <span>WhatsApp: 903 250 695</span>
+      </div>
+    </div>
+    <div class="page">
+      <div class="page-header">
+        <div class="brand-name">Lattafa</div>
+        <div class="page-number">9 / 89</div>
+      </div>
+
+      <div class="product-content">
+        <div class="image-container">
+          <img src="Imagenes perfumes/lattafa asad zanzibar.webp" alt="Asad Zanzibar" onerror="this.parentElement.innerHTML='<div class=\'no-image\'>Imagen no disponible</div>'" />
+        </div>
+
+        <div class="product-info">
+          <h1 class="product-name">Asad Zanzibar</h1>
+          <div class="product-brand">Lattafa</div>
+
+          <div class="meta-row">
+            <span class="badge badge-category">Masculino</span>
+            <span class="badge badge-size">100ml</span>
+          </div>
+
+          <p class="description">Versión tropical del Asad con notas de coco, vainilla y especias exóticas.</p>
+
+          <div class="prices-box">
+            <div class="price-row">
+              <span class="price-label">Precio Retail</span>
+              <span class="price-value">S/ 132.00</span>
+            </div>
+            <div class="price-row price-original">
+              <span class="price-label">Precio Original</span>
+              <span class="price-value">S/ 112.00</span>
+            </div>
+            
+          </div>
+
+          
+          <div class="notes-section">
+            <h3>Notas Olfativas</h3>
+            <div class="notes-grid">
+              <div class="note-group">
+                <div class="note-label">SALIDA</div>
+                <div class="note-items">Coco · Bergamota</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">CORAZON</div>
+                <div class="note-items">Especias · Café</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">BASE</div>
+                <div class="note-items">Vainilla · Ámbar · Almizcle</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="page-footer">
+        <span>AromaStudio</span>
+        <span>WhatsApp: 903 250 695</span>
+      </div>
+    </div>
+    <div class="page">
+      <div class="page-header">
+        <div class="brand-name">Lattafa</div>
+        <div class="page-number">10 / 89</div>
+      </div>
+
+      <div class="product-content">
+        <div class="image-container">
+          <img src="Imagenes perfumes/lattafa asad bournbon.webp" alt="Asad Bourbon" onerror="this.parentElement.innerHTML='<div class=\'no-image\'>Imagen no disponible</div>'" />
+        </div>
+
+        <div class="product-info">
+          <h1 class="product-name">Asad Bourbon</h1>
+          <div class="product-brand">Lattafa</div>
+
+          <div class="meta-row">
+            <span class="badge badge-category">Masculino</span>
+            <span class="badge badge-size">100ml</span>
+          </div>
+
+          <p class="description">Variante con notas de bourbon y vainilla. Cálido y sofisticado.</p>
+
+          <div class="prices-box">
+            <div class="price-row">
+              <span class="price-label">Precio Retail</span>
+              <span class="price-value">S/ 145.00</span>
+            </div>
+            <div class="price-row price-original">
+              <span class="price-label">Precio Original</span>
+              <span class="price-value">S/ 125.00</span>
+            </div>
+            <div class="price-row price-wholesale">
+              <span class="price-label">Precio Mayoreo</span>
+              <span class="price-value">S/ 100.00</span>
+            </div>
+          </div>
+
+          
+          <div class="notes-section">
+            <h3>Notas Olfativas</h3>
+            <div class="notes-grid">
+              <div class="note-group">
+                <div class="note-label">SALIDA</div>
+                <div class="note-items">Bourbon · Canela</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">CORAZON</div>
+                <div class="note-items">Tabaco · Café</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">BASE</div>
+                <div class="note-items">Vainilla · Ámbar · Madera</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="page-footer">
+        <span>AromaStudio</span>
+        <span>WhatsApp: 903 250 695</span>
+      </div>
+    </div>
+    <div class="page">
+      <div class="page-header">
+        <div class="brand-name">Lattafa</div>
+        <div class="page-number">11 / 89</div>
+      </div>
+
+      <div class="product-content">
+        <div class="image-container">
+          <img src="Imagenes perfumes/yara.webp" alt="Yara" onerror="this.parentElement.innerHTML='<div class=\'no-image\'>Imagen no disponible</div>'" />
+        </div>
+
+        <div class="product-info">
+          <h1 class="product-name">Yara</h1>
+          <div class="product-brand">Lattafa</div>
+
+          <div class="meta-row">
+            <span class="badge badge-category">Femenino</span>
+            <span class="badge badge-size">100ml</span>
+          </div>
+
+          <p class="description">Perfume femenino dulce y frutal con vainilla y frutas tropicales. Viral en TikTok.</p>
+
+          <div class="prices-box">
+            <div class="price-row">
+              <span class="price-label">Precio Retail</span>
+              <span class="price-value">S/ 142.00</span>
+            </div>
+            <div class="price-row price-original">
+              <span class="price-label">Precio Original</span>
+              <span class="price-value">S/ 122.00</span>
+            </div>
+            <div class="price-row price-wholesale">
+              <span class="price-label">Precio Mayoreo</span>
+              <span class="price-value">S/ 92.00</span>
+            </div>
+          </div>
+
+          
+          <div class="notes-section">
+            <h3>Notas Olfativas</h3>
+            <div class="notes-grid">
+              <div class="note-group">
+                <div class="note-label">SALIDA</div>
+                <div class="note-items">Orquídea · Heliotropo · Tangerina</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">CORAZON</div>
+                <div class="note-items">Frutas tropicales · Gourmand</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">BASE</div>
+                <div class="note-items">Vainilla · Almizcle · Sándalo</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="page-footer">
+        <span>AromaStudio</span>
+        <span>WhatsApp: 903 250 695</span>
+      </div>
+    </div>
+    <div class="page">
+      <div class="page-header">
+        <div class="brand-name">Lattafa</div>
+        <div class="page-number">12 / 89</div>
+      </div>
+
+      <div class="product-content">
+        <div class="image-container">
+          <img src="Imagenes perfumes/yara candy.webp" alt="Yara Candy" onerror="this.parentElement.innerHTML='<div class=\'no-image\'>Imagen no disponible</div>'" />
+        </div>
+
+        <div class="product-info">
+          <h1 class="product-name">Yara Candy</h1>
+          <div class="product-brand">Lattafa</div>
+
+          <div class="meta-row">
+            <span class="badge badge-category">Femenino</span>
+            <span class="badge badge-size">100ml</span>
+          </div>
+
+          <p class="description">Versión más dulce y juguetona del Yara con notas de caramelo y frutas.</p>
+
+          <div class="prices-box">
+            <div class="price-row">
+              <span class="price-label">Precio Retail</span>
+              <span class="price-value">S/ 133.00</span>
+            </div>
+            <div class="price-row price-original">
+              <span class="price-label">Precio Original</span>
+              <span class="price-value">S/ 113.00</span>
+            </div>
+            <div class="price-row price-wholesale">
+              <span class="price-label">Precio Mayoreo</span>
+              <span class="price-value">S/ 92.00</span>
+            </div>
+          </div>
+
+          
+          <div class="notes-section">
+            <h3>Notas Olfativas</h3>
+            <div class="notes-grid">
+              <div class="note-group">
+                <div class="note-label">SALIDA</div>
+                <div class="note-items">Mandarina verde · Grosella negra</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">CORAZON</div>
+                <div class="note-items">Gardenia · Fresa fizz</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">BASE</div>
+                <div class="note-items">Sándalo · Vainilla · Almizcle</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="page-footer">
+        <span>AromaStudio</span>
+        <span>WhatsApp: 903 250 695</span>
+      </div>
+    </div>
+    <div class="page">
+      <div class="page-header">
+        <div class="brand-name">Lattafa</div>
+        <div class="page-number">13 / 89</div>
+      </div>
+
+      <div class="product-content">
+        <div class="image-container">
+          <img src="Imagenes perfumes/yara tous.jpg" alt="Yara Tous" onerror="this.parentElement.innerHTML='<div class=\'no-image\'>Imagen no disponible</div>'" />
+        </div>
+
+        <div class="product-info">
+          <h1 class="product-name">Yara Tous</h1>
+          <div class="product-brand">Lattafa</div>
+
+          <div class="meta-row">
+            <span class="badge badge-category">Femenino</span>
+            <span class="badge badge-size">100ml</span>
+          </div>
+
+          <p class="description">Fragancia tropical con mango, coco y vainilla. Perfecta para el verano.</p>
+
+          <div class="prices-box">
+            <div class="price-row">
+              <span class="price-label">Precio Retail</span>
+              <span class="price-value">S/ 133.00</span>
+            </div>
+            <div class="price-row price-original">
+              <span class="price-label">Precio Original</span>
+              <span class="price-value">S/ 113.00</span>
+            </div>
+            <div class="price-row price-wholesale">
+              <span class="price-label">Precio Mayoreo</span>
+              <span class="price-value">S/ 92.00</span>
+            </div>
+          </div>
+
+          
+          <div class="notes-section">
+            <h3>Notas Olfativas</h3>
+            <div class="notes-grid">
+              <div class="note-group">
+                <div class="note-label">SALIDA</div>
+                <div class="note-items">Mango · Coco · Maracuyá</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">CORAZON</div>
+                <div class="note-items">Jazmín · Flor de naranjo · Heliotropo</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">BASE</div>
+                <div class="note-items">Vainilla · Almizcle · Cashmeran</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="page-footer">
+        <span>AromaStudio</span>
+        <span>WhatsApp: 903 250 695</span>
+      </div>
+    </div>
+    <div class="page">
+      <div class="page-header">
+        <div class="brand-name">Lattafa</div>
+        <div class="page-number">14 / 89</div>
+      </div>
+
+      <div class="product-content">
+        <div class="image-container">
+          <img src="Imagenes perfumes/yara moi.webp" alt="Yara Moi" onerror="this.parentElement.innerHTML='<div class=\'no-image\'>Imagen no disponible</div>'" />
+        </div>
+
+        <div class="product-info">
+          <h1 class="product-name">Yara Moi</h1>
+          <div class="product-brand">Lattafa</div>
+
+          <div class="meta-row">
+            <span class="badge badge-category">Femenino</span>
+            <span class="badge badge-size">100ml</span>
+          </div>
+
+          <p class="description">Versión más sofisticada del Yara con pera, tuberosa y vainilla.</p>
+
+          <div class="prices-box">
+            <div class="price-row">
+              <span class="price-label">Precio Retail</span>
+              <span class="price-value">S/ 132.00</span>
+            </div>
+            <div class="price-row price-original">
+              <span class="price-label">Precio Original</span>
+              <span class="price-value">S/ 112.00</span>
+            </div>
+            <div class="price-row price-wholesale">
+              <span class="price-label">Precio Mayoreo</span>
+              <span class="price-value">S/ 92.00</span>
+            </div>
+          </div>
+
+          
+          <div class="notes-section">
+            <h3>Notas Olfativas</h3>
+            <div class="notes-grid">
+              <div class="note-group">
+                <div class="note-label">SALIDA</div>
+                <div class="note-items">Pera · Pimienta rosa · Grosella</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">CORAZON</div>
+                <div class="note-items">Tuberosa · Jazmín · Almendra</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">BASE</div>
+                <div class="note-items">Vainilla · Cashmeran · Pachulí</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="page-footer">
+        <span>AromaStudio</span>
+        <span>WhatsApp: 903 250 695</span>
+      </div>
+    </div>
+    <div class="page">
+      <div class="page-header">
+        <div class="brand-name">Lattafa</div>
+        <div class="page-number">15 / 89</div>
+      </div>
+
+      <div class="product-content">
+        <div class="image-container">
+          <img src="Imagenes perfumes/eclaire.jpg" alt="Eclaire" onerror="this.parentElement.innerHTML='<div class=\'no-image\'>Imagen no disponible</div>'" />
+        </div>
+
+        <div class="product-info">
+          <h1 class="product-name">Eclaire</h1>
+          <div class="product-brand">Lattafa</div>
+
+          <div class="meta-row">
+            <span class="badge badge-category">Unisex</span>
+            <span class="badge badge-size">100ml</span>
+          </div>
+
+          <p class="description">Fragancia gourmand con pistacho, vainilla y notas dulces cremosas.</p>
+
+          <div class="prices-box">
+            <div class="price-row">
+              <span class="price-label">Precio Retail</span>
+              <span class="price-value">S/ 145.00</span>
+            </div>
+            <div class="price-row price-original">
+              <span class="price-label">Precio Original</span>
+              <span class="price-value">S/ 125.00</span>
+            </div>
+            <div class="price-row price-wholesale">
+              <span class="price-label">Precio Mayoreo</span>
+              <span class="price-value">S/ 100.00</span>
+            </div>
+          </div>
+
+          
+          <div class="notes-section">
+            <h3>Notas Olfativas</h3>
+            <div class="notes-grid">
+              <div class="note-group">
+                <div class="note-label">SALIDA</div>
+                <div class="note-items">Pistacho · Café</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">CORAZON</div>
+                <div class="note-items">Praliné · Flores blancas</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">BASE</div>
+                <div class="note-items">Vainilla · Sándalo · Almizcle</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="page-footer">
+        <span>AromaStudio</span>
+        <span>WhatsApp: 903 250 695</span>
+      </div>
+    </div>
+    <div class="page">
+      <div class="page-header">
+        <div class="brand-name">Lattafa</div>
+        <div class="page-number">16 / 89</div>
+      </div>
+
+      <div class="product-content">
+        <div class="image-container">
+          <img src="Imagenes perfumes/his confeson.webp" alt="His Confession" onerror="this.parentElement.innerHTML='<div class=\'no-image\'>Imagen no disponible</div>'" />
+        </div>
+
+        <div class="product-info">
+          <h1 class="product-name">His Confession</h1>
+          <div class="product-brand">Lattafa</div>
+
+          <div class="meta-row">
+            <span class="badge badge-category">Masculino</span>
+            <span class="badge badge-size">100ml</span>
+          </div>
+
+          <p class="description">Perfume masculino intenso y seductor con notas especiadas y amaderadas.</p>
+
+          <div class="prices-box">
+            <div class="price-row">
+              <span class="price-label">Precio Retail</span>
+              <span class="price-value">S/ 165.00</span>
+            </div>
+            <div class="price-row price-original">
+              <span class="price-label">Precio Original</span>
+              <span class="price-value">S/ 145.00</span>
+            </div>
+            
+          </div>
+
+          
+          <div class="notes-section">
+            <h3>Notas Olfativas</h3>
+            <div class="notes-grid">
+              <div class="note-group">
+                <div class="note-label">SALIDA</div>
+                <div class="note-items">Bergamota · Cardamomo</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">CORAZON</div>
+                <div class="note-items">Ámbar gris · Iris</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">BASE</div>
+                <div class="note-items">Vainilla · Cedro · Benjuí</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="page-footer">
+        <span>AromaStudio</span>
+        <span>WhatsApp: 903 250 695</span>
+      </div>
+    </div>
+    <div class="page">
+      <div class="page-header">
+        <div class="brand-name">Lattafa</div>
+        <div class="page-number">17 / 89</div>
+      </div>
+
+      <div class="product-content">
+        <div class="image-container">
+          <img src="Imagenes perfumes/fakhar silver.jpg" alt="Fakhar Silver" onerror="this.parentElement.innerHTML='<div class=\'no-image\'>Imagen no disponible</div>'" />
+        </div>
+
+        <div class="product-info">
+          <h1 class="product-name">Fakhar Silver</h1>
+          <div class="product-brand">Lattafa</div>
+
+          <div class="meta-row">
+            <span class="badge badge-category">Masculino</span>
+            <span class="badge badge-size">100ml</span>
+          </div>
+
+          <p class="description">Fragancia fresca y metálica para hombre con notas acuáticas y amaderadas.</p>
+
+          <div class="prices-box">
+            <div class="price-row">
+              <span class="price-label">Precio Retail</span>
+              <span class="price-value">S/ 129.00</span>
+            </div>
+            <div class="price-row price-original">
+              <span class="price-label">Precio Original</span>
+              <span class="price-value">S/ 109.00</span>
+            </div>
+            
+          </div>
+
+          
+          <div class="notes-section">
+            <h3>Notas Olfativas</h3>
+            <div class="notes-grid">
+              <div class="note-group">
+                <div class="note-label">SALIDA</div>
+                <div class="note-items">Limón · Manzana</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">CORAZON</div>
+                <div class="note-items">Jazmín · Cedro</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">BASE</div>
+                <div class="note-items">Almizcle · Ámbar</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="page-footer">
+        <span>AromaStudio</span>
+        <span>WhatsApp: 903 250 695</span>
+      </div>
+    </div>
+    <div class="page">
+      <div class="page-header">
+        <div class="brand-name">Lattafa</div>
+        <div class="page-number">18 / 89</div>
+      </div>
+
+      <div class="product-content">
+        <div class="image-container">
+          <img src="Imagenes perfumes/fakhar extrait gold.webp" alt="Fakhar Extrait Gold" onerror="this.parentElement.innerHTML='<div class=\'no-image\'>Imagen no disponible</div>'" />
+        </div>
+
+        <div class="product-info">
+          <h1 class="product-name">Fakhar Extrait Gold</h1>
+          <div class="product-brand">Lattafa</div>
+
+          <div class="meta-row">
+            <span class="badge badge-category">Masculino</span>
+            <span class="badge badge-size">100ml</span>
+          </div>
+
+          <p class="description">Versión más intensa y lujosa del Fakhar con notas doradas y cálidas.</p>
+
+          <div class="prices-box">
+            <div class="price-row">
+              <span class="price-label">Precio Retail</span>
+              <span class="price-value">S/ 129.00</span>
+            </div>
+            <div class="price-row price-original">
+              <span class="price-label">Precio Original</span>
+              <span class="price-value">S/ 109.00</span>
+            </div>
+            <div class="price-row price-wholesale">
+              <span class="price-label">Precio Mayoreo</span>
+              <span class="price-value">S/ 92.00</span>
+            </div>
+          </div>
+
+          
+          <div class="notes-section">
+            <h3>Notas Olfativas</h3>
+            <div class="notes-grid">
+              <div class="note-group">
+                <div class="note-label">SALIDA</div>
+                <div class="note-items">Bergamota · Naranja</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">CORAZON</div>
+                <div class="note-items">Jazmín · Especias</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">BASE</div>
+                <div class="note-items">Ámbar · Vainilla · Almizcle</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="page-footer">
+        <span>AromaStudio</span>
+        <span>WhatsApp: 903 250 695</span>
+      </div>
+    </div>
+    <div class="page">
+      <div class="page-header">
+        <div class="brand-name">Lattafa</div>
+        <div class="page-number">19 / 89</div>
+      </div>
+
+      <div class="product-content">
+        <div class="image-container">
+          <img src="Imagenes perfumes/fakhar platin.jpg" alt="Fakhar Platin" onerror="this.parentElement.innerHTML='<div class=\'no-image\'>Imagen no disponible</div>'" />
+        </div>
+
+        <div class="product-info">
+          <h1 class="product-name">Fakhar Platin</h1>
+          <div class="product-brand">Lattafa</div>
+
+          <div class="meta-row">
+            <span class="badge badge-category">Masculino</span>
+            <span class="badge badge-size">100ml</span>
+          </div>
+
+          <p class="description">Edición platino del Fakhar con mayor sofisticación y durabilidad.</p>
+
+          <div class="prices-box">
+            <div class="price-row">
+              <span class="price-label">Precio Retail</span>
+              <span class="price-value">S/ 147.00</span>
+            </div>
+            <div class="price-row price-original">
+              <span class="price-label">Precio Original</span>
+              <span class="price-value">S/ 127.00</span>
+            </div>
+            <div class="price-row price-wholesale">
+              <span class="price-label">Precio Mayoreo</span>
+              <span class="price-value">S/ 118.00</span>
+            </div>
+          </div>
+
+          
+          <div class="notes-section">
+            <h3>Notas Olfativas</h3>
+            <div class="notes-grid">
+              <div class="note-group">
+                <div class="note-label">SALIDA</div>
+                <div class="note-items">Pomelo · Menta</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">CORAZON</div>
+                <div class="note-items">Geranio · Rosa</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">BASE</div>
+                <div class="note-items">Cedro · Ámbar · Almizcle</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="page-footer">
+        <span>AromaStudio</span>
+        <span>WhatsApp: 903 250 695</span>
+      </div>
+    </div>
+    <div class="page">
+      <div class="page-header">
+        <div class="brand-name">Lattafa</div>
+        <div class="page-number">20 / 89</div>
+      </div>
+
+      <div class="product-content">
+        <div class="image-container">
+          <img src="Imagenes perfumes/qaed al fursan.webp" alt="Qaed Al Fursan" onerror="this.parentElement.innerHTML='<div class=\'no-image\'>Imagen no disponible</div>'" />
+        </div>
+
+        <div class="product-info">
+          <h1 class="product-name">Qaed Al Fursan</h1>
+          <div class="product-brand">Lattafa</div>
+
+          <div class="meta-row">
+            <span class="badge badge-category">Masculino</span>
+            <span class="badge badge-size">100ml</span>
+          </div>
+
+          <p class="description">Perfume frutal amaderado con piña y especias. Similar a Aventus de Creed.</p>
+
+          <div class="prices-box">
+            <div class="price-row">
+              <span class="price-label">Precio Retail</span>
+              <span class="price-value">S/ 111.00</span>
+            </div>
+            <div class="price-row price-original">
+              <span class="price-label">Precio Original</span>
+              <span class="price-value">S/ 91.00</span>
+            </div>
+            
+          </div>
+
+          
+          <div class="notes-section">
+            <h3>Notas Olfativas</h3>
+            <div class="notes-grid">
+              <div class="note-group">
+                <div class="note-label">SALIDA</div>
+                <div class="note-items">Piña · Bergamota · Manzana</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">CORAZON</div>
+                <div class="note-items">Abedul · Jazmín</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">BASE</div>
+                <div class="note-items">Almizcle · Cedro · Vainilla</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="page-footer">
+        <span>AromaStudio</span>
+        <span>WhatsApp: 903 250 695</span>
+      </div>
+    </div>
+    <div class="page">
+      <div class="page-header">
+        <div class="brand-name">Lattafa</div>
+        <div class="page-number">21 / 89</div>
+      </div>
+
+      <div class="product-content">
+        <div class="image-container">
+          <img src="Imagenes perfumes/nuevo qaed al fursan untamed.webp" alt="Qaed Al Fursan Untamed" onerror="this.parentElement.innerHTML='<div class=\'no-image\'>Imagen no disponible</div>'" />
+        </div>
+
+        <div class="product-info">
+          <h1 class="product-name">Qaed Al Fursan Untamed</h1>
+          <div class="product-brand">Lattafa</div>
+
+          <div class="meta-row">
+            <span class="badge badge-category">Masculino</span>
+            <span class="badge badge-size">100ml</span>
+          </div>
+
+          <p class="description">Versión más salvaje e intensa del Qaed Al Fursan.</p>
+
+          <div class="prices-box">
+            <div class="price-row">
+              <span class="price-label">Precio Retail</span>
+              <span class="price-value">S/ 113.00</span>
+            </div>
+            <div class="price-row price-original">
+              <span class="price-label">Precio Original</span>
+              <span class="price-value">S/ 93.00</span>
+            </div>
+            
+          </div>
+
+          
+          <div class="notes-section">
+            <h3>Notas Olfativas</h3>
+            <div class="notes-grid">
+              <div class="note-group">
+                <div class="note-label">SALIDA</div>
+                <div class="note-items">Piña · Bergamota</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">CORAZON</div>
+                <div class="note-items">Abedul · Especias</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">BASE</div>
+                <div class="note-items">Ámbar · Almizcle · Vainilla</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="page-footer">
+        <span>AromaStudio</span>
+        <span>WhatsApp: 903 250 695</span>
+      </div>
+    </div>
+    <div class="page">
+      <div class="page-header">
+        <div class="brand-name">Lattafa</div>
+        <div class="page-number">22 / 89</div>
+      </div>
+
+      <div class="product-content">
+        <div class="image-container">
+          <img src="Imagenes perfumes/Liam Blue.jpg" alt="Liam Blue" onerror="this.parentElement.innerHTML='<div class=\'no-image\'>Imagen no disponible</div>'" />
+        </div>
+
+        <div class="product-info">
+          <h1 class="product-name">Liam Blue</h1>
+          <div class="product-brand">Lattafa</div>
+
+          <div class="meta-row">
+            <span class="badge badge-category">Masculino</span>
+            <span class="badge badge-size">100ml</span>
+          </div>
+
+          <p class="description">Fragancia fresca y azul para hombre con notas acuáticas y amaderadas.</p>
+
+          <div class="prices-box">
+            <div class="price-row">
+              <span class="price-label">Precio Retail</span>
+              <span class="price-value">S/ 129.00</span>
+            </div>
+            <div class="price-row price-original">
+              <span class="price-label">Precio Original</span>
+              <span class="price-value">S/ 109.00</span>
+            </div>
+            
+          </div>
+
+          
+          <div class="notes-section">
+            <h3>Notas Olfativas</h3>
+            <div class="notes-grid">
+              <div class="note-group">
+                <div class="note-label">SALIDA</div>
+                <div class="note-items">Bergamota · Limón</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">CORAZON</div>
+                <div class="note-items">Lavanda · Geranio</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">BASE</div>
+                <div class="note-items">Cedro · Almizcle</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="page-footer">
+        <span>AromaStudio</span>
+        <span>WhatsApp: 903 250 695</span>
+      </div>
+    </div>
+    <div class="page">
+      <div class="page-header">
+        <div class="brand-name">Lattafa</div>
+        <div class="page-number">23 / 89</div>
+      </div>
+
+      <div class="product-content">
+        <div class="image-container">
+          <img src="Imagenes perfumes/hayaati.webp" alt="Hayaati" onerror="this.parentElement.innerHTML='<div class=\'no-image\'>Imagen no disponible</div>'" />
+        </div>
+
+        <div class="product-info">
+          <h1 class="product-name">Hayaati</h1>
+          <div class="product-brand">Lattafa</div>
+
+          <div class="meta-row">
+            <span class="badge badge-category">Femenino</span>
+            <span class="badge badge-size">100ml</span>
+          </div>
+
+          <p class="description">Perfume oriental floral femenino con notas de rosa, vainilla y almizcle.</p>
+
+          <div class="prices-box">
+            <div class="price-row">
+              <span class="price-label">Precio Retail</span>
+              <span class="price-value">S/ 114.00</span>
+            </div>
+            <div class="price-row price-original">
+              <span class="price-label">Precio Original</span>
+              <span class="price-value">S/ 94.00</span>
+            </div>
+            
+          </div>
+
+          
+          <div class="notes-section">
+            <h3>Notas Olfativas</h3>
+            <div class="notes-grid">
+              <div class="note-group">
+                <div class="note-label">SALIDA</div>
+                <div class="note-items">Rosa · Bergamota</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">CORAZON</div>
+                <div class="note-items">Jazmín · Azahar</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">BASE</div>
+                <div class="note-items">Vainilla · Almizcle · Sándalo</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="page-footer">
+        <span>AromaStudio</span>
+        <span>WhatsApp: 903 250 695</span>
+      </div>
+    </div>
+    <div class="page">
+      <div class="page-header">
+        <div class="brand-name">Lattafa</div>
+        <div class="page-number">24 / 89</div>
+      </div>
+
+      <div class="product-content">
+        <div class="image-container">
+          <img src="Imagenes perfumes/now men.webp" alt="Now Men" onerror="this.parentElement.innerHTML='<div class=\'no-image\'>Imagen no disponible</div>'" />
+        </div>
+
+        <div class="product-info">
+          <h1 class="product-name">Now Men</h1>
+          <div class="product-brand">Lattafa</div>
+
+          <div class="meta-row">
+            <span class="badge badge-category">Masculino</span>
+            <span class="badge badge-size">100ml</span>
+          </div>
+
+          <p class="description">Fragancia masculina moderna y fresca para el día a día.</p>
+
+          <div class="prices-box">
+            <div class="price-row">
+              <span class="price-label">Precio Retail</span>
+              <span class="price-value">S/ 117.00</span>
+            </div>
+            <div class="price-row price-original">
+              <span class="price-label">Precio Original</span>
+              <span class="price-value">S/ 97.00</span>
+            </div>
+            
+          </div>
+
+          
+          <div class="notes-section">
+            <h3>Notas Olfativas</h3>
+            <div class="notes-grid">
+              <div class="note-group">
+                <div class="note-label">SALIDA</div>
+                <div class="note-items">Bergamota · Pimienta</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">CORAZON</div>
+                <div class="note-items">Lavanda · Geranio</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">BASE</div>
+                <div class="note-items">Cedro · Vetiver · Almizcle</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="page-footer">
+        <span>AromaStudio</span>
+        <span>WhatsApp: 903 250 695</span>
+      </div>
+    </div>
+    <div class="page">
+      <div class="page-header">
+        <div class="brand-name">Lattafa</div>
+        <div class="page-number">25 / 89</div>
+      </div>
+
+      <div class="product-content">
+        <div class="image-container">
+          <img src="Imagenes perfumes/now white.webp" alt="Now White" onerror="this.parentElement.innerHTML='<div class=\'no-image\'>Imagen no disponible</div>'" />
+        </div>
+
+        <div class="product-info">
+          <h1 class="product-name">Now White</h1>
+          <div class="product-brand">Lattafa</div>
+
+          <div class="meta-row">
+            <span class="badge badge-category">Unisex</span>
+            <span class="badge badge-size">100ml</span>
+          </div>
+
+          <p class="description">Versión más limpia y fresca del Now con notas blancas.</p>
+
+          <div class="prices-box">
+            <div class="price-row">
+              <span class="price-label">Precio Retail</span>
+              <span class="price-value">S/ 117.00</span>
+            </div>
+            <div class="price-row price-original">
+              <span class="price-label">Precio Original</span>
+              <span class="price-value">S/ 97.00</span>
+            </div>
+            
+          </div>
+
+          
+          <div class="notes-section">
+            <h3>Notas Olfativas</h3>
+            <div class="notes-grid">
+              <div class="note-group">
+                <div class="note-label">SALIDA</div>
+                <div class="note-items">Cítricos · Aldehydos</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">CORAZON</div>
+                <div class="note-items">Flores blancas · Iris</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">BASE</div>
+                <div class="note-items">Almizcle blanco · Cedro</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="page-footer">
+        <span>AromaStudio</span>
+        <span>WhatsApp: 903 250 695</span>
+      </div>
+    </div>
+    <div class="page">
+      <div class="page-header">
+        <div class="brand-name">Lattafa</div>
+        <div class="page-number">26 / 89</div>
+      </div>
+
+      <div class="product-content">
+        <div class="image-container">
+          <img src="Imagenes perfumes/now women.webp" alt="Now Women" onerror="this.parentElement.innerHTML='<div class=\'no-image\'>Imagen no disponible</div>'" />
+        </div>
+
+        <div class="product-info">
+          <h1 class="product-name">Now Women</h1>
+          <div class="product-brand">Lattafa</div>
+
+          <div class="meta-row">
+            <span class="badge badge-category">Femenino</span>
+            <span class="badge badge-size">100ml</span>
+          </div>
+
+          <p class="description">Fragancia femenina elegante y sofisticada para la mujer moderna.</p>
+
+          <div class="prices-box">
+            <div class="price-row">
+              <span class="price-label">Precio Retail</span>
+              <span class="price-value">S/ 119.00</span>
+            </div>
+            <div class="price-row price-original">
+              <span class="price-label">Precio Original</span>
+              <span class="price-value">S/ 99.00</span>
+            </div>
+            
+          </div>
+
+          
+          <div class="notes-section">
+            <h3>Notas Olfativas</h3>
+            <div class="notes-grid">
+              <div class="note-group">
+                <div class="note-label">SALIDA</div>
+                <div class="note-items">Pera · Bergamota</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">CORAZON</div>
+                <div class="note-items">Rosa · Peonía</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">BASE</div>
+                <div class="note-items">Almizcle · Ámbar · Cedro</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="page-footer">
+        <span>AromaStudio</span>
+        <span>WhatsApp: 903 250 695</span>
+      </div>
+    </div>
+    <div class="page">
+      <div class="page-header">
+        <div class="brand-name">Lattafa</div>
+        <div class="page-number">27 / 89</div>
+      </div>
+
+      <div class="product-content">
+        <div class="image-container">
+          <img src="Imagenes perfumes/vintage Radio.jpg" alt="Vintage Radio" onerror="this.parentElement.innerHTML='<div class=\'no-image\'>Imagen no disponible</div>'" />
+        </div>
+
+        <div class="product-info">
+          <h1 class="product-name">Vintage Radio</h1>
+          <div class="product-brand">Lattafa</div>
+
+          <div class="meta-row">
+            <span class="badge badge-category">Unisex</span>
+            <span class="badge badge-size">100ml</span>
+          </div>
+
+          <p class="description">Fragancia nostálgica con notas especiadas y amaderadas vintage.</p>
+
+          <div class="prices-box">
+            <div class="price-row">
+              <span class="price-label">Precio Retail</span>
+              <span class="price-value">S/ 144.00</span>
+            </div>
+            <div class="price-row price-original">
+              <span class="price-label">Precio Original</span>
+              <span class="price-value">S/ 124.00</span>
+            </div>
+            
+          </div>
+
+          
+          <div class="notes-section">
+            <h3>Notas Olfativas</h3>
+            <div class="notes-grid">
+              <div class="note-group">
+                <div class="note-label">SALIDA</div>
+                <div class="note-items">Bergamota · Cardamomo</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">CORAZON</div>
+                <div class="note-items">Iris · Violeta</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">BASE</div>
+                <div class="note-items">Ámbar · Cedro · Cuero</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="page-footer">
+        <span>AromaStudio</span>
+        <span>WhatsApp: 903 250 695</span>
+      </div>
+    </div>
+    <div class="page">
+      <div class="page-header">
+        <div class="brand-name">Lattafa</div>
+        <div class="page-number">28 / 89</div>
+      </div>
+
+      <div class="product-content">
+        <div class="image-container">
+          <img src="https://fimgs.net/mdimg/perfume/375x500.77990.jpg" alt="Maahir Black Edition" onerror="this.parentElement.innerHTML='<div class=\'no-image\'>Imagen no disponible</div>'" />
+        </div>
+
+        <div class="product-info">
+          <h1 class="product-name">Maahir Black Edition</h1>
+          <div class="product-brand">Lattafa</div>
+
+          <div class="meta-row">
+            <span class="badge badge-category">Masculino</span>
+            <span class="badge badge-size">100ml</span>
+          </div>
+
+          <p class="description">Edición negra intensa con notas oscuras y misteriosas.</p>
+
+          <div class="prices-box">
+            <div class="price-row">
+              <span class="price-label">Precio Retail</span>
+              <span class="price-value">S/ 134.00</span>
+            </div>
+            <div class="price-row price-original">
+              <span class="price-label">Precio Original</span>
+              <span class="price-value">S/ 114.00</span>
+            </div>
+            
+          </div>
+
+          
+          <div class="notes-section">
+            <h3>Notas Olfativas</h3>
+            <div class="notes-grid">
+              <div class="note-group">
+                <div class="note-label">SALIDA</div>
+                <div class="note-items">Pimienta negra · Cardamomo</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">CORAZON</div>
+                <div class="note-items">Oud · Rosa</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">BASE</div>
+                <div class="note-items">Ámbar · Vainilla · Almizcle</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="page-footer">
+        <span>AromaStudio</span>
+        <span>WhatsApp: 903 250 695</span>
+      </div>
+    </div>
+    <div class="page">
+      <div class="page-header">
+        <div class="brand-name">Lattafa</div>
+        <div class="page-number">29 / 89</div>
+      </div>
+
+      <div class="product-content">
+        <div class="image-container">
+          <img src="https://fimgs.net/mdimg/perfume/375x500.79992.jpg" alt="Maahir Legacy" onerror="this.parentElement.innerHTML='<div class=\'no-image\'>Imagen no disponible</div>'" />
+        </div>
+
+        <div class="product-info">
+          <h1 class="product-name">Maahir Legacy</h1>
+          <div class="product-brand">Lattafa</div>
+
+          <div class="meta-row">
+            <span class="badge badge-category">Masculino</span>
+            <span class="badge badge-size">100ml</span>
+          </div>
+
+          <p class="description">Versión legacy del Maahir con mayor elegancia y sofisticación.</p>
+
+          <div class="prices-box">
+            <div class="price-row">
+              <span class="price-label">Precio Retail</span>
+              <span class="price-value">S/ 134.00</span>
+            </div>
+            <div class="price-row price-original">
+              <span class="price-label">Precio Original</span>
+              <span class="price-value">S/ 114.00</span>
+            </div>
+            
+          </div>
+
+          
+          <div class="notes-section">
+            <h3>Notas Olfativas</h3>
+            <div class="notes-grid">
+              <div class="note-group">
+                <div class="note-label">SALIDA</div>
+                <div class="note-items">Bergamota · Especias</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">CORAZON</div>
+                <div class="note-items">Iris · Lavanda</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">BASE</div>
+                <div class="note-items">Ámbar · Madera · Almizcle</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="page-footer">
+        <span>AromaStudio</span>
+        <span>WhatsApp: 903 250 695</span>
+      </div>
+    </div>
+    <div class="page">
+      <div class="page-header">
+        <div class="brand-name">Lattafa</div>
+        <div class="page-number">30 / 89</div>
+      </div>
+
+      <div class="product-content">
+        <div class="image-container">
+          <img src="https://fimgs.net/mdimg/perfume/375x500.74120.jpg" alt="Emeer" onerror="this.parentElement.innerHTML='<div class=\'no-image\'>Imagen no disponible</div>'" />
+        </div>
+
+        <div class="product-info">
+          <h1 class="product-name">Emeer</h1>
+          <div class="product-brand">Lattafa</div>
+
+          <div class="meta-row">
+            <span class="badge badge-category">Masculino</span>
+            <span class="badge badge-size">100ml</span>
+          </div>
+
+          <p class="description">Perfume de lujo oriental con oud, especias y ámbar intenso.</p>
+
+          <div class="prices-box">
+            <div class="price-row">
+              <span class="price-label">Precio Retail</span>
+              <span class="price-value">S/ 173.00</span>
+            </div>
+            <div class="price-row price-original">
+              <span class="price-label">Precio Original</span>
+              <span class="price-value">S/ 153.00</span>
+            </div>
+            
+          </div>
+
+          
+          <div class="notes-section">
+            <h3>Notas Olfativas</h3>
+            <div class="notes-grid">
+              <div class="note-group">
+                <div class="note-label">SALIDA</div>
+                <div class="note-items">Azafrán · Canela</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">CORAZON</div>
+                <div class="note-items">Oud · Rosa · Incienso</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">BASE</div>
+                <div class="note-items">Ámbar · Vainilla · Sándalo</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="page-footer">
+        <span>AromaStudio</span>
+        <span>WhatsApp: 903 250 695</span>
+      </div>
+    </div>
+    <div class="page">
+      <div class="page-header">
+        <div class="brand-name">Lattafa</div>
+        <div class="page-number">31 / 89</div>
+      </div>
+
+      <div class="product-content">
+        <div class="image-container">
+          <img src="Imagenes perfumes/stallion perfume set stallion 53 4 en 1.jpg" alt="Set Stallion 53 (4 en 1)" onerror="this.parentElement.innerHTML='<div class=\'no-image\'>Imagen no disponible</div>'" />
+        </div>
+
+        <div class="product-info">
+          <h1 class="product-name">Set Stallion 53 (4 en 1)</h1>
+          <div class="product-brand">Lattafa</div>
+
+          <div class="meta-row">
+            <span class="badge badge-category">Masculino</span>
+            <span class="badge badge-size">4x30ml</span>
+          </div>
+
+          <p class="description">Set de 4 fragancias masculinas en una presentación elegante.</p>
+
+          <div class="prices-box">
+            <div class="price-row">
+              <span class="price-label">Precio Retail</span>
+              <span class="price-value">S/ 142.00</span>
+            </div>
+            <div class="price-row price-original">
+              <span class="price-label">Precio Original</span>
+              <span class="price-value">S/ 122.00</span>
+            </div>
+            
+          </div>
+
+          
+          <div class="notes-section">
+            <h3>Notas Olfativas</h3>
+            <div class="notes-grid">
+              <div class="note-group">
+                <div class="note-label">SALIDA</div>
+                <div class="note-items">Varios · Cítricos</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">CORAZON</div>
+                <div class="note-items">Especias · Flores</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">BASE</div>
+                <div class="note-items">Maderas · Almizcle</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="page-footer">
+        <span>AromaStudio</span>
+        <span>WhatsApp: 903 250 695</span>
+      </div>
+    </div>
+    <div class="page">
+      <div class="page-header">
+        <div class="brand-name">Afnan</div>
+        <div class="page-number">32 / 89</div>
+      </div>
+
+      <div class="product-content">
+        <div class="image-container">
+          <img src="https://fimgs.net/mdimg/perfume/375x500.65414.jpg" alt="9 PM" onerror="this.parentElement.innerHTML='<div class=\'no-image\'>Imagen no disponible</div>'" />
+        </div>
+
+        <div class="product-info">
+          <h1 class="product-name">9 PM</h1>
+          <div class="product-brand">Afnan</div>
+
+          <div class="meta-row">
+            <span class="badge badge-category">Masculino</span>
+            <span class="badge badge-size">100ml</span>
+          </div>
+
+          <p class="description">Fragancia masculina dulce y seductora. Similar a JPG Ultra Male. Viral compliment getter.</p>
+
+          <div class="prices-box">
+            <div class="price-row">
+              <span class="price-label">Precio Retail</span>
+              <span class="price-value">S/ 145.00</span>
+            </div>
+            <div class="price-row price-original">
+              <span class="price-label">Precio Original</span>
+              <span class="price-value">S/ 125.00</span>
+            </div>
+            <div class="price-row price-wholesale">
+              <span class="price-label">Precio Mayoreo</span>
+              <span class="price-value">S/ 100.00</span>
+            </div>
+          </div>
+
+          
+          <div class="notes-section">
+            <h3>Notas Olfativas</h3>
+            <div class="notes-grid">
+              <div class="note-group">
+                <div class="note-label">SALIDA</div>
+                <div class="note-items">Manzana · Canela · Lavanda · Bergamota</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">CORAZON</div>
+                <div class="note-items">Flor de naranjo · Lirio del valle</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">BASE</div>
+                <div class="note-items">Vainilla · Tonka · Ámbar · Pachulí</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="page-footer">
+        <span>AromaStudio</span>
+        <span>WhatsApp: 903 250 695</span>
+      </div>
+    </div>
+    <div class="page">
+      <div class="page-header">
+        <div class="brand-name">Afnan</div>
+        <div class="page-number">33 / 89</div>
+      </div>
+
+      <div class="product-content">
+        <div class="image-container">
+          <img src="Imagenes perfumes/afnan 9 am dive.webp" alt="9 AM Dive" onerror="this.parentElement.innerHTML='<div class=\'no-image\'>Imagen no disponible</div>'" />
+        </div>
+
+        <div class="product-info">
+          <h1 class="product-name">9 AM Dive</h1>
+          <div class="product-brand">Afnan</div>
+
+          <div class="meta-row">
+            <span class="badge badge-category">Masculino</span>
+            <span class="badge badge-size">100ml</span>
+          </div>
+
+          <p class="description">Versión fresca y acuática del 9 AM perfecta para el día.</p>
+
+          <div class="prices-box">
+            <div class="price-row">
+              <span class="price-label">Precio Retail</span>
+              <span class="price-value">S/ 145.00</span>
+            </div>
+            <div class="price-row price-original">
+              <span class="price-label">Precio Original</span>
+              <span class="price-value">S/ 125.00</span>
+            </div>
+            <div class="price-row price-wholesale">
+              <span class="price-label">Precio Mayoreo</span>
+              <span class="price-value">S/ 100.00</span>
+            </div>
+          </div>
+
+          
+          <div class="notes-section">
+            <h3>Notas Olfativas</h3>
+            <div class="notes-grid">
+              <div class="note-group">
+                <div class="note-label">SALIDA</div>
+                <div class="note-items">Bergamota · Notas acuáticas</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">CORAZON</div>
+                <div class="note-items">Lavanda · Manzana</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">BASE</div>
+                <div class="note-items">Almizcle · Cedro · Ámbar</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="page-footer">
+        <span>AromaStudio</span>
+        <span>WhatsApp: 903 250 695</span>
+      </div>
+    </div>
+    <div class="page">
+      <div class="page-header">
+        <div class="brand-name">Afnan</div>
+        <div class="page-number">34 / 89</div>
+      </div>
+
+      <div class="product-content">
+        <div class="image-container">
+          <img src="Imagenes perfumes/turathi blue.webp" alt="Turathi Blue" onerror="this.parentElement.innerHTML='<div class=\'no-image\'>Imagen no disponible</div>'" />
+        </div>
+
+        <div class="product-info">
+          <h1 class="product-name">Turathi Blue</h1>
+          <div class="product-brand">Afnan</div>
+
+          <div class="meta-row">
+            <span class="badge badge-category">Masculino</span>
+            <span class="badge badge-size">90ml</span>
+          </div>
+
+          <p class="description">Fragancia azul fresca con notas acuáticas y amaderadas.</p>
+
+          <div class="prices-box">
+            <div class="price-row">
+              <span class="price-label">Precio Retail</span>
+              <span class="price-value">S/ 163.00</span>
+            </div>
+            <div class="price-row price-original">
+              <span class="price-label">Precio Original</span>
+              <span class="price-value">S/ 143.00</span>
+            </div>
+            
+          </div>
+
+          
+          <div class="notes-section">
+            <h3>Notas Olfativas</h3>
+            <div class="notes-grid">
+              <div class="note-group">
+                <div class="note-label">SALIDA</div>
+                <div class="note-items">Bergamota · Limón</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">CORAZON</div>
+                <div class="note-items">Lavanda · Geranio</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">BASE</div>
+                <div class="note-items">Cedro · Ámbar · Almizcle</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="page-footer">
+        <span>AromaStudio</span>
+        <span>WhatsApp: 903 250 695</span>
+      </div>
+    </div>
+    <div class="page">
+      <div class="page-header">
+        <div class="brand-name">Afnan</div>
+        <div class="page-number">35 / 89</div>
+      </div>
+
+      <div class="product-content">
+        <div class="image-container">
+          <img src="Imagenes perfumes/turathi brow.jpg" alt="Turathi Brown" onerror="this.parentElement.innerHTML='<div class=\'no-image\'>Imagen no disponible</div>'" />
+        </div>
+
+        <div class="product-info">
+          <h1 class="product-name">Turathi Brown</h1>
+          <div class="product-brand">Afnan</div>
+
+          <div class="meta-row">
+            <span class="badge badge-category">Masculino</span>
+            <span class="badge badge-size">90ml</span>
+          </div>
+
+          <p class="description">Versión cálida y especiada del Turathi con notas terrosas.</p>
+
+          <div class="prices-box">
+            <div class="price-row">
+              <span class="price-label">Precio Retail</span>
+              <span class="price-value">S/ 163.00</span>
+            </div>
+            <div class="price-row price-original">
+              <span class="price-label">Precio Original</span>
+              <span class="price-value">S/ 143.00</span>
+            </div>
+            
+          </div>
+
+          
+          <div class="notes-section">
+            <h3>Notas Olfativas</h3>
+            <div class="notes-grid">
+              <div class="note-group">
+                <div class="note-label">SALIDA</div>
+                <div class="note-items">Cardamomo · Jengibre</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">CORAZON</div>
+                <div class="note-items">Canela · Nuez moscada</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">BASE</div>
+                <div class="note-items">Oud · Sándalo · Vainilla</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="page-footer">
+        <span>AromaStudio</span>
+        <span>WhatsApp: 903 250 695</span>
+      </div>
+    </div>
+    <div class="page">
+      <div class="page-header">
+        <div class="brand-name">Armaf</div>
+        <div class="page-number">36 / 89</div>
+      </div>
+
+      <div class="product-content">
+        <div class="image-container">
+          <img src="Imagenes perfumes/odyssey mandarin sky.webp" alt="Odyssey Mandarin Sky" onerror="this.parentElement.innerHTML='<div class=\'no-image\'>Imagen no disponible</div>'" />
+        </div>
+
+        <div class="product-info">
+          <h1 class="product-name">Odyssey Mandarin Sky</h1>
+          <div class="product-brand">Armaf</div>
+
+          <div class="meta-row">
+            <span class="badge badge-category">Unisex</span>
+            <span class="badge badge-size">100ml</span>
+          </div>
+
+          <p class="description">Fragancia cítrica fresca con mandarina y notas aéreas.</p>
+
+          <div class="prices-box">
+            <div class="price-row">
+              <span class="price-label">Precio Retail</span>
+              <span class="price-value">S/ 149.00</span>
+            </div>
+            <div class="price-row price-original">
+              <span class="price-label">Precio Original</span>
+              <span class="price-value">S/ 129.00</span>
+            </div>
+            <div class="price-row price-wholesale">
+              <span class="price-label">Precio Mayoreo</span>
+              <span class="price-value">S/ 100.00</span>
+            </div>
+          </div>
+
+          
+          <div class="notes-section">
+            <h3>Notas Olfativas</h3>
+            <div class="notes-grid">
+              <div class="note-group">
+                <div class="note-label">SALIDA</div>
+                <div class="note-items">Mandarina · Bergamota</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">CORAZON</div>
+                <div class="note-items">Jazmín · Flores blancas</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">BASE</div>
+                <div class="note-items">Almizcle · Cedro · Ámbar</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="page-footer">
+        <span>AromaStudio</span>
+        <span>WhatsApp: 903 250 695</span>
+      </div>
+    </div>
+    <div class="page">
+      <div class="page-header">
+        <div class="brand-name">Armaf</div>
+        <div class="page-number">37 / 89</div>
+      </div>
+
+      <div class="product-content">
+        <div class="image-container">
+          <img src="Imagenes perfumes/odyssey mega.webp" alt="Odyssey Mega" onerror="this.parentElement.innerHTML='<div class=\'no-image\'>Imagen no disponible</div>'" />
+        </div>
+
+        <div class="product-info">
+          <h1 class="product-name">Odyssey Mega</h1>
+          <div class="product-brand">Armaf</div>
+
+          <div class="meta-row">
+            <span class="badge badge-category">Masculino</span>
+            <span class="badge badge-size">100ml</span>
+          </div>
+
+          <p class="description">Versión mega potente de la línea Odyssey con mayor proyección.</p>
+
+          <div class="prices-box">
+            <div class="price-row">
+              <span class="price-label">Precio Retail</span>
+              <span class="price-value">S/ 145.00</span>
+            </div>
+            <div class="price-row price-original">
+              <span class="price-label">Precio Original</span>
+              <span class="price-value">S/ 125.00</span>
+            </div>
+            <div class="price-row price-wholesale">
+              <span class="price-label">Precio Mayoreo</span>
+              <span class="price-value">S/ 92.00</span>
+            </div>
+          </div>
+
+          
+          <div class="notes-section">
+            <h3>Notas Olfativas</h3>
+            <div class="notes-grid">
+              <div class="note-group">
+                <div class="note-label">SALIDA</div>
+                <div class="note-items">Piña · Bergamota</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">CORAZON</div>
+                <div class="note-items">Abedul · Especias</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">BASE</div>
+                <div class="note-items">Ámbar · Almizcle · Vainilla</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="page-footer">
+        <span>AromaStudio</span>
+        <span>WhatsApp: 903 250 695</span>
+      </div>
+    </div>
+    <div class="page">
+      <div class="page-header">
+        <div class="brand-name">Armaf</div>
+        <div class="page-number">38 / 89</div>
+      </div>
+
+      <div class="product-content">
+        <div class="image-container">
+          <img src="Imagenes perfumes/odyssey aqua.webp" alt="Odyssey Aqua" onerror="this.parentElement.innerHTML='<div class=\'no-image\'>Imagen no disponible</div>'" />
+        </div>
+
+        <div class="product-info">
+          <h1 class="product-name">Odyssey Aqua</h1>
+          <div class="product-brand">Armaf</div>
+
+          <div class="meta-row">
+            <span class="badge badge-category">Masculino</span>
+            <span class="badge badge-size">100ml</span>
+          </div>
+
+          <p class="description">Fragancia acuática fresca y limpia para el verano.</p>
+
+          <div class="prices-box">
+            <div class="price-row">
+              <span class="price-label">Precio Retail</span>
+              <span class="price-value">S/ 145.00</span>
+            </div>
+            <div class="price-row price-original">
+              <span class="price-label">Precio Original</span>
+              <span class="price-value">S/ 125.00</span>
+            </div>
+            <div class="price-row price-wholesale">
+              <span class="price-label">Precio Mayoreo</span>
+              <span class="price-value">S/ 100.00</span>
+            </div>
+          </div>
+
+          
+          <div class="notes-section">
+            <h3>Notas Olfativas</h3>
+            <div class="notes-grid">
+              <div class="note-group">
+                <div class="note-label">SALIDA</div>
+                <div class="note-items">Notas acuáticas · Cítricos</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">CORAZON</div>
+                <div class="note-items">Lavanda · Geranio</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">BASE</div>
+                <div class="note-items">Almizcle · Cedro</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="page-footer">
+        <span>AromaStudio</span>
+        <span>WhatsApp: 903 250 695</span>
+      </div>
+    </div>
+    <div class="page">
+      <div class="page-header">
+        <div class="brand-name">Armaf</div>
+        <div class="page-number">39 / 89</div>
+      </div>
+
+      <div class="product-content">
+        <div class="image-container">
+          <img src="Imagenes perfumes/odyssey limoni.webp" alt="Odyssey Limoni" onerror="this.parentElement.innerHTML='<div class=\'no-image\'>Imagen no disponible</div>'" />
+        </div>
+
+        <div class="product-info">
+          <h1 class="product-name">Odyssey Limoni</h1>
+          <div class="product-brand">Armaf</div>
+
+          <div class="meta-row">
+            <span class="badge badge-category">Unisex</span>
+            <span class="badge badge-size">100ml</span>
+          </div>
+
+          <p class="description">Explosión cítrica de limón con frescura mediterránea.</p>
+
+          <div class="prices-box">
+            <div class="price-row">
+              <span class="price-label">Precio Retail</span>
+              <span class="price-value">S/ 145.00</span>
+            </div>
+            <div class="price-row price-original">
+              <span class="price-label">Precio Original</span>
+              <span class="price-value">S/ 125.00</span>
+            </div>
+            
+          </div>
+
+          
+          <div class="notes-section">
+            <h3>Notas Olfativas</h3>
+            <div class="notes-grid">
+              <div class="note-group">
+                <div class="note-label">SALIDA</div>
+                <div class="note-items">Limón · Bergamota · Pomelo</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">CORAZON</div>
+                <div class="note-items">Neroli · Petit grain</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">BASE</div>
+                <div class="note-items">Almizcle blanco · Cedro</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="page-footer">
+        <span>AromaStudio</span>
+        <span>WhatsApp: 903 250 695</span>
+      </div>
+    </div>
+    <div class="page">
+      <div class="page-header">
+        <div class="brand-name">Armaf</div>
+        <div class="page-number">40 / 89</div>
+      </div>
+
+      <div class="product-content">
+        <div class="image-container">
+          <img src="Imagenes perfumes/club de nuit intense man.jpg" alt="Club de Nuit Intense Man" onerror="this.parentElement.innerHTML='<div class=\'no-image\'>Imagen no disponible</div>'" />
+        </div>
+
+        <div class="product-info">
+          <h1 class="product-name">Club de Nuit Intense Man</h1>
+          <div class="product-brand">Armaf</div>
+
+          <div class="meta-row">
+            <span class="badge badge-category">Masculino</span>
+            <span class="badge badge-size">105ml</span>
+          </div>
+
+          <p class="description">El famoso dupe de Aventus de Creed. Frutal, especiado y amaderado.</p>
+
+          <div class="prices-box">
+            <div class="price-row">
+              <span class="price-label">Precio Retail</span>
+              <span class="price-value">S/ 145.00</span>
+            </div>
+            <div class="price-row price-original">
+              <span class="price-label">Precio Original</span>
+              <span class="price-value">S/ 125.00</span>
+            </div>
+            <div class="price-row price-wholesale">
+              <span class="price-label">Precio Mayoreo</span>
+              <span class="price-value">S/ 100.00</span>
+            </div>
+          </div>
+
+          
+          <div class="notes-section">
+            <h3>Notas Olfativas</h3>
+            <div class="notes-grid">
+              <div class="note-group">
+                <div class="note-label">SALIDA</div>
+                <div class="note-items">Piña · Bergamota · Manzana · Limón</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">CORAZON</div>
+                <div class="note-items">Rosa · Abedul · Jazmín</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">BASE</div>
+                <div class="note-items">Almizcle · Ámbar · Pachulí · Vainilla</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="page-footer">
+        <span>AromaStudio</span>
+        <span>WhatsApp: 903 250 695</span>
+      </div>
+    </div>
+    <div class="page">
+      <div class="page-header">
+        <div class="brand-name">Armaf</div>
+        <div class="page-number">41 / 89</div>
+      </div>
+
+      <div class="product-content">
+        <div class="image-container">
+          <img src="Imagenes perfumes/club de nuit urban elixir.webp" alt="Club de Nuit Urban Elixir" onerror="this.parentElement.innerHTML='<div class=\'no-image\'>Imagen no disponible</div>'" />
+        </div>
+
+        <div class="product-info">
+          <h1 class="product-name">Club de Nuit Urban Elixir</h1>
+          <div class="product-brand">Armaf</div>
+
+          <div class="meta-row">
+            <span class="badge badge-category">Masculino</span>
+            <span class="badge badge-size">105ml</span>
+          </div>
+
+          <p class="description">Versión elixir urbana con mayor intensidad y sofisticación.</p>
+
+          <div class="prices-box">
+            <div class="price-row">
+              <span class="price-label">Precio Retail</span>
+              <span class="price-value">S/ 169.00</span>
+            </div>
+            <div class="price-row price-original">
+              <span class="price-label">Precio Original</span>
+              <span class="price-value">S/ 149.00</span>
+            </div>
+            <div class="price-row price-wholesale">
+              <span class="price-label">Precio Mayoreo</span>
+              <span class="price-value">S/ 118.00</span>
+            </div>
+          </div>
+
+          
+          <div class="notes-section">
+            <h3>Notas Olfativas</h3>
+            <div class="notes-grid">
+              <div class="note-group">
+                <div class="note-label">SALIDA</div>
+                <div class="note-items">Bergamota · Pimienta</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">CORAZON</div>
+                <div class="note-items">Lavanda · Especias</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">BASE</div>
+                <div class="note-items">Ámbar · Vainilla · Madera</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="page-footer">
+        <span>AromaStudio</span>
+        <span>WhatsApp: 903 250 695</span>
+      </div>
+    </div>
+    <div class="page">
+      <div class="page-header">
+        <div class="brand-name">Armaf</div>
+        <div class="page-number">42 / 89</div>
+      </div>
+
+      <div class="product-content">
+        <div class="image-container">
+          <img src="Imagenes perfumes/club de nuit untold.webp" alt="Club de Nuit Untold" onerror="this.parentElement.innerHTML='<div class=\'no-image\'>Imagen no disponible</div>'" />
+        </div>
+
+        <div class="product-info">
+          <h1 class="product-name">Club de Nuit Untold</h1>
+          <div class="product-brand">Armaf</div>
+
+          <div class="meta-row">
+            <span class="badge badge-category">Unisex</span>
+            <span class="badge badge-size">105ml</span>
+          </div>
+
+          <p class="description">Similar a Baccarat Rouge 540. Dulce, ambarino y adictivo.</p>
+
+          <div class="prices-box">
+            <div class="price-row">
+              <span class="price-label">Precio Retail</span>
+              <span class="price-value">S/ 189.00</span>
+            </div>
+            <div class="price-row price-original">
+              <span class="price-label">Precio Original</span>
+              <span class="price-value">S/ 169.00</span>
+            </div>
+            <div class="price-row price-wholesale">
+              <span class="price-label">Precio Mayoreo</span>
+              <span class="price-value">S/ 130.00</span>
+            </div>
+          </div>
+
+          
+          <div class="notes-section">
+            <h3>Notas Olfativas</h3>
+            <div class="notes-grid">
+              <div class="note-group">
+                <div class="note-label">SALIDA</div>
+                <div class="note-items">Azafrán · Jazmín</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">CORAZON</div>
+                <div class="note-items">Ámbar · Ámbar gris</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">BASE</div>
+                <div class="note-items">Resina de abeto · Cedro</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="page-footer">
+        <span>AromaStudio</span>
+        <span>WhatsApp: 903 250 695</span>
+      </div>
+    </div>
+    <div class="page">
+      <div class="page-header">
+        <div class="brand-name">Armaf</div>
+        <div class="page-number">43 / 89</div>
+      </div>
+
+      <div class="product-content">
+        <div class="image-container">
+          <img src="Imagenes perfumes/Tag uomo rosso.jpg" alt="Tag Uomo Rosso" onerror="this.parentElement.innerHTML='<div class=\'no-image\'>Imagen no disponible</div>'" />
+        </div>
+
+        <div class="product-info">
+          <h1 class="product-name">Tag Uomo Rosso</h1>
+          <div class="product-brand">Armaf</div>
+
+          <div class="meta-row">
+            <span class="badge badge-category">Masculino</span>
+            <span class="badge badge-size">100ml</span>
+          </div>
+
+          <p class="description">Fragancia masculina roja con notas especiadas y cálidas.</p>
+
+          <div class="prices-box">
+            <div class="price-row">
+              <span class="price-label">Precio Retail</span>
+              <span class="price-value">S/ 139.00</span>
+            </div>
+            <div class="price-row price-original">
+              <span class="price-label">Precio Original</span>
+              <span class="price-value">S/ 119.00</span>
+            </div>
+            
+          </div>
+
+          
+          <div class="notes-section">
+            <h3>Notas Olfativas</h3>
+            <div class="notes-grid">
+              <div class="note-group">
+                <div class="note-label">SALIDA</div>
+                <div class="note-items">Mandarina · Pimienta rosa</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">CORAZON</div>
+                <div class="note-items">Lavanda · Especias</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">BASE</div>
+                <div class="note-items">Ámbar · Tonka · Vainilla</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="page-footer">
+        <span>AromaStudio</span>
+        <span>WhatsApp: 903 250 695</span>
+      </div>
+    </div>
+    <div class="page">
+      <div class="page-header">
+        <div class="brand-name">Al Haramain</div>
+        <div class="page-number">44 / 89</div>
+      </div>
+
+      <div class="product-content">
+        <div class="image-container">
+          <img src="Imagenes perfumes/amber oud gold edition 100 ml.webp" alt="Amber Oud Gold Edition" onerror="this.parentElement.innerHTML='<div class=\'no-image\'>Imagen no disponible</div>'" />
+        </div>
+
+        <div class="product-info">
+          <h1 class="product-name">Amber Oud Gold Edition</h1>
+          <div class="product-brand">Al Haramain</div>
+
+          <div class="meta-row">
+            <span class="badge badge-category">Unisex</span>
+            <span class="badge badge-size">100ml</span>
+          </div>
+
+          <p class="description">Lujoso perfume de oud y ámbar con presentación dorada premium.</p>
+
+          <div class="prices-box">
+            <div class="price-row">
+              <span class="price-label">Precio Retail</span>
+              <span class="price-value">S/ 223.00</span>
+            </div>
+            <div class="price-row price-original">
+              <span class="price-label">Precio Original</span>
+              <span class="price-value">S/ 203.00</span>
+            </div>
+            <div class="price-row price-wholesale">
+              <span class="price-label">Precio Mayoreo</span>
+              <span class="price-value">S/ 180.00</span>
+            </div>
+          </div>
+
+          
+          <div class="notes-section">
+            <h3>Notas Olfativas</h3>
+            <div class="notes-grid">
+              <div class="note-group">
+                <div class="note-label">SALIDA</div>
+                <div class="note-items">Ámbar · Rosa</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">CORAZON</div>
+                <div class="note-items">Oud · Azafrán</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">BASE</div>
+                <div class="note-items">Sándalo · Almizcle · Vainilla</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="page-footer">
+        <span>AromaStudio</span>
+        <span>WhatsApp: 903 250 695</span>
+      </div>
+    </div>
+    <div class="page">
+      <div class="page-header">
+        <div class="brand-name">Maison Alhambra</div>
+        <div class="page-number">45 / 89</div>
+      </div>
+
+      <div class="product-content">
+        <div class="image-container">
+          <img src="Imagenes perfumes/jean lowe immortal.jpg" alt="Jean Lowe Immortal" onerror="this.parentElement.innerHTML='<div class=\'no-image\'>Imagen no disponible</div>'" />
+        </div>
+
+        <div class="product-info">
+          <h1 class="product-name">Jean Lowe Immortal</h1>
+          <div class="product-brand">Maison Alhambra</div>
+
+          <div class="meta-row">
+            <span class="badge badge-category">Masculino</span>
+            <span class="badge badge-size">100ml</span>
+          </div>
+
+          <p class="description">Inspirado en fragancias inmortales con notas sofisticadas.</p>
+
+          <div class="prices-box">
+            <div class="price-row">
+              <span class="price-label">Precio Retail</span>
+              <span class="price-value">S/ 143.00</span>
+            </div>
+            <div class="price-row price-original">
+              <span class="price-label">Precio Original</span>
+              <span class="price-value">S/ 123.00</span>
+            </div>
+            <div class="price-row price-wholesale">
+              <span class="price-label">Precio Mayoreo</span>
+              <span class="price-value">S/ 100.00</span>
+            </div>
+          </div>
+
+          
+          <div class="notes-section">
+            <h3>Notas Olfativas</h3>
+            <div class="notes-grid">
+              <div class="note-group">
+                <div class="note-label">SALIDA</div>
+                <div class="note-items">Bergamota · Lavanda</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">CORAZON</div>
+                <div class="note-items">Iris · Geranio</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">BASE</div>
+                <div class="note-items">Ámbar · Vainilla · Tonka</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="page-footer">
+        <span>AromaStudio</span>
+        <span>WhatsApp: 903 250 695</span>
+      </div>
+    </div>
+    <div class="page">
+      <div class="page-header">
+        <div class="brand-name">Rasasi</div>
+        <div class="page-number">46 / 89</div>
+      </div>
+
+      <div class="product-content">
+        <div class="image-container">
+          <img src="Imagenes perfumes/hawas for him.webp" alt="Hawas for Him" onerror="this.parentElement.innerHTML='<div class=\'no-image\'>Imagen no disponible</div>'" />
+        </div>
+
+        <div class="product-info">
+          <h1 class="product-name">Hawas for Him</h1>
+          <div class="product-brand">Rasasi</div>
+
+          <div class="meta-row">
+            <span class="badge badge-category">Masculino</span>
+            <span class="badge badge-size">100ml</span>
+          </div>
+
+          <p class="description">Fragancia acuática frutal masculina. Fresca y versátil.</p>
+
+          <div class="prices-box">
+            <div class="price-row">
+              <span class="price-label">Precio Retail</span>
+              <span class="price-value">S/ 142.00</span>
+            </div>
+            <div class="price-row price-original">
+              <span class="price-label">Precio Original</span>
+              <span class="price-value">S/ 122.00</span>
+            </div>
+            <div class="price-row price-wholesale">
+              <span class="price-label">Precio Mayoreo</span>
+              <span class="price-value">S/ 100.00</span>
+            </div>
+          </div>
+
+          
+          <div class="notes-section">
+            <h3>Notas Olfativas</h3>
+            <div class="notes-grid">
+              <div class="note-group">
+                <div class="note-label">SALIDA</div>
+                <div class="note-items">Bergamota · Manzana · Canela</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">CORAZON</div>
+                <div class="note-items">Notas marinas · Cardamomo</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">BASE</div>
+                <div class="note-items">Almizcle · Ámbar · Madera</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="page-footer">
+        <span>AromaStudio</span>
+        <span>WhatsApp: 903 250 695</span>
+      </div>
+    </div>
+    <div class="page">
+      <div class="page-header">
+        <div class="brand-name">Armaf</div>
+        <div class="page-number">47 / 89</div>
+      </div>
+
+      <div class="product-content">
+        <div class="image-container">
+          <img src="Imagenes perfumes/Rome.webp" alt="Rome" onerror="this.parentElement.innerHTML='<div class=\'no-image\'>Imagen no disponible</div>'" />
+        </div>
+
+        <div class="product-info">
+          <h1 class="product-name">Rome</h1>
+          <div class="product-brand">Armaf</div>
+
+          <div class="meta-row">
+            <span class="badge badge-category">Masculino</span>
+            <span class="badge badge-size">100ml</span>
+          </div>
+
+          <p class="description">Elegancia italiana capturada en una fragancia sofisticada.</p>
+
+          <div class="prices-box">
+            <div class="price-row">
+              <span class="price-label">Precio Retail</span>
+              <span class="price-value">S/ 155.00</span>
+            </div>
+            <div class="price-row price-original">
+              <span class="price-label">Precio Original</span>
+              <span class="price-value">S/ 135.00</span>
+            </div>
+            <div class="price-row price-wholesale">
+              <span class="price-label">Precio Mayoreo</span>
+              <span class="price-value">S/ 100.00</span>
+            </div>
+          </div>
+
+          
+          <div class="notes-section">
+            <h3>Notas Olfativas</h3>
+            <div class="notes-grid">
+              <div class="note-group">
+                <div class="note-label">SALIDA</div>
+                <div class="note-items">Bergamota · Limón</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">CORAZON</div>
+                <div class="note-items">Iris · Lavanda</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">BASE</div>
+                <div class="note-items">Cedro · Ámbar · Almizcle</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="page-footer">
+        <span>AromaStudio</span>
+        <span>WhatsApp: 903 250 695</span>
+      </div>
+    </div>
+    <div class="page">
+      <div class="page-header">
+        <div class="brand-name">Dumont</div>
+        <div class="page-number">48 / 89</div>
+      </div>
+
+      <div class="product-content">
+        <div class="image-container">
+          <img src="Imagenes perfumes/nitro red.webp" alt="Nitro Red" onerror="this.parentElement.innerHTML='<div class=\'no-image\'>Imagen no disponible</div>'" />
+        </div>
+
+        <div class="product-info">
+          <h1 class="product-name">Nitro Red</h1>
+          <div class="product-brand">Dumont</div>
+
+          <div class="meta-row">
+            <span class="badge badge-category">Masculino</span>
+            <span class="badge badge-size">100ml</span>
+          </div>
+
+          <p class="description">Fragancia explosiva y energética con notas rojas vibrantes.</p>
+
+          <div class="prices-box">
+            <div class="price-row">
+              <span class="price-label">Precio Retail</span>
+              <span class="price-value">S/ 155.00</span>
+            </div>
+            <div class="price-row price-original">
+              <span class="price-label">Precio Original</span>
+              <span class="price-value">S/ 135.00</span>
+            </div>
+            <div class="price-row price-wholesale">
+              <span class="price-label">Precio Mayoreo</span>
+              <span class="price-value">S/ 118.00</span>
+            </div>
+          </div>
+
+          
+          <div class="notes-section">
+            <h3>Notas Olfativas</h3>
+            <div class="notes-grid">
+              <div class="note-group">
+                <div class="note-label">SALIDA</div>
+                <div class="note-items">Manzana roja · Bergamota</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">CORAZON</div>
+                <div class="note-items">Canela · Especias</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">BASE</div>
+                <div class="note-items">Vainilla · Ámbar · Almizcle</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="page-footer">
+        <span>AromaStudio</span>
+        <span>WhatsApp: 903 250 695</span>
+      </div>
+    </div>
+    <div class="page">
+      <div class="page-header">
+        <div class="brand-name">Bharara</div>
+        <div class="page-number">49 / 89</div>
+      </div>
+
+      <div class="product-content">
+        <div class="image-container">
+          <img src="Imagenes perfumes/liquid brun.webp" alt="Liquid Brun" onerror="this.parentElement.innerHTML='<div class=\'no-image\'>Imagen no disponible</div>'" />
+        </div>
+
+        <div class="product-info">
+          <h1 class="product-name">Liquid Brun</h1>
+          <div class="product-brand">Bharara</div>
+
+          <div class="meta-row">
+            <span class="badge badge-category">Unisex</span>
+            <span class="badge badge-size">100ml</span>
+          </div>
+
+          <p class="description">Fragancia marrón líquida con notas de café, tabaco y especias.</p>
+
+          <div class="prices-box">
+            <div class="price-row">
+              <span class="price-label">Precio Retail</span>
+              <span class="price-value">S/ 181.00</span>
+            </div>
+            <div class="price-row price-original">
+              <span class="price-label">Precio Original</span>
+              <span class="price-value">S/ 161.00</span>
+            </div>
+            
+          </div>
+
+          
+          <div class="notes-section">
+            <h3>Notas Olfativas</h3>
+            <div class="notes-grid">
+              <div class="note-group">
+                <div class="note-label">SALIDA</div>
+                <div class="note-items">Café · Cardamomo</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">CORAZON</div>
+                <div class="note-items">Tabaco · Caramelo</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">BASE</div>
+                <div class="note-items">Vainilla · Ámbar · Almizcle</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="page-footer">
+        <span>AromaStudio</span>
+        <span>WhatsApp: 903 250 695</span>
+      </div>
+    </div>
+    <div class="page">
+      <div class="page-header">
+        <div class="brand-name">Paris Corner</div>
+        <div class="page-number">50 / 89</div>
+      </div>
+
+      <div class="product-content">
+        <div class="image-container">
+          <img src="Imagenes perfumes/tiramisu caramel.webp" alt="Tiramisu Caramel" onerror="this.parentElement.innerHTML='<div class=\'no-image\'>Imagen no disponible</div>'" />
+        </div>
+
+        <div class="product-info">
+          <h1 class="product-name">Tiramisu Caramel</h1>
+          <div class="product-brand">Paris Corner</div>
+
+          <div class="meta-row">
+            <span class="badge badge-category">Unisex</span>
+            <span class="badge badge-size">80ml</span>
+          </div>
+
+          <p class="description">Gourmand irresistible con tiramisú, caramelo y café.</p>
+
+          <div class="prices-box">
+            <div class="price-row">
+              <span class="price-label">Precio Retail</span>
+              <span class="price-value">S/ 149.00</span>
+            </div>
+            <div class="price-row price-original">
+              <span class="price-label">Precio Original</span>
+              <span class="price-value">S/ 129.00</span>
+            </div>
+            
+          </div>
+
+          
+          <div class="notes-section">
+            <h3>Notas Olfativas</h3>
+            <div class="notes-grid">
+              <div class="note-group">
+                <div class="note-label">SALIDA</div>
+                <div class="note-items">Café · Caramelo</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">CORAZON</div>
+                <div class="note-items">Tiramisú · Chocolate</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">BASE</div>
+                <div class="note-items">Vainilla · Almizcle · Ámbar</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="page-footer">
+        <span>AromaStudio</span>
+        <span>WhatsApp: 903 250 695</span>
+      </div>
+    </div>
+    <div class="page">
+      <div class="page-header">
+        <div class="brand-name">Lattafa</div>
+        <div class="page-number">51 / 89</div>
+      </div>
+
+      <div class="product-content">
+        <div class="image-container">
+          <img src="Imagenes perfumes/ajwad.jpg" alt="Ajwad" onerror="this.parentElement.innerHTML='<div class=\'no-image\'>Imagen no disponible</div>'" />
+        </div>
+
+        <div class="product-info">
+          <h1 class="product-name">Ajwad</h1>
+          <div class="product-brand">Lattafa</div>
+
+          <div class="meta-row">
+            <span class="badge badge-category">Unisex</span>
+            <span class="badge badge-size">60ml</span>
+          </div>
+
+          <p class="description">Perfume oriental amaderado con notas de oud y especias.</p>
+
+          <div class="prices-box">
+            <div class="price-row">
+              <span class="price-label">Precio Retail</span>
+              <span class="price-value">S/ 119.00</span>
+            </div>
+            <div class="price-row price-original">
+              <span class="price-label">Precio Original</span>
+              <span class="price-value">S/ 99.00</span>
+            </div>
+            
+          </div>
+
+          
+          <div class="notes-section">
+            <h3>Notas Olfativas</h3>
+            <div class="notes-grid">
+              <div class="note-group">
+                <div class="note-label">SALIDA</div>
+                <div class="note-items">Bergamota · Cardamomo</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">CORAZON</div>
+                <div class="note-items">Rosa · Oud</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">BASE</div>
+                <div class="note-items">Ámbar · Sándalo · Vainilla</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="page-footer">
+        <span>AromaStudio</span>
+        <span>WhatsApp: 903 250 695</span>
+      </div>
+    </div>
+    <div class="page">
+      <div class="page-header">
+        <div class="brand-name">Lattafa</div>
+        <div class="page-number">52 / 89</div>
+      </div>
+
+      <div class="product-content">
+        <div class="image-container">
+          <img src="Imagenes perfumes/stallion 53 + viajador 20 ml.png" alt="Stallion 53 + Viajador" onerror="this.parentElement.innerHTML='<div class=\'no-image\'>Imagen no disponible</div>'" />
+        </div>
+
+        <div class="product-info">
+          <h1 class="product-name">Stallion 53 + Viajador</h1>
+          <div class="product-brand">Lattafa</div>
+
+          <div class="meta-row">
+            <span class="badge badge-category">Masculino</span>
+            <span class="badge badge-size">100ml + 20ml</span>
+          </div>
+
+          <p class="description">Set combinado de dos fragancias masculinas versátiles.</p>
+
+          <div class="prices-box">
+            <div class="price-row">
+              <span class="price-label">Precio Retail</span>
+              <span class="price-value">S/ 119.00</span>
+            </div>
+            <div class="price-row price-original">
+              <span class="price-label">Precio Original</span>
+              <span class="price-value">S/ 99.00</span>
+            </div>
+            
+          </div>
+
+          
+          <div class="notes-section">
+            <h3>Notas Olfativas</h3>
+            <div class="notes-grid">
+              <div class="note-group">
+                <div class="note-label">SALIDA</div>
+                <div class="note-items">Cítricos · Especias</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">CORAZON</div>
+                <div class="note-items">Flores · Madera</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">BASE</div>
+                <div class="note-items">Almizcle · Ámbar</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="page-footer">
+        <span>AromaStudio</span>
+        <span>WhatsApp: 903 250 695</span>
+      </div>
+    </div>
+    <div class="page">
+      <div class="page-header">
+        <div class="brand-name">Lattafa</div>
+        <div class="page-number">53 / 89</div>
+      </div>
+
+      <div class="product-content">
+        <div class="image-container">
+          <img src="Imagenes perfumes/lattafa sublime.webp" alt="Set Sublime" onerror="this.parentElement.innerHTML='<div class=\'no-image\'>Imagen no disponible</div>'" />
+        </div>
+
+        <div class="product-info">
+          <h1 class="product-name">Set Sublime</h1>
+          <div class="product-brand">Lattafa</div>
+
+          <div class="meta-row">
+            <span class="badge badge-category">Femenino</span>
+            <span class="badge badge-size">Set 3 piezas</span>
+          </div>
+
+          <p class="description">Set completo de belleza con spray corporal, bruma capilar y perfume.</p>
+
+          <div class="prices-box">
+            <div class="price-row">
+              <span class="price-label">Precio Retail</span>
+              <span class="price-value">S/ 167.00</span>
+            </div>
+            <div class="price-row price-original">
+              <span class="price-label">Precio Original</span>
+              <span class="price-value">S/ 147.00</span>
+            </div>
+            
+          </div>
+
+          
+          <div class="notes-section">
+            <h3>Notas Olfativas</h3>
+            <div class="notes-grid">
+              <div class="note-group">
+                <div class="note-label">SALIDA</div>
+                <div class="note-items">Pera · Bergamota</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">CORAZON</div>
+                <div class="note-items">Jazmín · Rosa</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">BASE</div>
+                <div class="note-items">Vainilla · Sándalo · Almizcle</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="page-footer">
+        <span>AromaStudio</span>
+        <span>WhatsApp: 903 250 695</span>
+      </div>
+    </div>
+    <div class="page">
+      <div class="page-header">
+        <div class="brand-name">Lattafa</div>
+        <div class="page-number">54 / 89</div>
+      </div>
+
+      <div class="product-content">
+        <div class="image-container">
+          <img src="Imagenes perfumes/set yara.webp" alt="Set Yara (Pink + Candy)" onerror="this.parentElement.innerHTML='<div class=\'no-image\'>Imagen no disponible</div>'" />
+        </div>
+
+        <div class="product-info">
+          <h1 class="product-name">Set Yara (Pink + Candy)</h1>
+          <div class="product-brand">Lattafa</div>
+
+          <div class="meta-row">
+            <span class="badge badge-category">Femenino</span>
+            <span class="badge badge-size">Set 2 piezas</span>
+          </div>
+
+          <p class="description">Set de dos fragancias femeninas dulces y frutales.</p>
+
+          <div class="prices-box">
+            <div class="price-row">
+              <span class="price-label">Precio Retail</span>
+              <span class="price-value">S/ 182.50</span>
+            </div>
+            <div class="price-row price-original">
+              <span class="price-label">Precio Original</span>
+              <span class="price-value">S/ 162.50</span>
+            </div>
+            
+          </div>
+
+          
+          <div class="notes-section">
+            <h3>Notas Olfativas</h3>
+            <div class="notes-grid">
+              <div class="note-group">
+                <div class="note-label">SALIDA</div>
+                <div class="note-items">Frutas · Flores</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">CORAZON</div>
+                <div class="note-items">Gourmand · Tropical</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">BASE</div>
+                <div class="note-items">Vainilla · Almizcle</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="page-footer">
+        <span>AromaStudio</span>
+        <span>WhatsApp: 903 250 695</span>
+      </div>
+    </div>
+    <div class="page">
+      <div class="page-header">
+        <div class="brand-name">Afnan</div>
+        <div class="page-number">55 / 89</div>
+      </div>
+
+      <div class="product-content">
+        <div class="image-container">
+          <img src="Imagenes perfumes/9 am afnan blanco.webp" alt="9 AM (Blanco)" onerror="this.parentElement.innerHTML='<div class=\'no-image\'>Imagen no disponible</div>'" />
+        </div>
+
+        <div class="product-info">
+          <h1 class="product-name">9 AM (Blanco)</h1>
+          <div class="product-brand">Afnan</div>
+
+          <div class="meta-row">
+            <span class="badge badge-category">Unisex</span>
+            <span class="badge badge-size">100ml</span>
+          </div>
+
+          <p class="description">Versión blanca fresca del 9 AM para uso diurno.</p>
+
+          <div class="prices-box">
+            <div class="price-row">
+              <span class="price-label">Precio Retail</span>
+              <span class="price-value">S/ 141.00</span>
+            </div>
+            <div class="price-row price-original">
+              <span class="price-label">Precio Original</span>
+              <span class="price-value">S/ 121.00</span>
+            </div>
+            
+          </div>
+
+          
+          <div class="notes-section">
+            <h3>Notas Olfativas</h3>
+            <div class="notes-grid">
+              <div class="note-group">
+                <div class="note-label">SALIDA</div>
+                <div class="note-items">Bergamota · Menta</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">CORAZON</div>
+                <div class="note-items">Lavanda · Geranio</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">BASE</div>
+                <div class="note-items">Cedro · Almizcle · Ámbar</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="page-footer">
+        <span>AromaStudio</span>
+        <span>WhatsApp: 903 250 695</span>
+      </div>
+    </div>
+    <div class="page">
+      <div class="page-header">
+        <div class="brand-name">Afnan</div>
+        <div class="page-number">56 / 89</div>
+      </div>
+
+      <div class="product-content">
+        <div class="image-container">
+          <img src="Imagenes perfumes/turathi electric.jpg" alt="Turathi Electric" onerror="this.parentElement.innerHTML='<div class=\'no-image\'>Imagen no disponible</div>'" />
+        </div>
+
+        <div class="product-info">
+          <h1 class="product-name">Turathi Electric</h1>
+          <div class="product-brand">Afnan</div>
+
+          <div class="meta-row">
+            <span class="badge badge-category">Unisex</span>
+            <span class="badge badge-size">90ml</span>
+          </div>
+
+          <p class="description">Versión electrizante del Turathi con notas vibrantes y modernas.</p>
+
+          <div class="prices-box">
+            <div class="price-row">
+              <span class="price-label">Precio Retail</span>
+              <span class="price-value">S/ 179.00</span>
+            </div>
+            <div class="price-row price-original">
+              <span class="price-label">Precio Original</span>
+              <span class="price-value">S/ 159.00</span>
+            </div>
+            
+          </div>
+
+          
+          <div class="notes-section">
+            <h3>Notas Olfativas</h3>
+            <div class="notes-grid">
+              <div class="note-group">
+                <div class="note-label">SALIDA</div>
+                <div class="note-items">Notas eléctricas · Cítricos</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">CORAZON</div>
+                <div class="note-items">Especias · Flores</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">BASE</div>
+                <div class="note-items">Ámbar · Almizcle · Madera</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="page-footer">
+        <span>AromaStudio</span>
+        <span>WhatsApp: 903 250 695</span>
+      </div>
+    </div>
+    <div class="page">
+      <div class="page-header">
+        <div class="brand-name">Armaf</div>
+        <div class="page-number">57 / 89</div>
+      </div>
+
+      <div class="product-content">
+        <div class="image-container">
+          <img src="https://fimgs.net/mdimg/perfume/375x500.98759.jpg" alt="Odyssey Dubai Chocolat" onerror="this.parentElement.innerHTML='<div class=\'no-image\'>Imagen no disponible</div>'" />
+        </div>
+
+        <div class="product-info">
+          <h1 class="product-name">Odyssey Dubai Chocolat</h1>
+          <div class="product-brand">Armaf</div>
+
+          <div class="meta-row">
+            <span class="badge badge-category">Unisex</span>
+            <span class="badge badge-size">100ml</span>
+          </div>
+
+          <p class="description">Gourmand de chocolate con toques orientales de Dubai.</p>
+
+          <div class="prices-box">
+            <div class="price-row">
+              <span class="price-label">Precio Retail</span>
+              <span class="price-value">S/ 159.80</span>
+            </div>
+            <div class="price-row price-original">
+              <span class="price-label">Precio Original</span>
+              <span class="price-value">S/ 139.80</span>
+            </div>
+            
+          </div>
+
+          
+          <div class="notes-section">
+            <h3>Notas Olfativas</h3>
+            <div class="notes-grid">
+              <div class="note-group">
+                <div class="note-label">SALIDA</div>
+                <div class="note-items">Chocolate · Naranja</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">CORAZON</div>
+                <div class="note-items">Café · Vainilla</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">BASE</div>
+                <div class="note-items">Ámbar · Almizcle · Sándalo</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="page-footer">
+        <span>AromaStudio</span>
+        <span>WhatsApp: 903 250 695</span>
+      </div>
+    </div>
+    <div class="page">
+      <div class="page-header">
+        <div class="brand-name">Armaf</div>
+        <div class="page-number">58 / 89</div>
+      </div>
+
+      <div class="product-content">
+        <div class="image-container">
+          <img src="Imagenes perfumes/odyssey mandarin sky elixir.webp" alt="Odyssey Mandarin Sky Elixir" onerror="this.parentElement.innerHTML='<div class=\'no-image\'>Imagen no disponible</div>'" />
+        </div>
+
+        <div class="product-info">
+          <h1 class="product-name">Odyssey Mandarin Sky Elixir</h1>
+          <div class="product-brand">Armaf</div>
+
+          <div class="meta-row">
+            <span class="badge badge-category">Unisex</span>
+            <span class="badge badge-size">100ml</span>
+          </div>
+
+          <p class="description">Versión elixir concentrada del Mandarin Sky.</p>
+
+          <div class="prices-box">
+            <div class="price-row">
+              <span class="price-label">Precio Retail</span>
+              <span class="price-value">S/ 178.90</span>
+            </div>
+            <div class="price-row price-original">
+              <span class="price-label">Precio Original</span>
+              <span class="price-value">S/ 158.90</span>
+            </div>
+            <div class="price-row price-wholesale">
+              <span class="price-label">Precio Mayoreo</span>
+              <span class="price-value">S/ 130.00</span>
+            </div>
+          </div>
+
+          
+          <div class="notes-section">
+            <h3>Notas Olfativas</h3>
+            <div class="notes-grid">
+              <div class="note-group">
+                <div class="note-label">SALIDA</div>
+                <div class="note-items">Mandarina · Bergamota</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">CORAZON</div>
+                <div class="note-items">Jazmín · Azahar</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">BASE</div>
+                <div class="note-items">Almizcle · Ámbar · Sándalo</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="page-footer">
+        <span>AromaStudio</span>
+        <span>WhatsApp: 903 250 695</span>
+      </div>
+    </div>
+    <div class="page">
+      <div class="page-header">
+        <div class="brand-name">Armaf</div>
+        <div class="page-number">59 / 89</div>
+      </div>
+
+      <div class="product-content">
+        <div class="image-container">
+          <img src="Imagenes perfumes/odyssey revolution.webp" alt="Odyssey Revolution" onerror="this.parentElement.innerHTML='<div class=\'no-image\'>Imagen no disponible</div>'" />
+        </div>
+
+        <div class="product-info">
+          <h1 class="product-name">Odyssey Revolution</h1>
+          <div class="product-brand">Armaf</div>
+
+          <div class="meta-row">
+            <span class="badge badge-category">Masculino</span>
+            <span class="badge badge-size">100ml</span>
+          </div>
+
+          <p class="description">Revolución olfativa con notas innovadoras y modernas.</p>
+
+          <div class="prices-box">
+            <div class="price-row">
+              <span class="price-label">Precio Retail</span>
+              <span class="price-value">S/ 184.50</span>
+            </div>
+            <div class="price-row price-original">
+              <span class="price-label">Precio Original</span>
+              <span class="price-value">S/ 164.50</span>
+            </div>
+            <div class="price-row price-wholesale">
+              <span class="price-label">Precio Mayoreo</span>
+              <span class="price-value">S/ 130.00</span>
+            </div>
+          </div>
+
+          
+          <div class="notes-section">
+            <h3>Notas Olfativas</h3>
+            <div class="notes-grid">
+              <div class="note-group">
+                <div class="note-label">SALIDA</div>
+                <div class="note-items">Pomelo · Pimienta</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">CORAZON</div>
+                <div class="note-items">Lavanda · Salvia</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">BASE</div>
+                <div class="note-items">Cedro · Pachulí · Almizcle</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="page-footer">
+        <span>AromaStudio</span>
+        <span>WhatsApp: 903 250 695</span>
+      </div>
+    </div>
+    <div class="page">
+      <div class="page-header">
+        <div class="brand-name">Armaf</div>
+        <div class="page-number">60 / 89</div>
+      </div>
+
+      <div class="product-content">
+        <div class="image-container">
+          <img src="Imagenes perfumes/odyssey montagne.jpg" alt="Odyssey Montagne" onerror="this.parentElement.innerHTML='<div class=\'no-image\'>Imagen no disponible</div>'" />
+        </div>
+
+        <div class="product-info">
+          <h1 class="product-name">Odyssey Montagne</h1>
+          <div class="product-brand">Armaf</div>
+
+          <div class="meta-row">
+            <span class="badge badge-category">Masculino</span>
+            <span class="badge badge-size">100ml</span>
+          </div>
+
+          <p class="description">Frescura de montaña con notas alpinas y verdes.</p>
+
+          <div class="prices-box">
+            <div class="price-row">
+              <span class="price-label">Precio Retail</span>
+              <span class="price-value">S/ 182.00</span>
+            </div>
+            <div class="price-row price-original">
+              <span class="price-label">Precio Original</span>
+              <span class="price-value">S/ 162.00</span>
+            </div>
+            <div class="price-row price-wholesale">
+              <span class="price-label">Precio Mayoreo</span>
+              <span class="price-value">S/ 100.00</span>
+            </div>
+          </div>
+
+          
+          <div class="notes-section">
+            <h3>Notas Olfativas</h3>
+            <div class="notes-grid">
+              <div class="note-group">
+                <div class="note-label">SALIDA</div>
+                <div class="note-items">Bergamota · Notas verdes</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">CORAZON</div>
+                <div class="note-items">Lavanda · Geranio</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">BASE</div>
+                <div class="note-items">Cedro · Vetiver · Almizcle</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="page-footer">
+        <span>AromaStudio</span>
+        <span>WhatsApp: 903 250 695</span>
+      </div>
+    </div>
+    <div class="page">
+      <div class="page-header">
+        <div class="brand-name">Armaf</div>
+        <div class="page-number">61 / 89</div>
+      </div>
+
+      <div class="product-content">
+        <div class="image-container">
+          <img src="Imagenes perfumes/odyssey Aoud.webp" alt="Odyssey Aoud" onerror="this.parentElement.innerHTML='<div class=\'no-image\'>Imagen no disponible</div>'" />
+        </div>
+
+        <div class="product-info">
+          <h1 class="product-name">Odyssey Aoud</h1>
+          <div class="product-brand">Armaf</div>
+
+          <div class="meta-row">
+            <span class="badge badge-category">Unisex</span>
+            <span class="badge badge-size">100ml</span>
+          </div>
+
+          <p class="description">Interpretación de oud en la línea Odyssey.</p>
+
+          <div class="prices-box">
+            <div class="price-row">
+              <span class="price-label">Precio Retail</span>
+              <span class="price-value">S/ 135.00</span>
+            </div>
+            <div class="price-row price-original">
+              <span class="price-label">Precio Original</span>
+              <span class="price-value">S/ 115.00</span>
+            </div>
+            
+          </div>
+
+          
+          <div class="notes-section">
+            <h3>Notas Olfativas</h3>
+            <div class="notes-grid">
+              <div class="note-group">
+                <div class="note-label">SALIDA</div>
+                <div class="note-items">Azafrán · Bergamota</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">CORAZON</div>
+                <div class="note-items">Oud · Rosa</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">BASE</div>
+                <div class="note-items">Ámbar · Sándalo · Almizcle</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="page-footer">
+        <span>AromaStudio</span>
+        <span>WhatsApp: 903 250 695</span>
+      </div>
+    </div>
+    <div class="page">
+      <div class="page-header">
+        <div class="brand-name">Armaf</div>
+        <div class="page-number">62 / 89</div>
+      </div>
+
+      <div class="product-content">
+        <div class="image-container">
+          <img src="Imagenes perfumes/odyssey spectra.webp" alt="Odyssey Spectra" onerror="this.parentElement.innerHTML='<div class=\'no-image\'>Imagen no disponible</div>'" />
+        </div>
+
+        <div class="product-info">
+          <h1 class="product-name">Odyssey Spectra</h1>
+          <div class="product-brand">Armaf</div>
+
+          <div class="meta-row">
+            <span class="badge badge-category">Unisex</span>
+            <span class="badge badge-size">100ml</span>
+          </div>
+
+          <p class="description">Espectro completo de notas en armonía perfecta.</p>
+
+          <div class="prices-box">
+            <div class="price-row">
+              <span class="price-label">Precio Retail</span>
+              <span class="price-value">S/ 155.50</span>
+            </div>
+            <div class="price-row price-original">
+              <span class="price-label">Precio Original</span>
+              <span class="price-value">S/ 135.50</span>
+            </div>
+            
+          </div>
+
+          
+          <div class="notes-section">
+            <h3>Notas Olfativas</h3>
+            <div class="notes-grid">
+              <div class="note-group">
+                <div class="note-label">SALIDA</div>
+                <div class="note-items">Cítricos · Especias</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">CORAZON</div>
+                <div class="note-items">Flores · Oud</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">BASE</div>
+                <div class="note-items">Vainilla · Ámbar · Almizcle</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="page-footer">
+        <span>AromaStudio</span>
+        <span>WhatsApp: 903 250 695</span>
+      </div>
+    </div>
+    <div class="page">
+      <div class="page-header">
+        <div class="brand-name">Paris Corner</div>
+        <div class="page-number">63 / 89</div>
+      </div>
+
+      <div class="product-content">
+        <div class="image-container">
+          <img src="Imagenes perfumes/phantom my hero.jpg" alt="Phantom My Hero" onerror="this.parentElement.innerHTML='<div class=\'no-image\'>Imagen no disponible</div>'" />
+        </div>
+
+        <div class="product-info">
+          <h1 class="product-name">Phantom My Hero</h1>
+          <div class="product-brand">Paris Corner</div>
+
+          <div class="meta-row">
+            <span class="badge badge-category">Masculino</span>
+            <span class="badge badge-size">100ml</span>
+          </div>
+
+          <p class="description">Fragancia heroica con notas potentes y masculinas.</p>
+
+          <div class="prices-box">
+            <div class="price-row">
+              <span class="price-label">Precio Retail</span>
+              <span class="price-value">S/ 119.00</span>
+            </div>
+            <div class="price-row price-original">
+              <span class="price-label">Precio Original</span>
+              <span class="price-value">S/ 99.00</span>
+            </div>
+            
+          </div>
+
+          
+          <div class="notes-section">
+            <h3>Notas Olfativas</h3>
+            <div class="notes-grid">
+              <div class="note-group">
+                <div class="note-label">SALIDA</div>
+                <div class="note-items">Limón · Lavanda</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">CORAZON</div>
+                <div class="note-items">Vetiver · Especias</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">BASE</div>
+                <div class="note-items">Vainilla · Ámbar · Almizcle</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="page-footer">
+        <span>AromaStudio</span>
+        <span>WhatsApp: 903 250 695</span>
+      </div>
+    </div>
+    <div class="page">
+      <div class="page-header">
+        <div class="brand-name">Afnan</div>
+        <div class="page-number">64 / 89</div>
+      </div>
+
+      <div class="product-content">
+        <div class="image-container">
+          <img src="Imagenes perfumes/9 pm set.webp" alt="9 PM Set" onerror="this.parentElement.innerHTML='<div class=\'no-image\'>Imagen no disponible</div>'" />
+        </div>
+
+        <div class="product-info">
+          <h1 class="product-name">9 PM Set</h1>
+          <div class="product-brand">Afnan</div>
+
+          <div class="meta-row">
+            <span class="badge badge-category">Masculino</span>
+            <span class="badge badge-size">Set completo</span>
+          </div>
+
+          <p class="description">Set completo de la línea 9 PM con varias presentaciones.</p>
+
+          <div class="prices-box">
+            <div class="price-row">
+              <span class="price-label">Precio Retail</span>
+              <span class="price-value">S/ 167.00</span>
+            </div>
+            <div class="price-row price-original">
+              <span class="price-label">Precio Original</span>
+              <span class="price-value">S/ 147.00</span>
+            </div>
+            
+          </div>
+
+          
+          <div class="notes-section">
+            <h3>Notas Olfativas</h3>
+            <div class="notes-grid">
+              <div class="note-group">
+                <div class="note-label">SALIDA</div>
+                <div class="note-items">Manzana · Canela · Bergamota</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">CORAZON</div>
+                <div class="note-items">Flor de naranjo · Lirio</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">BASE</div>
+                <div class="note-items">Vainilla · Tonka · Ámbar</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="page-footer">
+        <span>AromaStudio</span>
+        <span>WhatsApp: 903 250 695</span>
+      </div>
+    </div>
+    <div class="page">
+      <div class="page-header">
+        <div class="brand-name">Zimaya</div>
+        <div class="page-number">65 / 89</div>
+      </div>
+
+      <div class="product-content">
+        <div class="image-container">
+          <img src="Imagenes perfumes/zimaya rabab.avif" alt="Zimaya Rabab" onerror="this.parentElement.innerHTML='<div class=\'no-image\'>Imagen no disponible</div>'" />
+        </div>
+
+        <div class="product-info">
+          <h1 class="product-name">Zimaya Rabab</h1>
+          <div class="product-brand">Zimaya</div>
+
+          <div class="meta-row">
+            <span class="badge badge-category">Unisex</span>
+            <span class="badge badge-size">100ml</span>
+          </div>
+
+          <p class="description">Fragancia oriental con notas de oud y especias árabes.</p>
+
+          <div class="prices-box">
+            <div class="price-row">
+              <span class="price-label">Precio Retail</span>
+              <span class="price-value">S/ 118.00</span>
+            </div>
+            <div class="price-row price-original">
+              <span class="price-label">Precio Original</span>
+              <span class="price-value">S/ 98.00</span>
+            </div>
+            
+          </div>
+
+          
+          <div class="notes-section">
+            <h3>Notas Olfativas</h3>
+            <div class="notes-grid">
+              <div class="note-group">
+                <div class="note-label">SALIDA</div>
+                <div class="note-items">Cardamomo · Azafrán</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">CORAZON</div>
+                <div class="note-items">Rosa · Oud</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">BASE</div>
+                <div class="note-items">Ámbar · Sándalo · Vainilla</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="page-footer">
+        <span>AromaStudio</span>
+        <span>WhatsApp: 903 250 695</span>
+      </div>
+    </div>
+    <div class="page">
+      <div class="page-header">
+        <div class="brand-name">Maison Alhambra</div>
+        <div class="page-number">66 / 89</div>
+      </div>
+
+      <div class="product-content">
+        <div class="image-container">
+          <img src="Imagenes perfumes/glacier ultra.webp" alt="Glacier Ultra" onerror="this.parentElement.innerHTML='<div class=\'no-image\'>Imagen no disponible</div>'" />
+        </div>
+
+        <div class="product-info">
+          <h1 class="product-name">Glacier Ultra</h1>
+          <div class="product-brand">Maison Alhambra</div>
+
+          <div class="meta-row">
+            <span class="badge badge-category">Masculino</span>
+            <span class="badge badge-size">100ml</span>
+          </div>
+
+          <p class="description">Frescura glacial extrema con notas heladas.</p>
+
+          <div class="prices-box">
+            <div class="price-row">
+              <span class="price-label">Precio Retail</span>
+              <span class="price-value">S/ 113.00</span>
+            </div>
+            <div class="price-row price-original">
+              <span class="price-label">Precio Original</span>
+              <span class="price-value">S/ 93.00</span>
+            </div>
+            
+          </div>
+
+          
+          <div class="notes-section">
+            <h3>Notas Olfativas</h3>
+            <div class="notes-grid">
+              <div class="note-group">
+                <div class="note-label">SALIDA</div>
+                <div class="note-items">Menta · Notas acuáticas</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">CORAZON</div>
+                <div class="note-items">Lavanda · Geranio</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">BASE</div>
+                <div class="note-items">Almizcle · Cedro · Ámbar</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="page-footer">
+        <span>AromaStudio</span>
+        <span>WhatsApp: 903 250 695</span>
+      </div>
+    </div>
+    <div class="page">
+      <div class="page-header">
+        <div class="brand-name">Maison Alhambra</div>
+        <div class="page-number">67 / 89</div>
+      </div>
+
+      <div class="product-content">
+        <div class="image-container">
+          <img src="Imagenes perfumes/glacier le noir.webp" alt="Glacier Le Noir" onerror="this.parentElement.innerHTML='<div class=\'no-image\'>Imagen no disponible</div>'" />
+        </div>
+
+        <div class="product-info">
+          <h1 class="product-name">Glacier Le Noir</h1>
+          <div class="product-brand">Maison Alhambra</div>
+
+          <div class="meta-row">
+            <span class="badge badge-category">Masculino</span>
+            <span class="badge badge-size">100ml</span>
+          </div>
+
+          <p class="description">Versión oscura del Glacier con notas más profundas.</p>
+
+          <div class="prices-box">
+            <div class="price-row">
+              <span class="price-label">Precio Retail</span>
+              <span class="price-value">S/ 106.00</span>
+            </div>
+            <div class="price-row price-original">
+              <span class="price-label">Precio Original</span>
+              <span class="price-value">S/ 86.00</span>
+            </div>
+            
+          </div>
+
+          
+          <div class="notes-section">
+            <h3>Notas Olfativas</h3>
+            <div class="notes-grid">
+              <div class="note-group">
+                <div class="note-label">SALIDA</div>
+                <div class="note-items">Bergamota · Pimienta</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">CORAZON</div>
+                <div class="note-items">Lavanda · Violeta</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">BASE</div>
+                <div class="note-items">Ámbar · Almizcle · Madera</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="page-footer">
+        <span>AromaStudio</span>
+        <span>WhatsApp: 903 250 695</span>
+      </div>
+    </div>
+    <div class="page">
+      <div class="page-header">
+        <div class="brand-name">Lattafa</div>
+        <div class="page-number">68 / 89</div>
+      </div>
+
+      <div class="product-content">
+        <div class="image-container">
+          <img src="Imagenes perfumes/mayar natural intense.webp" alt="Mayar Natural Intense" onerror="this.parentElement.innerHTML='<div class=\'no-image\'>Imagen no disponible</div>'" />
+        </div>
+
+        <div class="product-info">
+          <h1 class="product-name">Mayar Natural Intense</h1>
+          <div class="product-brand">Lattafa</div>
+
+          <div class="meta-row">
+            <span class="badge badge-category">Femenino</span>
+            <span class="badge badge-size">100ml</span>
+          </div>
+
+          <p class="description">Fragancia natural intensificada con notas florales y amaderadas.</p>
+
+          <div class="prices-box">
+            <div class="price-row">
+              <span class="price-label">Precio Retail</span>
+              <span class="price-value">S/ 126.50</span>
+            </div>
+            <div class="price-row price-original">
+              <span class="price-label">Precio Original</span>
+              <span class="price-value">S/ 106.50</span>
+            </div>
+            
+          </div>
+
+          
+          <div class="notes-section">
+            <h3>Notas Olfativas</h3>
+            <div class="notes-grid">
+              <div class="note-group">
+                <div class="note-label">SALIDA</div>
+                <div class="note-items">Bergamota · Pera</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">CORAZON</div>
+                <div class="note-items">Rosa · Jazmín</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">BASE</div>
+                <div class="note-items">Almizcle · Cedro · Ámbar</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="page-footer">
+        <span>AromaStudio</span>
+        <span>WhatsApp: 903 250 695</span>
+      </div>
+    </div>
+    <div class="page">
+      <div class="page-header">
+        <div class="brand-name">Armaf</div>
+        <div class="page-number">69 / 89</div>
+      </div>
+
+      <div class="product-content">
+        <div class="image-container">
+          <img src="Imagenes perfumes/art natural universe.webp" alt="Art of Universe" onerror="this.parentElement.innerHTML='<div class=\'no-image\'>Imagen no disponible</div>'" />
+        </div>
+
+        <div class="product-info">
+          <h1 class="product-name">Art of Universe</h1>
+          <div class="product-brand">Armaf</div>
+
+          <div class="meta-row">
+            <span class="badge badge-category">Unisex</span>
+            <span class="badge badge-size">100ml</span>
+          </div>
+
+          <p class="description">Obra de arte olfativa con notas complejas y universales.</p>
+
+          <div class="prices-box">
+            <div class="price-row">
+              <span class="price-label">Precio Retail</span>
+              <span class="price-value">S/ 182.00</span>
+            </div>
+            <div class="price-row price-original">
+              <span class="price-label">Precio Original</span>
+              <span class="price-value">S/ 162.00</span>
+            </div>
+            
+          </div>
+
+          
+          <div class="notes-section">
+            <h3>Notas Olfativas</h3>
+            <div class="notes-grid">
+              <div class="note-group">
+                <div class="note-label">SALIDA</div>
+                <div class="note-items">Bergamota · Especias</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">CORAZON</div>
+                <div class="note-items">Iris · Rosa</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">BASE</div>
+                <div class="note-items">Ámbar · Vainilla · Almizcle</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="page-footer">
+        <span>AromaStudio</span>
+        <span>WhatsApp: 903 250 695</span>
+      </div>
+    </div>
+    <div class="page">
+      <div class="page-header">
+        <div class="brand-name">Al Haramain</div>
+        <div class="page-number">70 / 89</div>
+      </div>
+
+      <div class="product-content">
+        <div class="image-container">
+          <img src="Imagenes perfumes/al haramain gold edition 120ml.webp" alt="Gold Edition 120ml" onerror="this.parentElement.innerHTML='<div class=\'no-image\'>Imagen no disponible</div>'" />
+        </div>
+
+        <div class="product-info">
+          <h1 class="product-name">Gold Edition 120ml</h1>
+          <div class="product-brand">Al Haramain</div>
+
+          <div class="meta-row">
+            <span class="badge badge-category">Unisex</span>
+            <span class="badge badge-size">120ml</span>
+          </div>
+
+          <p class="description">Edición dorada premium de 120ml con oud y ámbar de lujo.</p>
+
+          <div class="prices-box">
+            <div class="price-row">
+              <span class="price-label">Precio Retail</span>
+              <span class="price-value">S/ 228.00</span>
+            </div>
+            <div class="price-row price-original">
+              <span class="price-label">Precio Original</span>
+              <span class="price-value">S/ 208.00</span>
+            </div>
+            
+          </div>
+
+          
+          <div class="notes-section">
+            <h3>Notas Olfativas</h3>
+            <div class="notes-grid">
+              <div class="note-group">
+                <div class="note-label">SALIDA</div>
+                <div class="note-items">Ámbar · Rosa</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">CORAZON</div>
+                <div class="note-items">Oud · Azafrán</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">BASE</div>
+                <div class="note-items">Sándalo · Almizcle · Vainilla</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="page-footer">
+        <span>AromaStudio</span>
+        <span>WhatsApp: 903 250 695</span>
+      </div>
+    </div>
+    <div class="page">
+      <div class="page-header">
+        <div class="brand-name">Bharara</div>
+        <div class="page-number">71 / 89</div>
+      </div>
+
+      <div class="product-content">
+        <div class="image-container">
+          <img src="Imagenes perfumes/bharara king edp 100 ml.png" alt="King EDP" onerror="this.parentElement.innerHTML='<div class=\'no-image\'>Imagen no disponible</div>'" />
+        </div>
+
+        <div class="product-info">
+          <h1 class="product-name">King EDP</h1>
+          <div class="product-brand">Bharara</div>
+
+          <div class="meta-row">
+            <span class="badge badge-category">Masculino</span>
+            <span class="badge badge-size">100ml</span>
+          </div>
+
+          <p class="description">Rey de las fragancias con proyección beast mode. Cítrico, frutal y cálido.</p>
+
+          <div class="prices-box">
+            <div class="price-row">
+              <span class="price-label">Precio Retail</span>
+              <span class="price-value">S/ 228.00</span>
+            </div>
+            <div class="price-row price-original">
+              <span class="price-label">Precio Original</span>
+              <span class="price-value">S/ 208.00</span>
+            </div>
+            <div class="price-row price-wholesale">
+              <span class="price-label">Precio Mayoreo</span>
+              <span class="price-value">S/ 177.00</span>
+            </div>
+          </div>
+
+          
+          <div class="notes-section">
+            <h3>Notas Olfativas</h3>
+            <div class="notes-grid">
+              <div class="note-group">
+                <div class="note-label">SALIDA</div>
+                <div class="note-items">Naranja · Bergamota · Limón</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">CORAZON</div>
+                <div class="note-items">Notas frutales</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">BASE</div>
+                <div class="note-items">Vainilla · Almizcle blanco · Ámbar</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="page-footer">
+        <span>AromaStudio</span>
+        <span>WhatsApp: 903 250 695</span>
+      </div>
+    </div>
+    <div class="page">
+      <div class="page-header">
+        <div class="brand-name">Afnan</div>
+        <div class="page-number">72 / 89</div>
+      </div>
+
+      <div class="product-content">
+        <div class="image-container">
+          <img src="Imagenes perfumes/9 am women.webp" alt="9 AM Women" onerror="this.parentElement.innerHTML='<div class=\'no-image\'>Imagen no disponible</div>'" />
+        </div>
+
+        <div class="product-info">
+          <h1 class="product-name">9 AM Women</h1>
+          <div class="product-brand">Afnan</div>
+
+          <div class="meta-row">
+            <span class="badge badge-category">Femenino</span>
+            <span class="badge badge-size">100ml</span>
+          </div>
+
+          <p class="description">Versión femenina del 9 AM con notas florales y frescas.</p>
+
+          <div class="prices-box">
+            <div class="price-row">
+              <span class="price-label">Precio Retail</span>
+              <span class="price-value">S/ 145.00</span>
+            </div>
+            <div class="price-row price-original">
+              <span class="price-label">Precio Original</span>
+              <span class="price-value">S/ 125.00</span>
+            </div>
+            
+          </div>
+
+          
+          <div class="notes-section">
+            <h3>Notas Olfativas</h3>
+            <div class="notes-grid">
+              <div class="note-group">
+                <div class="note-label">SALIDA</div>
+                <div class="note-items">Bergamota · Pera</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">CORAZON</div>
+                <div class="note-items">Rosa · Peonía</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">BASE</div>
+                <div class="note-items">Almizcle · Cedro · Ámbar</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="page-footer">
+        <span>AromaStudio</span>
+        <span>WhatsApp: 903 250 695</span>
+      </div>
+    </div>
+    <div class="page">
+      <div class="page-header">
+        <div class="brand-name">Afnan</div>
+        <div class="page-number">73 / 89</div>
+      </div>
+
+      <div class="product-content">
+        <div class="image-container">
+          <img src="Imagenes perfumes/9 pm women.webp" alt="9 PM Women" onerror="this.parentElement.innerHTML='<div class=\'no-image\'>Imagen no disponible</div>'" />
+        </div>
+
+        <div class="product-info">
+          <h1 class="product-name">9 PM Women</h1>
+          <div class="product-brand">Afnan</div>
+
+          <div class="meta-row">
+            <span class="badge badge-category">Femenino</span>
+            <span class="badge badge-size">100ml</span>
+          </div>
+
+          <p class="description">Versión femenina del 9 PM con vainilla y notas dulces.</p>
+
+          <div class="prices-box">
+            <div class="price-row">
+              <span class="price-label">Precio Retail</span>
+              <span class="price-value">S/ 145.00</span>
+            </div>
+            <div class="price-row price-original">
+              <span class="price-label">Precio Original</span>
+              <span class="price-value">S/ 125.00</span>
+            </div>
+            
+          </div>
+
+          
+          <div class="notes-section">
+            <h3>Notas Olfativas</h3>
+            <div class="notes-grid">
+              <div class="note-group">
+                <div class="note-label">SALIDA</div>
+                <div class="note-items">Bergamota · Frambuesa</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">CORAZON</div>
+                <div class="note-items">Rosa · Jazmín</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">BASE</div>
+                <div class="note-items">Vainilla · Almizcle · Ámbar</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="page-footer">
+        <span>AromaStudio</span>
+        <span>WhatsApp: 903 250 695</span>
+      </div>
+    </div>
+    <div class="page">
+      <div class="page-header">
+        <div class="brand-name">Afnan</div>
+        <div class="page-number">74 / 89</div>
+      </div>
+
+      <div class="product-content">
+        <div class="image-container">
+          <img src="Imagenes perfumes/9 pm elixir.webp" alt="9 PM Elixir" onerror="this.parentElement.innerHTML='<div class=\'no-image\'>Imagen no disponible</div>'" />
+        </div>
+
+        <div class="product-info">
+          <h1 class="product-name">9 PM Elixir</h1>
+          <div class="product-brand">Afnan</div>
+
+          <div class="meta-row">
+            <span class="badge badge-category">Unisex</span>
+            <span class="badge badge-size">100ml</span>
+          </div>
+
+          <p class="description">Versión elixir concentrada del 9 PM con mayor intensidad.</p>
+
+          <div class="prices-box">
+            <div class="price-row">
+              <span class="price-label">Precio Retail</span>
+              <span class="price-value">S/ 160.00</span>
+            </div>
+            <div class="price-row price-original">
+              <span class="price-label">Precio Original</span>
+              <span class="price-value">S/ 140.00</span>
+            </div>
+            <div class="price-row price-wholesale">
+              <span class="price-label">Precio Mayoreo</span>
+              <span class="price-value">S/ 118.00</span>
+            </div>
+          </div>
+
+          
+          <div class="notes-section">
+            <h3>Notas Olfativas</h3>
+            <div class="notes-grid">
+              <div class="note-group">
+                <div class="note-label">SALIDA</div>
+                <div class="note-items">Menta · Canela</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">CORAZON</div>
+                <div class="note-items">Lavanda · Vainilla</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">BASE</div>
+                <div class="note-items">Tonka · Ámbar · Cuero</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="page-footer">
+        <span>AromaStudio</span>
+        <span>WhatsApp: 903 250 695</span>
+      </div>
+    </div>
+    <div class="page">
+      <div class="page-header">
+        <div class="brand-name">Lattafa</div>
+        <div class="page-number">75 / 89</div>
+      </div>
+
+      <div class="product-content">
+        <div class="image-container">
+          <img src="Imagenes perfumes/ramz.webp" alt="Ramz" onerror="this.parentElement.innerHTML='<div class=\'no-image\'>Imagen no disponible</div>'" />
+        </div>
+
+        <div class="product-info">
+          <h1 class="product-name">Ramz</h1>
+          <div class="product-brand">Lattafa</div>
+
+          <div class="meta-row">
+            <span class="badge badge-category">Masculino</span>
+            <span class="badge badge-size">100ml</span>
+          </div>
+
+          <p class="description">El perfume más económico de la colección. Fresco y versátil.</p>
+
+          <div class="prices-box">
+            <div class="price-row">
+              <span class="price-label">Precio Retail</span>
+              <span class="price-value">S/ 100.00</span>
+            </div>
+            <div class="price-row price-original">
+              <span class="price-label">Precio Original</span>
+              <span class="price-value">S/ 80.00</span>
+            </div>
+            
+          </div>
+
+          
+          <div class="notes-section">
+            <h3>Notas Olfativas</h3>
+            <div class="notes-grid">
+              <div class="note-group">
+                <div class="note-label">SALIDA</div>
+                <div class="note-items">Bergamota · Limón</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">CORAZON</div>
+                <div class="note-items">Lavanda · Especias</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">BASE</div>
+                <div class="note-items">Cedro · Almizcle</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="page-footer">
+        <span>AromaStudio</span>
+        <span>WhatsApp: 903 250 695</span>
+      </div>
+    </div>
+    <div class="page">
+      <div class="page-header">
+        <div class="brand-name">Rasasi</div>
+        <div class="page-number">76 / 89</div>
+      </div>
+
+      <div class="product-content">
+        <div class="image-container">
+          <img src="Imagenes perfumes/hawas elixir.webp" alt="Hawas Elixir" onerror="this.parentElement.innerHTML='<div class=\'no-image\'>Imagen no disponible</div>'" />
+        </div>
+
+        <div class="product-info">
+          <h1 class="product-name">Hawas Elixir</h1>
+          <div class="product-brand">Rasasi</div>
+
+          <div class="meta-row">
+            <span class="badge badge-category">Masculino</span>
+            <span class="badge badge-size">100ml</span>
+          </div>
+
+          <p class="description">Versión elixir del famoso Hawas con mayor concentración.</p>
+
+          <div class="prices-box">
+            <div class="price-row">
+              <span class="price-label">Precio Retail</span>
+              <span class="price-value">S/ 153.00</span>
+            </div>
+            <div class="price-row price-original">
+              <span class="price-label">Precio Original</span>
+              <span class="price-value">S/ 133.00</span>
+            </div>
+            <div class="price-row price-wholesale">
+              <span class="price-label">Precio Mayoreo</span>
+              <span class="price-value">S/ 100.00</span>
+            </div>
+          </div>
+
+          
+          <div class="notes-section">
+            <h3>Notas Olfativas</h3>
+            <div class="notes-grid">
+              <div class="note-group">
+                <div class="note-label">SALIDA</div>
+                <div class="note-items">Bergamota · Manzana</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">CORAZON</div>
+                <div class="note-items">Notas marinas · Especias</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">BASE</div>
+                <div class="note-items">Ámbar · Almizcle · Vainilla</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="page-footer">
+        <span>AromaStudio</span>
+        <span>WhatsApp: 903 250 695</span>
+      </div>
+    </div>
+    <div class="page">
+      <div class="page-header">
+        <div class="brand-name">Armaf</div>
+        <div class="page-number">77 / 89</div>
+      </div>
+
+      <div class="product-content">
+        <div class="image-container">
+          <img src="Imagenes perfumes/odyssey candy.webp" alt="Odyssey Candy" onerror="this.parentElement.innerHTML='<div class=\'no-image\'>Imagen no disponible</div>'" />
+        </div>
+
+        <div class="product-info">
+          <h1 class="product-name">Odyssey Candy</h1>
+          <div class="product-brand">Armaf</div>
+
+          <div class="meta-row">
+            <span class="badge badge-category">Unisex</span>
+            <span class="badge badge-size">100ml</span>
+          </div>
+
+          <p class="description">Fragancia gourmand dulce con notas de caramelo y frutas. Irresistible y adictiva.</p>
+
+          <div class="prices-box">
+            <div class="price-row">
+              <span class="price-label">Precio Retail</span>
+              <span class="price-value">S/ 150.00</span>
+            </div>
+            <div class="price-row price-original">
+              <span class="price-label">Precio Original</span>
+              <span class="price-value">S/ 130.00</span>
+            </div>
+            <div class="price-row price-wholesale">
+              <span class="price-label">Precio Mayoreo</span>
+              <span class="price-value">S/ 100.00</span>
+            </div>
+          </div>
+
+          
+          <div class="notes-section">
+            <h3>Notas Olfativas</h3>
+            <div class="notes-grid">
+              <div class="note-group">
+                <div class="note-label">SALIDA</div>
+                <div class="note-items">Caramelo · Frutas rojas</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">CORAZON</div>
+                <div class="note-items">Vainilla · Flores dulces</div>
+              </div>
+              <div class="note-group">
+                <div class="note-label">BASE</div>
+                <div class="note-items">Almizcle · Ámbar · Sándalo</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="page-footer">
+        <span>AromaStudio</span>
+        <span>WhatsApp: 903 250 695</span>
+      </div>
+    </div>
+    <div class="page">
+      <div class="page-header">
+        <div class="brand-name">Afnan</div>
+        <div class="page-number">78 / 89</div>
+      </div>
+
+      <div class="product-content">
+        <div class="image-container">
+          <img src="Imagenes perfumes/9 pm rebel.webp" alt="9PM Rebel" onerror="this.parentElement.innerHTML='<div class=\'no-image\'>Imagen no disponible</div>'" />
+        </div>
+
+        <div class="product-info">
+          <h1 class="product-name">9PM Rebel</h1>
+          <div class="product-brand">Afnan</div>
+
+          <div class="meta-row">
+            <span class="badge badge-wholesale">Mayoreo</span>
+          </div>
+
+          <p class="description">Versión rebelde del 9 PM con notas más oscuras e intensas.</p>
+
+          <div class="prices-box">
+            <div class="price-row price-wholesale">
+              <span class="price-label">Precio Mayoreo</span>
+              <span class="price-value">S/ 118.00</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="page-footer">
+        <span>AromaStudio</span>
+        <span>WhatsApp: 903 250 695</span>
+      </div>
+    </div>
+    <div class="page">
+      <div class="page-header">
+        <div class="brand-name">Zimaya</div>
+        <div class="page-number">79 / 89</div>
+      </div>
+
+      <div class="product-content">
+        <div class="image-container">
+          <img src="Imagenes perfumes/tiramisu.webp" alt="Tiramisu" onerror="this.parentElement.innerHTML='<div class=\'no-image\'>Imagen no disponible</div>'" />
+        </div>
+
+        <div class="product-info">
+          <h1 class="product-name">Tiramisu</h1>
+          <div class="product-brand">Zimaya</div>
+
+          <div class="meta-row">
+            <span class="badge badge-wholesale">Mayoreo</span>
+          </div>
+
+          <p class="description">Fragancia gourmand con notas de tiramisú, café y vainilla.</p>
+
+          <div class="prices-box">
+            <div class="price-row price-wholesale">
+              <span class="price-label">Precio Mayoreo</span>
+              <span class="price-value">S/ 118.00</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="page-footer">
+        <span>AromaStudio</span>
+        <span>WhatsApp: 903 250 695</span>
+      </div>
+    </div>
+    <div class="page">
+      <div class="page-header">
+        <div class="brand-name">Lattafa</div>
+        <div class="page-number">80 / 89</div>
+      </div>
+
+      <div class="product-content">
+        <div class="image-container">
+          <img src="Imagenes perfumes/amethyst.webp" alt="Amethyst" onerror="this.parentElement.innerHTML='<div class=\'no-image\'>Imagen no disponible</div>'" />
+        </div>
+
+        <div class="product-info">
+          <h1 class="product-name">Amethyst</h1>
+          <div class="product-brand">Lattafa</div>
+
+          <div class="meta-row">
+            <span class="badge badge-wholesale">Mayoreo</span>
+          </div>
+
+          <p class="description">Fragancia elegante con notas florales y amaderadas.</p>
+
+          <div class="prices-box">
+            <div class="price-row price-wholesale">
+              <span class="price-label">Precio Mayoreo</span>
+              <span class="price-value">S/ 92.00</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="page-footer">
+        <span>AromaStudio</span>
+        <span>WhatsApp: 903 250 695</span>
+      </div>
+    </div>
+    <div class="page">
+      <div class="page-header">
+        <div class="brand-name">Lattafa</div>
+        <div class="page-number">81 / 89</div>
+      </div>
+
+      <div class="product-content">
+        <div class="image-container">
+          <img src="Imagenes perfumes/fkahar black.jpg" alt="Fakhar Black" onerror="this.parentElement.innerHTML='<div class=\'no-image\'>Imagen no disponible</div>'" />
+        </div>
+
+        <div class="product-info">
+          <h1 class="product-name">Fakhar Black</h1>
+          <div class="product-brand">Lattafa</div>
+
+          <div class="meta-row">
+            <span class="badge badge-wholesale">Mayoreo</span>
+          </div>
+
+          <p class="description">Edición negra del Fakhar con notas oscuras y misteriosas.</p>
+
+          <div class="prices-box">
+            <div class="price-row price-wholesale">
+              <span class="price-label">Precio Mayoreo</span>
+              <span class="price-value">S/ 92.00</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="page-footer">
+        <span>AromaStudio</span>
+        <span>WhatsApp: 903 250 695</span>
+      </div>
+    </div>
+    <div class="page">
+      <div class="page-header">
+        <div class="brand-name">Lattafa</div>
+        <div class="page-number">82 / 89</div>
+      </div>
+
+      <div class="product-content">
+        <div class="image-container">
+          <img src="Imagenes perfumes/fakhar rose.png" alt="Fakhar Rose" onerror="this.parentElement.innerHTML='<div class=\'no-image\'>Imagen no disponible</div>'" />
+        </div>
+
+        <div class="product-info">
+          <h1 class="product-name">Fakhar Rose</h1>
+          <div class="product-brand">Lattafa</div>
+
+          <div class="meta-row">
+            <span class="badge badge-wholesale">Mayoreo</span>
+          </div>
+
+          <p class="description">Versión floral del Fakhar con rosa como nota protagonista.</p>
+
+          <div class="prices-box">
+            <div class="price-row price-wholesale">
+              <span class="price-label">Precio Mayoreo</span>
+              <span class="price-value">S/ 92.00</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="page-footer">
+        <span>AromaStudio</span>
+        <span>WhatsApp: 903 250 695</span>
+      </div>
+    </div>
+    <div class="page">
+      <div class="page-header">
+        <div class="brand-name">Lattafa</div>
+        <div class="page-number">83 / 89</div>
+      </div>
+
+      <div class="product-content">
+        <div class="image-container">
+          <img src="Imagenes perfumes/asad elixir.jpg" alt="Asad Elixir" onerror="this.parentElement.innerHTML='<div class=\'no-image\'>Imagen no disponible</div>'" />
+        </div>
+
+        <div class="product-info">
+          <h1 class="product-name">Asad Elixir</h1>
+          <div class="product-brand">Lattafa</div>
+
+          <div class="meta-row">
+            <span class="badge badge-wholesale">Mayoreo</span>
+          </div>
+
+          <p class="description">Versión elixir concentrada del popular Asad.</p>
+
+          <div class="prices-box">
+            <div class="price-row price-wholesale">
+              <span class="price-label">Precio Mayoreo</span>
+              <span class="price-value">S/ 118.00</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="page-footer">
+        <span>AromaStudio</span>
+        <span>WhatsApp: 903 250 695</span>
+      </div>
+    </div>
+    <div class="page">
+      <div class="page-header">
+        <div class="brand-name">Lattafa</div>
+        <div class="page-number">84 / 89</div>
+      </div>
+
+      <div class="product-content">
+        <div class="image-container">
+          <img src="Imagenes perfumes/yara elixir.jpg" alt="Yara Elixir" onerror="this.parentElement.innerHTML='<div class=\'no-image\'>Imagen no disponible</div>'" />
+        </div>
+
+        <div class="product-info">
+          <h1 class="product-name">Yara Elixir</h1>
+          <div class="product-brand">Lattafa</div>
+
+          <div class="meta-row">
+            <span class="badge badge-wholesale">Mayoreo</span>
+          </div>
+
+          <p class="description">Versión elixir del exitoso Yara con mayor intensidad.</p>
+
+          <div class="prices-box">
+            <div class="price-row price-wholesale">
+              <span class="price-label">Precio Mayoreo</span>
+              <span class="price-value">S/ 118.00</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="page-footer">
+        <span>AromaStudio</span>
+        <span>WhatsApp: 903 250 695</span>
+      </div>
+    </div>
+    <div class="page">
+      <div class="page-header">
+        <div class="brand-name">Lattafa</div>
+        <div class="page-number">85 / 89</div>
+      </div>
+
+      <div class="product-content">
+        <div class="image-container">
+          <img src="Imagenes perfumes/jasoor.jpg" alt="Jasoor" onerror="this.parentElement.innerHTML='<div class=\'no-image\'>Imagen no disponible</div>'" />
+        </div>
+
+        <div class="product-info">
+          <h1 class="product-name">Jasoor</h1>
+          <div class="product-brand">Lattafa</div>
+
+          <div class="meta-row">
+            <span class="badge badge-wholesale">Mayoreo</span>
+          </div>
+
+          <p class="description">Fragancia audaz y masculina con notas amaderadas.</p>
+
+          <div class="prices-box">
+            <div class="price-row price-wholesale">
+              <span class="price-label">Precio Mayoreo</span>
+              <span class="price-value">S/ 100.00</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="page-footer">
+        <span>AromaStudio</span>
+        <span>WhatsApp: 903 250 695</span>
+      </div>
+    </div>
+    <div class="page">
+      <div class="page-header">
+        <div class="brand-name">Lattafa</div>
+        <div class="page-number">86 / 89</div>
+      </div>
+
+      <div class="product-content">
+        <div class="image-container">
+          <img src="Imagenes perfumes/atlas.png" alt="Atlas" onerror="this.parentElement.innerHTML='<div class=\'no-image\'>Imagen no disponible</div>'" />
+        </div>
+
+        <div class="product-info">
+          <h1 class="product-name">Atlas</h1>
+          <div class="product-brand">Lattafa</div>
+
+          <div class="meta-row">
+            <span class="badge badge-wholesale">Mayoreo</span>
+          </div>
+
+          <p class="description">Fragancia inspirada en viajes con notas especiadas.</p>
+
+          <div class="prices-box">
+            <div class="price-row price-wholesale">
+              <span class="price-label">Precio Mayoreo</span>
+              <span class="price-value">S/ 118.00</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="page-footer">
+        <span>AromaStudio</span>
+        <span>WhatsApp: 903 250 695</span>
+      </div>
+    </div>
+    <div class="page">
+      <div class="page-header">
+        <div class="brand-name">Lattafa</div>
+        <div class="page-number">87 / 89</div>
+      </div>
+
+      <div class="product-content">
+        <div class="image-container">
+          <img src="Imagenes perfumes/fire on ice.jpg" alt="Fire on Ice" onerror="this.parentElement.innerHTML='<div class=\'no-image\'>Imagen no disponible</div>'" />
+        </div>
+
+        <div class="product-info">
+          <h1 class="product-name">Fire on Ice</h1>
+          <div class="product-brand">Lattafa</div>
+
+          <div class="meta-row">
+            <span class="badge badge-wholesale">Mayoreo</span>
+          </div>
+
+          <p class="description">Contraste de notas calientes y frescas en una fragancia única.</p>
+
+          <div class="prices-box">
+            <div class="price-row price-wholesale">
+              <span class="price-label">Precio Mayoreo</span>
+              <span class="price-value">S/ 130.00</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="page-footer">
+        <span>AromaStudio</span>
+        <span>WhatsApp: 903 250 695</span>
+      </div>
+    </div>
+    <div class="page">
+      <div class="page-header">
+        <div class="brand-name">Lattafa</div>
+        <div class="page-number">88 / 89</div>
+      </div>
+
+      <div class="product-content">
+        <div class="image-container">
+          <img src="Imagenes perfumes/pisa pride.png" alt="Pisa Pride" onerror="this.parentElement.innerHTML='<div class=\'no-image\'>Imagen no disponible</div>'" />
+        </div>
+
+        <div class="product-info">
+          <h1 class="product-name">Pisa Pride</h1>
+          <div class="product-brand">Lattafa</div>
+
+          <div class="meta-row">
+            <span class="badge badge-wholesale">Mayoreo</span>
+          </div>
+
+          <p class="description">Fragancia orgullosa con notas italianas elegantes.</p>
+
+          <div class="prices-box">
+            <div class="price-row price-wholesale">
+              <span class="price-label">Precio Mayoreo</span>
+              <span class="price-value">S/ 130.00</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="page-footer">
+        <span>AromaStudio</span>
+        <span>WhatsApp: 903 250 695</span>
+      </div>
+    </div>
+    <div class="page">
+      <div class="page-header">
+        <div class="brand-name">Lattafa</div>
+        <div class="page-number">89 / 89</div>
+      </div>
+
+      <div class="product-content">
+        <div class="image-container">
+          <img src="Imagenes perfumes/mango ice.jpg" alt="Mango Ice" onerror="this.parentElement.innerHTML='<div class=\'no-image\'>Imagen no disponible</div>'" />
+        </div>
+
+        <div class="product-info">
+          <h1 class="product-name">Mango Ice</h1>
+          <div class="product-brand">Lattafa</div>
+
+          <div class="meta-row">
+            <span class="badge badge-wholesale">Mayoreo</span>
+          </div>
+
+          <p class="description">Fragancia tropical refrescante con mango y notas heladas.</p>
+
+          <div class="prices-box">
+            <div class="price-row price-wholesale">
+              <span class="price-label">Precio Mayoreo</span>
+              <span class="price-value">S/ 100.00</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="page-footer">
+        <span>AromaStudio</span>
+        <span>WhatsApp: 903 250 695</span>
+      </div>
+    </div>
+
+  <!-- ═══ PRINT BUTTON ═══ -->
+  <div class="no-print" style="position:fixed;bottom:20px;right:20px;z-index:1000;">
+    <button onclick="window.print()" style="
+      background:#C9A227;color:#fff;border:none;padding:15px 30px;
+      font-size:14pt;border-radius:8px;cursor:pointer;
+      box-shadow:0 4px 12px rgba(0,0,0,0.2);font-weight:600;
+    ">Imprimir / Guardar PDF</button>
+  </div>
+</body>
+</html>
