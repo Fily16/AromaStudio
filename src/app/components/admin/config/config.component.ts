@@ -29,7 +29,10 @@ export class ConfigComponent implements OnInit {
     miami_shipping_threshold: 'Umbral Envío Miami (USD)',
     miami_shipping_extra: 'Costo Extra Miami (USD)',
     wholesale_profit_per_unit: 'Ganancia por Unidad Consolidado (S/)',
-    deposit_per_unit: 'Separación por Perfume (S/)'
+    deposit_per_unit: 'Separación por Perfume (S/)',
+    google_script_url: 'Google Apps Script - Web App URL',
+    google_form_url: 'Google Form URL',
+    google_sheet_url: 'Google Sheet URL'
   };
 
   ngOnInit() { this.load(); }
