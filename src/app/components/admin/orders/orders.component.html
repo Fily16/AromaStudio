@@ -7,6 +7,7 @@
       <a routerLink="/admin/products" class="nav-link">Productos</a>
       <a routerLink="/admin/stock-purchase" class="nav-link">Compra Tienda</a>
       <a routerLink="/admin/inventory" class="nav-link">Inventario</a>
+      <a routerLink="/admin/ventas" class="nav-link">Ventas</a>
       <a routerLink="/admin/config" class="nav-link">Config</a>
     </div>
   </nav>
@@ -86,7 +87,6 @@
         <div class="consolidado-stats">
           <span>Inversión: S/ {{ c.totalInvestmentPen | number:'1.2-2' }}</span>
           <span>Courier: ${{ c.courierCostUsd | number:'1.2-2' }} USD</span>
-          <span>Ganancia: S/ {{ c.projectedProfitPen | number:'1.2-2' }}</span>
           <span>Peso: {{ c.totalWeightG }}g</span>
         </div>
         <div class="consolidado-actions">
@@ -171,13 +171,6 @@
               <div class="bd-divider"></div>
               <div class="bd-row"><span>T/C</span><span>{{ breakdown()!.total.exchangeRate | number:'1.2-2' }}</span></div>
               <div class="bd-row hl"><span>Inversión</span><span>S/ {{ breakdown()!.total.totalInvestmentPen | number:'1.2-2' }}</span></div>
-              <div class="bd-divider"></div>
-              @if (breakdown()!.total.totalRevenuePen !== null) {
-                <div class="bd-row"><span>Ingresos</span><span>S/ {{ breakdown()!.total.totalRevenuePen | number:'1.2-2' }}</span></div>
-              }
-              @if (breakdown()!.total.profitPen !== null) {
-                <div class="bd-row profit"><span>Ganancia</span><span>S/ {{ breakdown()!.total.profitPen | number:'1.2-2' }}</span></div>
-              }
             </div>
           </div>
         }

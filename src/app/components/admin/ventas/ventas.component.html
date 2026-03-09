@@ -1,0 +1,173 @@
+<div class="admin-page">
+  <nav class="admin-nav">
+    <div class="nav-brand"><span class="brand-name">AromaStudio</span><span class="brand-tag">Admin</span></div>
+    <div class="nav-links">
+      <a routerLink="/admin" class="nav-link">Dashboard</a>
+      <a routerLink="/admin/orders" class="nav-link">Pedidos</a>
+      <a routerLink="/admin/products" class="nav-link">Productos</a>
+      <a routerLink="/admin/stock-purchase" class="nav-link">Compra Tienda</a>
+      <a routerLink="/admin/inventory" class="nav-link">Inventario</a>
+      <a routerLink="/admin/ventas" class="nav-link active">Ventas</a>
+      <a routerLink="/admin/config" class="nav-link">Config</a>
+    </div>
+  </nav>
+
+  <div class="admin-content">
+    <div class="page-header">
+      <h1>Registro de Ventas</h1>
+      <div class="header-actions">
+        <button class="tab-btn" [class.active]="tab() === 'dashboard'" (click)="setTab('dashboard')">Dashboard</button>
+        <button class="tab-btn" [class.active]="tab() === 'ventas'" (click)="setTab('ventas')">Historial</button>
+        <button class="tab-btn" [class.active]="tab() === 'config'" (click)="setTab('config')">Setup</button>
+      </div>
+    </div>
+
+    @if (message()) {
+      <div class="message" [class.error]="message().startsWith('Error')">{{ message() }}</div>
+    }
+
+    <!-- Action buttons -->
+    <div class="action-bar">
+      <button class="action-btn primary" (click)="openForm()" [disabled]="!formUrl()">
+        Registrar Venta
+      </button>
+      <button class="action-btn" (click)="syncStock()" [disabled]="syncing() || !scriptUrl()">
+        {{ syncing() ? 'Sincronizando...' : 'Sincronizar Stock' }}
+      </button>
+      <button class="action-btn" (click)="openSheet()" [disabled]="!sheetUrl()">
+        Ver Google Sheet
+      </button>
+      <button class="action-btn" (click)="loadStats(); loadVentas()" [disabled]="!scriptUrl()">
+        Actualizar
+      </button>
+    </div>
+
+    <!-- DASHBOARD TAB -->
+    @if (tab() === 'dashboard') {
+      @if (!scriptUrl()) {
+        <div class="setup-prompt">
+          <h3>Configura Google Sheets</h3>
+          <p>Para usar el registro de ventas, necesitas configurar las URLs de Google Sheets.</p>
+          <button class="action-btn primary" (click)="setTab('config')">Ir a Setup</button>
+        </div>
+      } @else if (stats(); as s) {
+        <div class="stats-grid">
+          <div class="stat-card">
+            <span class="stat-value">{{ s.totalVentas }}</span>
+            <span class="stat-label">Ventas Totales</span>
+          </div>
+          <div class="stat-card highlight">
+            <span class="stat-value">S/ {{ s.totalIngresos | number:'1.2-2' }}</span>
+            <span class="stat-label">Ingresos</span>
+          </div>
+          <div class="stat-card profit">
+            <span class="stat-value">S/ {{ s.totalGanancia | number:'1.2-2' }}</span>
+            <span class="stat-label">Ganancia Tienda</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-value">{{ s.totalStock }}</span>
+            <span class="stat-label">Unidades en Stock</span>
+          </div>
+        </div>
+
+        <!-- Ventas por canal -->
+        @if (canalKeys().length > 0) {
+          <div class="section">
+            <h3>Ventas por Canal</h3>
+            <div class="canal-grid">
+              @for (canal of canalKeys(); track canal) {
+                <div class="canal-card">
+                  <span class="canal-name">{{ canal }}</span>
+                  <span class="canal-value">S/ {{ s.porCanal[canal] | number:'1.2-2' }}</span>
+                </div>
+              }
+            </div>
+          </div>
+        }
+      } @else if (loading()) {
+        <p class="loading">Cargando datos...</p>
+      }
+    }
+
+    <!-- HISTORIAL TAB -->
+    @if (tab() === 'ventas') {
+      @if (ventas().length === 0) {
+        <p class="empty">No hay ventas registradas</p>
+      } @else {
+        <div class="ventas-table-wrap">
+          <table class="ventas-table">
+            <thead>
+              <tr>
+                <th>Fecha</th>
+                <th>Producto</th>
+                <th>Cant</th>
+                <th>Precio</th>
+                <th>Costo</th>
+                <th>Subtotal</th>
+                <th>Ganancia</th>
+                <th>Canal</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (v of ventas(); track $index) {
+                <tr>
+                  <td class="date-col">{{ v.fecha }}</td>
+                  <td>{{ v.marca }} - {{ v.producto }}</td>
+                  <td class="num-col">{{ v.cantidad }}</td>
+                  <td class="num-col">S/ {{ v.precioVenta | number:'1.2-2' }}</td>
+                  <td class="num-col">S/ {{ v.costoUnit | number:'1.2-2' }}</td>
+                  <td class="num-col">S/ {{ v.subtotal | number:'1.2-2' }}</td>
+                  <td class="num-col" [class.positive]="v.ganancia > 0" [class.negative]="v.ganancia < 0">
+                    S/ {{ v.ganancia | number:'1.2-2' }}
+                  </td>
+                  <td><span class="canal-badge">{{ v.canal }}</span></td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    }
+
+    <!-- CONFIG/SETUP TAB -->
+    @if (tab() === 'config') {
+      <div class="setup-section">
+        <h3>Como configurar Google Sheets</h3>
+        <ol class="setup-steps">
+          <li>Crea un <strong>Google Sheet nuevo</strong></li>
+          <li>Ve a <strong>Extensiones > Apps Script</strong></li>
+          <li>Pega el codigo del archivo <code>google-sheets/apps-script.gs</code></li>
+          <li>Ejecuta la funcion <strong>setup</strong> (boton Play)</li>
+          <li>Acepta los permisos de Google</li>
+          <li>Ve a <strong>Implementar > Nueva implementacion > App web</strong></li>
+          <li>Pon "Ejecutar como: Yo" y "Acceso: Cualquier persona"</li>
+          <li>Copia la <strong>URL del Web App</strong></li>
+          <li>Ve a <a routerLink="/admin/config" class="link">Config</a> y agrega estas claves:
+            <ul>
+              <li><code>google_script_url</code> = URL del Web App</li>
+              <li><code>google_form_url</code> = URL del formulario (lo da el setup)</li>
+              <li><code>google_sheet_url</code> = URL del Google Sheet</li>
+            </ul>
+          </li>
+          <li>Guarda la URL del formulario en tu celular para acceso rapido</li>
+        </ol>
+
+        <div class="config-status">
+          <h4>Estado actual:</h4>
+          <div class="config-row">
+            <span>Web App URL:</span>
+            <span [class.ok]="scriptUrl()" [class.missing]="!scriptUrl()">{{ scriptUrl() || 'No configurado' }}</span>
+          </div>
+          <div class="config-row">
+            <span>Form URL:</span>
+            <span [class.ok]="formUrl()" [class.missing]="!formUrl()">{{ formUrl() || 'No configurado' }}</span>
+          </div>
+          <div class="config-row">
+            <span>Sheet URL:</span>
+            <span [class.ok]="sheetUrl()" [class.missing]="!sheetUrl()">{{ sheetUrl() || 'No configurado' }}</span>
+          </div>
+        </div>
+      </div>
+    }
+  </div>
+</div>

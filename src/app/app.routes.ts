@@ -44,6 +44,11 @@ export const routes: Routes = [
     loadComponent: () => import('./components/admin/inventory/inventory.component').then(m => m.InventoryComponent)
   },
   {
+    path: 'admin/ventas',
+    canActivate: [authGuard],
+    loadComponent: () => import('./components/admin/ventas/ventas.component').then(m => m.VentasComponent)
+  },
+  {
     path: 'admin/config',
     canActivate: [authGuard],
     loadComponent: () => import('./components/admin/config/config.component').then(m => m.ConfigComponent)
