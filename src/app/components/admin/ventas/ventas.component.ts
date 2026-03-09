@@ -50,6 +50,12 @@ export class VentasComponent implements OnInit {
   loading = signal(false);
   message = signal('');
   tab = signal<'dashboard' | 'ventas' | 'config'>('dashboard');
+  saving = signal(false);
+
+  // Editable URL fields
+  editScriptUrl = signal('');
+  editFormUrl = signal('');
+  editSheetUrl = signal('');
 
   // Products for sync
   products = signal<Product[]>([]);
@@ -67,12 +73,66 @@ export class VentasComponent implements OnInit {
           if (c.configKey === 'google_form_url') this.formUrl.set(c.configValue);
           if (c.configKey === 'google_sheet_url') this.sheetUrl.set(c.configValue);
         }
+        // Sync edit fields with current values
+        this.editScriptUrl.set(this.scriptUrl());
+        this.editFormUrl.set(this.formUrl());
+        this.editSheetUrl.set(this.sheetUrl());
+
         if (this.scriptUrl()) {
           this.loadStats();
           this.loadVentas();
         }
       }
     });
+  }
+
+  saveUrls() {
+    this.saving.set(true);
+    this.message.set('Guardando URLs...');
+
+    const updates: { key: string; value: string }[] = [];
+    if (this.editScriptUrl().trim()) updates.push({ key: 'google_script_url', value: this.editScriptUrl().trim() });
+    if (this.editFormUrl().trim()) updates.push({ key: 'google_form_url', value: this.editFormUrl().trim() });
+    if (this.editSheetUrl().trim()) updates.push({ key: 'google_sheet_url', value: this.editSheetUrl().trim() });
+
+    if (updates.length === 0) {
+      this.message.set('Ingresa al menos una URL');
+      this.saving.set(false);
+      return;
+    }
+
+    let completed = 0;
+    let errors = 0;
+    for (const u of updates) {
+      this.api.updateConfig(u.key, u.value).subscribe({
+        next: () => {
+          completed++;
+          if (completed + errors === updates.length) this.onSaveComplete(errors);
+        },
+        error: () => {
+          errors++;
+          if (completed + errors === updates.length) this.onSaveComplete(errors);
+        }
+      });
+    }
+  }
+
+  private onSaveComplete(errors: number) {
+    this.saving.set(false);
+    if (errors > 0) {
+      this.message.set('Error al guardar algunas URLs. Revisa que estés logueado.');
+    } else {
+      this.message.set('URLs guardadas correctamente!');
+      this.loadConfig();
+    }
+    setTimeout(() => this.message.set(''), 4000);
+  }
+
+  setEditUrl(field: 'script' | 'form' | 'sheet', event: Event) {
+    const value = (event.target as HTMLInputElement).value;
+    if (field === 'script') this.editScriptUrl.set(value);
+    else if (field === 'form') this.editFormUrl.set(value);
+    else this.editSheetUrl.set(value);
   }
 
   loadStats() {

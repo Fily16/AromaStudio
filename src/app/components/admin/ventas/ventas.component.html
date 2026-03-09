@@ -131,42 +131,75 @@
 
     <!-- CONFIG/SETUP TAB -->
     @if (tab() === 'config') {
+      <!-- URL CONFIGURATION FORM -->
       <div class="setup-section">
-        <h3>Como configurar Google Sheets</h3>
+        <h3>Configurar URLs de Google</h3>
+        <p class="setup-desc">Pega aqui las URLs de tu Google Apps Script, Form y Sheet.</p>
+
+        <div class="url-form">
+          <div class="url-field">
+            <label>Web App URL <span class="required">*</span></label>
+            <div class="url-input-row">
+              <input type="url"
+                placeholder="https://script.google.com/macros/s/.../exec"
+                [value]="editScriptUrl()"
+                (input)="setEditUrl('script', $event)" />
+              @if (scriptUrl()) {
+                <span class="status-dot ok"></span>
+              }
+            </div>
+            <span class="url-hint">La URL de tu Web App (Implementar > App web)</span>
+          </div>
+
+          <div class="url-field">
+            <label>Google Form URL</label>
+            <div class="url-input-row">
+              <input type="url"
+                placeholder="https://docs.google.com/forms/d/.../viewform"
+                [value]="editFormUrl()"
+                (input)="setEditUrl('form', $event)" />
+              @if (formUrl()) {
+                <span class="status-dot ok"></span>
+              }
+            </div>
+            <span class="url-hint">La URL del formulario (aparece en el log al ejecutar setup)</span>
+          </div>
+
+          <div class="url-field">
+            <label>Google Sheet URL</label>
+            <div class="url-input-row">
+              <input type="url"
+                placeholder="https://docs.google.com/spreadsheets/d/..."
+                [value]="editSheetUrl()"
+                (input)="setEditUrl('sheet', $event)" />
+              @if (sheetUrl()) {
+                <span class="status-dot ok"></span>
+              }
+            </div>
+            <span class="url-hint">La URL de tu Google Sheet</span>
+          </div>
+
+          <button class="action-btn primary save-btn" (click)="saveUrls()" [disabled]="saving()">
+            {{ saving() ? 'Guardando...' : 'Guardar URLs' }}
+          </button>
+        </div>
+      </div>
+
+      <!-- INSTRUCTIONS -->
+      <div class="setup-section" style="margin-top: 1.5rem;">
+        <h3>Instrucciones de configuracion</h3>
         <ol class="setup-steps">
           <li>Crea un <strong>Google Sheet nuevo</strong></li>
           <li>Ve a <strong>Extensiones > Apps Script</strong></li>
           <li>Pega el codigo del archivo <code>google-sheets/apps-script.gs</code></li>
           <li>Ejecuta la funcion <strong>setup</strong> (boton Play)</li>
           <li>Acepta los permisos de Google</li>
+          <li>En el registro de ejecucion aparece la <strong>URL del formulario</strong> - copiala</li>
           <li>Ve a <strong>Implementar > Nueva implementacion > App web</strong></li>
           <li>Pon "Ejecutar como: Yo" y "Acceso: Cualquier persona"</li>
-          <li>Copia la <strong>URL del Web App</strong></li>
-          <li>Ve a <a routerLink="/admin/config" class="link">Config</a> y agrega estas claves:
-            <ul>
-              <li><code>google_script_url</code> = URL del Web App</li>
-              <li><code>google_form_url</code> = URL del formulario (lo da el setup)</li>
-              <li><code>google_sheet_url</code> = URL del Google Sheet</li>
-            </ul>
-          </li>
+          <li>Copia la <strong>URL del Web App</strong> y pegala arriba</li>
           <li>Guarda la URL del formulario en tu celular para acceso rapido</li>
         </ol>
-
-        <div class="config-status">
-          <h4>Estado actual:</h4>
-          <div class="config-row">
-            <span>Web App URL:</span>
-            <span [class.ok]="scriptUrl()" [class.missing]="!scriptUrl()">{{ scriptUrl() || 'No configurado' }}</span>
-          </div>
-          <div class="config-row">
-            <span>Form URL:</span>
-            <span [class.ok]="formUrl()" [class.missing]="!formUrl()">{{ formUrl() || 'No configurado' }}</span>
-          </div>
-          <div class="config-row">
-            <span>Sheet URL:</span>
-            <span [class.ok]="sheetUrl()" [class.missing]="!sheetUrl()">{{ sheetUrl() || 'No configurado' }}</span>
-          </div>
-        </div>
       </div>
     }
   </div>
