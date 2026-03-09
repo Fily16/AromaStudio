@@ -28,6 +28,7 @@ export class CatalogComponent implements OnInit, AfterViewInit, OnDestroy {
 
   // All products from API
   allProducts = signal<Product[]>([]);
+  retailStock = signal<Record<number, number>>({});
   loading = signal(true);
 
   // Retail filters
@@ -51,6 +52,10 @@ export class CatalogComponent implements OnInit, AfterViewInit, OnDestroy {
         this.loading.set(false);
       },
       error: () => this.loading.set(false)
+    });
+    this.api.getRetailStock().subscribe({
+      next: (stock) => this.retailStock.set(stock),
+      error: () => {} // silently ignore if endpoint not available
     });
   }
 
@@ -95,10 +100,17 @@ export class CatalogComponent implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
-  // === Retail products ===
+  // === Retail products (only those with actual stock) ===
   retailProducts = computed(() => {
-    return this.allProducts().filter(p => p.retailPricePen && p.retailPricePen > 0);
+    const stock = this.retailStock();
+    return this.allProducts().filter(p =>
+      p.retailPricePen && p.retailPricePen > 0 && (stock[p.id] ?? 0) > 0
+    );
   });
+
+  getStock(productId: number): number {
+    return this.retailStock()[productId] ?? 0;
+  }
 
   filteredRetailProducts = computed(() => {
     let products = [...this.retailProducts()];

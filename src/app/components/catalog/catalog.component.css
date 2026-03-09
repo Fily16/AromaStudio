@@ -1164,6 +1164,13 @@
   color: var(--accent);
   border: 1px solid rgba(201,162,39,0.3);
 }
+.badge-stock {
+  background: rgba(52,211,153,0.15);
+  color: #34d399;
+  border: 1px solid rgba(52,211,153,0.3);
+  right: 0.75rem;
+  left: auto;
+}
 .card-body {
   padding: 1.25rem;
 }

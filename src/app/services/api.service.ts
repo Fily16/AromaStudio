@@ -106,7 +106,12 @@ export class ApiService {
     return this.http.put<Consolidado>(`${this.url}/consolidados/${id}/close`, {}, { headers: this.authHeaders() });
   }
 
-  // --- Retail ---
+  // --- Retail (public) ---
+  getRetailStock(): Observable<Record<number, number>> {
+    return this.http.get<Record<number, number>>(`${this.url}/retail/stock`);
+  }
+
+  // --- Retail (admin) ---
   getRetailInventory(inStock = false): Observable<RetailInventory[]> {
     return this.http.get<RetailInventory[]>(`${this.url}/retail/inventory`, {
       params: { inStock: inStock.toString() }, headers: this.authHeaders()
