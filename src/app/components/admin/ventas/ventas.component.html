@@ -91,9 +91,14 @@
 
     <!-- HISTORIAL TAB -->
     @if (tab() === 'ventas') {
-      @if (ventas().length === 0) {
-        <p class="empty">No hay ventas registradas</p>
-      } @else {
+      @if (!scriptUrl()) {
+        <div class="setup-prompt">
+          <h3>Configura Google Sheets</h3>
+          <p>Para ver el historial de ventas, configura las URLs de Google Sheets en la pestaña Setup.</p>
+          <button class="action-btn primary" (click)="setTab('config')">Ir a Setup</button>
+        </div>
+      } @else if (ventas().length > 0) {
+        <!-- Show all ventas as flat list -->
         <div class="ventas-table-wrap">
           <table class="ventas-table">
             <thead>
@@ -126,6 +131,10 @@
             </tbody>
           </table>
         </div>
+      } @else if (loading()) {
+        <p class="loading">Cargando ventas...</p>
+      } @else {
+        <p class="empty">No hay ventas registradas. Registra ventas con el formulario y haz click en "Actualizar".</p>
       }
     }
 
@@ -182,6 +191,50 @@
           <button class="action-btn primary save-btn" (click)="saveUrls()" [disabled]="saving()">
             {{ saving() ? 'Guardando...' : 'Guardar URLs' }}
           </button>
+        </div>
+      </div>
+
+      <!-- SYNC BACKEND CONFIG -->
+      <div class="setup-section" style="margin-top: 1.5rem;">
+        <h3>Sincronizacion Formulario &rarr; Backend</h3>
+        <p class="setup-desc">Configura la URL publica de tu backend para que el Google Form actualice el stock automaticamente al registrar ventas.</p>
+
+        <div class="url-form">
+          <div class="url-field">
+            <label>URL Publica del Backend <span class="required">*</span></label>
+            <div class="url-input-row">
+              <input type="url"
+                placeholder="https://tu-backend.com (o http://localhost:8080)"
+                [value]="editBackendUrl()"
+                (input)="setEditUrl('backend', $event)" />
+              @if (backendUrl()) {
+                <span class="status-dot ok"></span>
+              }
+            </div>
+            <span class="url-hint">La URL donde tu backend esta desplegado (ej: https://aromastudio-api.onrender.com)</span>
+          </div>
+
+          <div class="url-field">
+            <label>API Key (auto-generada)</label>
+            <div class="url-input-row">
+              <input type="text" [value]="apiKey()" readonly class="readonly-input" />
+              @if (apiKey()) {
+                <span class="status-dot ok"></span>
+              }
+            </div>
+            <span class="url-hint">Esta clave se envia automaticamente al sincronizar stock. No la compartas.</span>
+          </div>
+        </div>
+
+        <div class="sync-info">
+          <p><strong>Como funciona:</strong></p>
+          <ol class="setup-steps">
+            <li>Configura la URL del backend arriba y guarda</li>
+            <li>Haz click en <strong>"Sincronizar Stock"</strong> para enviar productos al Sheet</li>
+            <li>Registra ventas en el formulario - el stock se descuenta en el Sheet</li>
+            <li>Al sincronizar de nuevo, las ventas del Sheet se importan al backend automaticamente</li>
+            <li>El catalogo publico se actualiza con el stock correcto</li>
+          </ol>
         </div>
       </div>
 

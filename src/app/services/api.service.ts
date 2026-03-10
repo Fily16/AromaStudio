@@ -45,7 +45,7 @@ export class ApiService {
     return this.http.put<Product>(`${this.url}/products/${id}`, product, { headers: this.authHeaders() });
   }
 
-  updateProductPrices(id: number, prices: { retailPricePen?: number; wholesalePricePen?: number; priceUsd?: number; weightG?: number }): Observable<Product> {
+  updateProductPrices(id: number, prices: { retailPricePen?: number; wholesalePricePen?: number; mayorPricePen?: number; priceUsd?: number; weightG?: number }): Observable<Product> {
     return this.http.put<Product>(`${this.url}/products/${id}/prices`, prices, { headers: this.authHeaders() });
   }
 
@@ -163,5 +163,22 @@ export class ApiService {
   // --- Full Breakdown ---
   getFullBreakdown(consolidadoId: number): Observable<FullBreakdownResponse> {
     return this.http.get<FullBreakdownResponse>(`${this.url}/consolidados/${consolidadoId}/full-breakdown`, { headers: this.authHeaders() });
+  }
+
+  // --- Sync from Sheet ---
+  syncFromSheet(sheetStock: Record<string, number>): Observable<any> {
+    return this.http.post(`${this.url}/admin/sync-from-sheet`, { sheetStock }, { headers: this.authHeaders() });
+  }
+
+  // --- Google Apps Script Proxy ---
+  googleProxyPost(body: any): Observable<any> {
+    return this.http.post(`${this.url}/admin/google-proxy`, body, { headers: this.authHeaders() });
+  }
+
+  googleProxyGet(action: string): Observable<any> {
+    return this.http.get(`${this.url}/admin/google-proxy`, {
+      params: { action },
+      headers: this.authHeaders()
+    });
   }
 }

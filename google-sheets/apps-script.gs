@@ -181,6 +181,38 @@ function onFormSubmit(e) {
 
   // Actualizar opciones del formulario (stock cambio)
   crearFormulario_();
+
+  // Notificar al backend para descontar stock del inventario retail
+  notifyBackend_(data[fila][0], cantidad, precioVenta, canal);
+}
+
+// -----------------------------------------------------------
+// NOTIFICAR AL BACKEND (cuando se vende via formulario)
+// -----------------------------------------------------------
+function notifyBackend_(productId, cantidad, precioVenta, canal) {
+  var props = PropertiesService.getScriptProperties();
+  var backendUrl = props.getProperty('BACKEND_URL');
+  var apiKey = props.getProperty('API_KEY');
+
+  if (!backendUrl || !apiKey) return; // No configurado, saltar
+
+  try {
+    var response = UrlFetchApp.fetch(backendUrl + '/api/retail/form-sale', {
+      method: 'post',
+      contentType: 'application/json',
+      payload: JSON.stringify({
+        productId: productId,
+        quantity: cantidad,
+        salePricePen: precioVenta,
+        channel: canal,
+        apiKey: apiKey
+      }),
+      muteHttpExceptions: true
+    });
+    console.log('Backend notificado: ' + response.getContentText());
+  } catch (err) {
+    console.log('Error al notificar backend: ' + err.message);
+  }
 }
 
 // -----------------------------------------------------------
@@ -193,7 +225,7 @@ function doPost(e) {
     const body = JSON.parse(e.postData.contents);
 
     if (body.action === 'syncStock') {
-      return syncStock_(body.products);
+      return syncStock_(body.products, body.backendUrl, body.apiKey);
     }
 
     if (body.action === 'registerSale') {
@@ -213,35 +245,59 @@ function doGet(e) {
   if (action === 'stats')  return getStats_();
   if (action === 'ventas') return getVentas_();
   if (action === 'formUrl') return getFormUrl_();
+  if (action === 'getSheetStock') return getSheetStock_();
 
-  return jsonResponse_({ error: 'Usa ?action=stats|ventas|formUrl' });
+  return jsonResponse_({ error: 'Usa ?action=stats|ventas|formUrl|getSheetStock' });
 }
 
 // -----------------------------------------------------------
 // SYNC STOCK (llamado desde admin panel)
 // -----------------------------------------------------------
-function syncStock_(products) {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const prod = ss.getSheetByName(TAB_PRODUCTOS);
+function syncStock_(products, backendUrl, apiKey) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var prod = ss.getSheetByName(TAB_PRODUCTOS);
 
-  // Limpiar datos anteriores
+  // Leer stock actual del Sheet para productos existentes
+  var existingStock = {};
   if (prod.getLastRow() > 1) {
+    var existingData = prod.getRange(2, 1, prod.getLastRow() - 1, 7).getValues();
+    for (var i = 0; i < existingData.length; i++) {
+      var id = existingData[i][0];
+      if (id) existingStock[id] = existingData[i][5]; // id -> stock actual en sheet
+    }
     prod.getRange(2, 1, prod.getLastRow() - 1, 7).clearContent();
   }
 
-  // Escribir productos nuevos
-  const rows = products.map(function(p) {
-    return [p.id, p.brand, p.name, p.ml, p.costPen, p.stock, p.imageUrl || ''];
+  // Escribir productos: CONSERVAR stock del Sheet para productos existentes
+  var newCount = 0;
+  var rows = products.map(function(p) {
+    var stock;
+    if (existingStock[p.id] !== undefined) {
+      // Producto ya existia en Sheet: conservar su stock (puede tener ventas descontadas)
+      stock = existingStock[p.id];
+    } else {
+      // Producto NUEVO: usar stock del backend
+      stock = p.stock;
+      newCount++;
+    }
+    return [p.id, p.brand, p.name, p.ml, p.costPen, stock, p.imageUrl || ''];
   });
 
   if (rows.length > 0) {
     prod.getRange(2, 1, rows.length, 7).setValues(rows);
   }
 
+  // Guardar config del backend para callbacks de ventas
+  if (backendUrl) {
+    var props = PropertiesService.getScriptProperties();
+    props.setProperty('BACKEND_URL', backendUrl);
+    if (apiKey) props.setProperty('API_KEY', apiKey);
+  }
+
   // Actualizar formulario con nuevos productos
   crearFormulario_();
 
-  return jsonResponse_({ ok: true, productos: rows.length });
+  return jsonResponse_({ ok: true, productos: rows.length, nuevos: newCount });
 }
 
 // -----------------------------------------------------------
@@ -331,6 +387,24 @@ function getFormUrl_() {
     formUrl: form.getPublishedUrl(),
     sheetUrl: SpreadsheetApp.getActiveSpreadsheet().getUrl()
   });
+}
+
+// -----------------------------------------------------------
+// STOCK ACTUAL DEL SHEET (para sincronizar al backend)
+// -----------------------------------------------------------
+function getSheetStock_() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var prod = ss.getSheetByName(TAB_PRODUCTOS);
+  if (!prod || prod.getLastRow() < 2) return jsonResponse_({});
+
+  var data = prod.getRange(2, 1, prod.getLastRow() - 1, 6).getValues();
+  var stock = {};
+  for (var i = 0; i < data.length; i++) {
+    if (data[i][0]) {
+      stock[data[i][0]] = data[i][5] || 0;
+    }
+  }
+  return jsonResponse_(stock);
 }
 
 // -----------------------------------------------------------

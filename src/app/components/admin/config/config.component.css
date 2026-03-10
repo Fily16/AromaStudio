@@ -1,46 +1,47 @@
-.admin-page { min-height: 100vh; background: #0a0a0b; color: #fff; }
-.admin-nav { display: flex; align-items: center; justify-content: space-between; padding: 0.75rem 2rem; background: #111113; border-bottom: 1px solid rgba(255,255,255,0.06); flex-wrap: wrap; gap: 0.75rem; }
+.admin-page { min-height: 100vh; background: #f8f9fa; color: #1f2937; }
+.admin-nav { display: flex; align-items: center; justify-content: space-between; padding: 0.75rem 2rem; background: #ffffff; border-bottom: 1px solid #e5e7eb; flex-wrap: wrap; gap: 0.75rem; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
 .nav-brand { display: flex; align-items: center; gap: 0.5rem; }
 .brand-name { font-weight: 700; font-size: 1.1rem; color: #C9A227; }
-.brand-tag { font-size: 0.7rem; background: rgba(201,162,39,0.15); color: #C9A227; padding: 2px 8px; border-radius: 4px; }
+.brand-tag { font-size: 0.7rem; background: rgba(201,162,39,0.1); color: #C9A227; padding: 2px 8px; border-radius: 4px; }
 .nav-links { display: flex; gap: 0.25rem; flex-wrap: wrap; }
-.nav-link { padding: 0.5rem 0.75rem; color: #a1a1aa; text-decoration: none; font-size: 0.85rem; border-radius: 6px; }
-.nav-link:hover { color: #fff; background: rgba(255,255,255,0.05); }
-.nav-link.active { color: #C9A227; background: rgba(201,162,39,0.1); }
+.nav-link { padding: 0.5rem 0.75rem; color: #6b7280; text-decoration: none; font-size: 0.85rem; border-radius: 6px; }
+.nav-link:hover { color: #1f2937; background: rgba(0,0,0,0.04); }
+.nav-link.active { color: #C9A227; background: rgba(201,162,39,0.08); }
 
 .admin-content { padding: 2rem; max-width: 700px; margin: 0 auto; }
 .admin-content h1 { font-size: 1.5rem; margin-bottom: 1.5rem; }
 
 .message {
-  background: rgba(52,211,153,0.1); color: #34d399; border: 1px solid rgba(52,211,153,0.2);
+  background: rgba(22,163,74,0.06); color: #16a34a; border: 1px solid rgba(22,163,74,0.15);
   padding: 0.75rem 1rem; border-radius: 8px; margin-bottom: 1rem; font-size: 0.9rem;
 }
 .message.error {
-  background: rgba(239,68,68,0.1); color: #ef4444; border-color: rgba(239,68,68,0.2);
+  background: rgba(239,68,68,0.06); color: #dc2626; border-color: rgba(239,68,68,0.15);
 }
 
 .config-list { display: flex; flex-direction: column; gap: 0.75rem; }
 
 .config-item {
-  background: #18181b; border: 1px solid rgba(255,255,255,0.06);
+  background: #ffffff; border: 1px solid #e5e7eb;
   border-radius: 12px; padding: 1.25rem;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
 }
 
 .config-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem; }
 .config-label { font-weight: 600; font-size: 0.95rem; }
-.config-key { font-size: 0.7rem; color: #52525b; font-family: monospace; background: rgba(255,255,255,0.03); padding: 2px 6px; border-radius: 4px; }
+.config-key { font-size: 0.7rem; color: #9ca3af; font-family: monospace; background: rgba(0,0,0,0.03); padding: 2px 6px; border-radius: 4px; }
 
 .config-display {
   display: flex; align-items: center; justify-content: space-between;
-  padding: 0.6rem 0.75rem; background: rgba(255,255,255,0.03);
-  border: 1px solid rgba(255,255,255,0.06); border-radius: 8px;
+  padding: 0.6rem 0.75rem; background: #f9fafb;
+  border: 1px solid #e5e7eb; border-radius: 8px;
   cursor: pointer; transition: all 0.2s;
 }
 .config-display:hover { border-color: rgba(201,162,39,0.3); }
 .config-value { font-size: 1rem; font-weight: 500; color: #C9A227; }
 
 .btn-edit {
-  background: none; border: none; color: #52525b; cursor: pointer;
+  background: none; border: none; color: #9ca3af; cursor: pointer;
   padding: 4px; border-radius: 4px; transition: color 0.2s;
 }
 .btn-edit:hover { color: #C9A227; }
@@ -48,26 +49,26 @@
 .config-edit { display: flex; flex-direction: column; gap: 0.5rem; }
 .config-input {
   width: 100%; padding: 0.65rem 0.75rem;
-  background: rgba(255,255,255,0.05); border: 1px solid #C9A227;
-  border-radius: 8px; color: #fff; font-size: 0.95rem; box-sizing: border-box;
+  background: #f9fafb; border: 1px solid #C9A227;
+  border-radius: 8px; color: #1f2937; font-size: 0.95rem; box-sizing: border-box;
   outline: none;
 }
 
 .edit-actions { display: flex; gap: 0.5rem; }
 .btn-save {
-  padding: 0.4rem 1rem; background: #C9A227; color: #000;
+  padding: 0.4rem 1rem; background: #C9A227; color: #fff;
   border: none; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 0.85rem;
 }
-.btn-save:hover { background: #E5C76B; }
+.btn-save:hover { background: #d4af37; }
 .btn-cancel {
-  padding: 0.4rem 1rem; background: transparent; color: #a1a1aa;
-  border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; cursor: pointer; font-size: 0.85rem;
+  padding: 0.4rem 1rem; background: transparent; color: #6b7280;
+  border: 1px solid #e5e7eb; border-radius: 6px; cursor: pointer; font-size: 0.85rem;
 }
-.btn-cancel:hover { color: #fff; }
+.btn-cancel:hover { color: #1f2937; }
 
-.config-desc { font-size: 0.75rem; color: #52525b; margin-top: 0.5rem; }
+.config-desc { font-size: 0.75rem; color: #9ca3af; margin-top: 0.5rem; }
 
-.empty { text-align: center; color: #a1a1aa; padding: 2rem; }
+.empty { text-align: center; color: #6b7280; padding: 2rem; }
 
 @media (max-width: 600px) {
   .admin-content { padding: 1rem; }

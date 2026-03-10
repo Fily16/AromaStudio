@@ -12,6 +12,7 @@ export interface Product {
   imageUrl: string | null;
   retailPricePen: number | null;
   wholesalePricePen: number | null;
+  mayorPricePen: number | null;
   description: string | null;
   category: 'men' | 'women' | 'unisex';
   isNew: boolean;

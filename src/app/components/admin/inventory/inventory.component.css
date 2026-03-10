@@ -1,76 +1,78 @@
-.admin-page { min-height: 100vh; background: #0a0a0b; color: #fff; }
-.admin-nav { display: flex; align-items: center; justify-content: space-between; padding: 0.75rem 2rem; background: #111113; border-bottom: 1px solid rgba(255,255,255,0.06); flex-wrap: wrap; gap: 0.75rem; }
+.admin-page { min-height: 100vh; background: #f8f9fa; color: #1f2937; }
+.admin-nav { display: flex; align-items: center; justify-content: space-between; padding: 0.75rem 2rem; background: #ffffff; border-bottom: 1px solid #e5e7eb; flex-wrap: wrap; gap: 0.75rem; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
 .nav-brand { display: flex; align-items: center; gap: 0.5rem; }
 .brand-name { font-weight: 700; font-size: 1.1rem; color: #C9A227; }
-.brand-tag { font-size: 0.7rem; background: rgba(201,162,39,0.15); color: #C9A227; padding: 2px 8px; border-radius: 4px; }
+.brand-tag { font-size: 0.7rem; background: rgba(201,162,39,0.1); color: #C9A227; padding: 2px 8px; border-radius: 4px; }
 .nav-links { display: flex; gap: 0.25rem; flex-wrap: wrap; }
-.nav-link { padding: 0.5rem 0.75rem; color: #a1a1aa; text-decoration: none; font-size: 0.85rem; border-radius: 6px; }
-.nav-link:hover { color: #fff; background: rgba(255,255,255,0.05); }
-.nav-link.active { color: #C9A227; background: rgba(201,162,39,0.1); }
+.nav-link { padding: 0.5rem 0.75rem; color: #6b7280; text-decoration: none; font-size: 0.85rem; border-radius: 6px; }
+.nav-link:hover { color: #1f2937; background: rgba(0,0,0,0.04); }
+.nav-link.active { color: #C9A227; background: rgba(201,162,39,0.08); }
 
 .admin-content { padding: 2rem; max-width: 1000px; margin: 0 auto; }
 .admin-content h1 { font-size: 1.5rem; margin-bottom: 1.5rem; }
 
 .tabs { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
 .tabs button {
-  padding: 0.5rem 1rem; background: #18181b; border: 1px solid rgba(255,255,255,0.06);
-  color: #a1a1aa; border-radius: 8px; cursor: pointer; font-size: 0.85rem; transition: all 0.2s;
+  padding: 0.5rem 1rem; background: #ffffff; border: 1px solid #e5e7eb;
+  color: #6b7280; border-radius: 8px; cursor: pointer; font-size: 0.85rem; transition: all 0.2s;
 }
-.tabs button.active { color: #C9A227; border-color: #C9A227; background: rgba(201,162,39,0.08); }
-.tabs button:hover { color: #fff; }
+.tabs button.active { color: #C9A227; border-color: #C9A227; background: rgba(201,162,39,0.06); }
+.tabs button:hover { color: #1f2937; }
 
 .message {
-  background: rgba(52,211,153,0.1); color: #34d399; border: 1px solid rgba(52,211,153,0.2);
+  background: rgba(22,163,74,0.06); color: #16a34a; border: 1px solid rgba(22,163,74,0.15);
   padding: 0.75rem 1rem; border-radius: 8px; margin-bottom: 1rem; font-size: 0.9rem;
 }
 
 .stock-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem; }
 .stock-card {
-  background: #18181b; border: 1px solid rgba(255,255,255,0.06); border-radius: 12px;
+  background: #ffffff; border: 1px solid #e5e7eb; border-radius: 12px;
   padding: 1rem; display: flex; gap: 1rem; align-items: center;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
 }
 .stock-qty {
-  background: rgba(201,162,39,0.1); color: #C9A227; width: 48px; height: 48px;
+  background: rgba(201,162,39,0.08); color: #C9A227; width: 48px; height: 48px;
   display: flex; align-items: center; justify-content: center;
   border-radius: 10px; font-weight: 700; font-size: 1.2rem; flex-shrink: 0;
 }
 .stock-info { display: flex; flex-direction: column; gap: 0.2rem; font-size: 0.85rem; }
 .stock-info strong { font-size: 0.9rem; }
-.cost { color: #a1a1aa; }
+.cost { color: #6b7280; }
 
 .form-card {
-  background: #18181b; border: 1px solid rgba(255,255,255,0.06);
+  background: #ffffff; border: 1px solid #e5e7eb;
   border-radius: 12px; padding: 1.5rem; max-width: 500px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
 }
 .form-card h2 { font-size: 1.1rem; margin-bottom: 1.25rem; }
 
 .form-group { margin-bottom: 1rem; }
-.form-group label { display: block; color: #a1a1aa; font-size: 0.85rem; margin-bottom: 0.4rem; }
+.form-group label { display: block; color: #6b7280; font-size: 0.85rem; margin-bottom: 0.4rem; }
 .form-group input, .form-group select {
   width: 100%; padding: 0.65rem 0.75rem;
-  background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
-  border-radius: 8px; color: #fff; font-size: 0.9rem; box-sizing: border-box;
+  background: #f9fafb; border: 1px solid #e5e7eb;
+  border-radius: 8px; color: #1f2937; font-size: 0.9rem; box-sizing: border-box;
 }
 .form-group input:focus, .form-group select:focus { outline: none; border-color: #C9A227; }
-.form-group select option { background: #18181b; }
+.form-group select option { background: #ffffff; }
 
 .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
 
 .submit-btn {
-  width: 100%; padding: 0.75rem; background: #C9A227; color: #000;
+  width: 100%; padding: 0.75rem; background: #C9A227; color: #fff;
   border: none; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 0.95rem;
 }
-.submit-btn:hover { background: #E5C76B; }
+.submit-btn:hover { background: #d4af37; }
 
 .sales-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
 .sales-table th {
-  text-align: left; padding: 0.75rem; color: #a1a1aa; font-size: 0.75rem;
-  text-transform: uppercase; border-bottom: 1px solid rgba(255,255,255,0.06);
+  text-align: left; padding: 0.75rem; color: #6b7280; font-size: 0.75rem;
+  text-transform: uppercase; border-bottom: 1px solid #e5e7eb;
 }
-.sales-table td { padding: 0.6rem 0.75rem; border-bottom: 1px solid rgba(255,255,255,0.03); }
-.profit { color: #34d399; font-weight: 600; }
-.channel-badge { background: rgba(201,162,39,0.1); color: #C9A227; padding: 2px 8px; border-radius: 4px; font-size: 0.7rem; }
-.empty { text-align: center; color: #a1a1aa; padding: 2rem; }
+.sales-table td { padding: 0.6rem 0.75rem; border-bottom: 1px solid #f3f4f6; }
+.profit { color: #16a34a; font-weight: 600; }
+.channel-badge { background: rgba(201,162,39,0.08); color: #C9A227; padding: 2px 8px; border-radius: 4px; font-size: 0.7rem; }
+.empty { text-align: center; color: #6b7280; padding: 2rem; }
 
 @media (max-width: 600px) {
   .admin-content { padding: 1rem; }

@@ -18,8 +18,8 @@ export class ProductsComponent implements OnInit {
   products = signal<Product[]>([]);
   search = signal('');
   editingId = signal<number | null>(null);
-  editPrices = signal<{ retailPricePen: number; wholesalePricePen: number; priceUsd: number; weightG: number }>({
-    retailPricePen: 0, wholesalePricePen: 0, priceUsd: 0, weightG: 0
+  editPrices = signal<{ retailPricePen: number; wholesalePricePen: number; mayorPricePen: number; priceUsd: number; weightG: number }>({
+    retailPricePen: 0, wholesalePricePen: 0, mayorPricePen: 0, priceUsd: 0, weightG: 0
   });
 
   // Config values
@@ -28,6 +28,9 @@ export class ProductsComponent implements OnInit {
   editingConfig = signal<string | null>(null);
   editConfigValue = signal('');
   configMessage = signal('');
+
+  // Image edit
+  editImageUrl = signal('');
 
   // Create product
   showCreate = signal(false);
@@ -123,17 +126,32 @@ export class ProductsComponent implements OnInit {
     this.editPrices.set({
       retailPricePen: product.retailPricePen ?? 0,
       wholesalePricePen: product.wholesalePricePen ?? 0,
+      mayorPricePen: product.mayorPricePen ?? 0,
       priceUsd: product.priceUsd,
       weightG: product.weightG ?? 0
     });
+    this.editImageUrl.set(product.imageUrl || '');
   }
 
   cancelEdit() { this.editingId.set(null); }
 
+  onImageUrlInput(event: Event) {
+    this.editImageUrl.set((event.target as HTMLInputElement).value);
+  }
+
+  onImageError(event: Event) {
+    (event.target as HTMLImageElement).style.display = 'none';
+  }
+
   savePrices(productId: number) {
+    // Save prices
     this.api.updateProductPrices(productId, this.editPrices()).subscribe(() => {
-      this.editingId.set(null);
-      this.loadProducts();
+      // Also save imageUrl if changed
+      const imageUrl = this.editImageUrl();
+      this.api.updateProduct(productId, { imageUrl: imageUrl || null } as any).subscribe(() => {
+        this.editingId.set(null);
+        this.loadProducts();
+      });
     });
   }
 

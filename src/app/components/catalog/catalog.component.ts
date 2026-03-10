@@ -24,7 +24,7 @@ export class CatalogComponent implements OnInit, AfterViewInit, OnDestroy {
   cart = inject(CartService);
   private router = inject(Router);
 
-  currentView = signal<'landing' | 'retail' | 'wholesale'>('landing');
+  currentView = signal<'landing' | 'retail' | 'wholesale' | 'mayor'>('landing');
 
   // All products from API
   allProducts = signal<Product[]>([]);
@@ -42,8 +42,16 @@ export class CatalogComponent implements OnInit, AfterViewInit, OnDestroy {
   wholesaleItemsPerPage = 15;
   wholesaleBrandFilter = signal('Todos');
 
+  // Por Mayor filters
+  mayorSearch = signal('');
+  mayorCategory = signal<'all' | 'men' | 'women' | 'unisex'>('all');
+  mayorSortBy = signal<'name' | 'price-asc' | 'price-desc' | 'brand'>('name');
+
   // Cart toast
   cartToast = signal('');
+
+  // Quantity selector per product
+  selectedQty = signal<Record<number, number>>({});
 
   ngOnInit() {
     this.api.getProducts({ onlyAvailable: true }).subscribe({
@@ -91,10 +99,10 @@ export class CatalogComponent implements OnInit, AfterViewInit, OnDestroy {
     }, 100);
   }
 
-  setView(view: 'landing' | 'retail' | 'wholesale'): void {
+  setView(view: 'landing' | 'retail' | 'wholesale' | 'mayor'): void {
     this.currentView.set(view);
     window.scrollTo({ top: 0, behavior: 'smooth' });
-    if (view === 'retail' || view === 'wholesale') {
+    if (view !== 'landing') {
       ScrollTrigger.getAll().forEach(st => st.kill());
       this.initCatalogAnimations();
     }
@@ -174,6 +182,40 @@ export class CatalogComponent implements OnInit, AfterViewInit, OnDestroy {
 
   wholesaleResultsCount = computed(() => this.filteredWholesaleProducts().length);
 
+  // === Por Mayor products (same stock as retail, mayor prices) ===
+  mayorProducts = computed(() => {
+    const stock = this.retailStock();
+    return this.allProducts().filter(p =>
+      p.mayorPricePen && p.mayorPricePen > 0 && (stock[p.id] ?? 0) > 0
+    );
+  });
+
+  filteredMayorProducts = computed(() => {
+    let products = [...this.mayorProducts()];
+    const query = this.mayorSearch().toLowerCase();
+    if (query) {
+      products = products.filter(p =>
+        p.name.toLowerCase().includes(query) ||
+        p.brand.toLowerCase().includes(query) ||
+        (p.description || '').toLowerCase().includes(query)
+      );
+    }
+    const category = this.mayorCategory();
+    if (category !== 'all') {
+      products = products.filter(p => p.category === category);
+    }
+    const sort = this.mayorSortBy();
+    switch (sort) {
+      case 'name': products.sort((a, b) => a.name.localeCompare(b.name)); break;
+      case 'price-asc': products.sort((a, b) => (a.mayorPricePen ?? 0) - (b.mayorPricePen ?? 0)); break;
+      case 'price-desc': products.sort((a, b) => (b.mayorPricePen ?? 0) - (a.mayorPricePen ?? 0)); break;
+      case 'brand': products.sort((a, b) => a.brand.localeCompare(b.brand)); break;
+    }
+    return products;
+  });
+
+  mayorCount = computed(() => this.filteredMayorProducts().length);
+
   private searchEffect = effect(() => {
     this.wholesaleSearch();
     this.wholesaleBrandFilter();
@@ -214,6 +256,30 @@ export class CatalogComponent implements OnInit, AfterViewInit, OnDestroy {
     this.sortBy.set('name');
   }
 
+  // Mayor event handlers
+  onMayorSearchChange(event: Event): void {
+    this.mayorSearch.set((event.target as HTMLInputElement).value);
+  }
+
+  onMayorCategoryChange(category: 'all' | 'men' | 'women' | 'unisex'): void {
+    this.mayorCategory.set(category);
+  }
+
+  onMayorSortChange(event: Event): void {
+    this.mayorSortBy.set((event.target as HTMLSelectElement).value as any);
+  }
+
+  clearMayorFilters(): void {
+    this.mayorSearch.set('');
+    this.mayorCategory.set('all');
+    this.mayorSortBy.set('name');
+  }
+
+  getMayorWhatsAppLink(product: Product): string {
+    const message = `¡Hola! Estoy interesado/a en compra por mayor:\n\n${product.brand} - ${product.name} ${product.ml}ml\nPrecio por mayor: S/ ${product.mayorPricePen}\n\n¿Cuál es la cantidad mínima y el proceso de compra?`;
+    return `https://wa.me/51903250695?text=${encodeURIComponent(message)}`;
+  }
+
   onWholesaleSearchChange(event: Event): void {
     this.wholesaleSearch.set((event.target as HTMLInputElement).value);
   }
@@ -245,6 +311,29 @@ export class CatalogComponent implements OnInit, AfterViewInit, OnDestroy {
       pages.push(total);
     }
     return pages;
+  }
+
+  // === Quantity selector ===
+  getQty(productId: number): number {
+    return this.selectedQty()[productId] ?? 1;
+  }
+
+  changeQty(productId: number, delta: number): void {
+    const current = this.getQty(productId);
+    const next = Math.max(1, current + delta);
+    this.selectedQty.update(q => ({ ...q, [productId]: next }));
+  }
+
+  addToCartWithQty(product: Product, priceType: 'wholesale' | 'retail' | 'mayor'): void {
+    const qty = this.getQty(product.id);
+    const price = priceType === 'wholesale' ? product.wholesalePricePen : priceType === 'mayor' ? product.mayorPricePen : product.retailPricePen;
+    if (!price) return;
+    const cartProduct = { ...product, wholesalePricePen: price, retailPricePen: price };
+    this.cart.addItem(cartProduct, qty);
+    this.cartToast.set(`${product.brand} - ${product.name} (x${qty}) agregado`);
+    setTimeout(() => this.cartToast.set(''), 2500);
+    // Reset qty to 1 after adding
+    this.selectedQty.update(q => ({ ...q, [product.id]: 1 }));
   }
 
   // === Cart ===

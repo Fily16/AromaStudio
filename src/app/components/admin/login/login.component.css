@@ -1,6 +1,6 @@
 .login-page {
   min-height: 100vh;
-  background: #0a0a0b;
+  background: #f8f9fa;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -8,34 +8,35 @@
 }
 
 .login-card {
-  background: #18181b;
-  border: 1px solid rgba(255,255,255,0.06);
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
   border-radius: 16px;
   padding: 2.5rem;
   max-width: 400px;
   width: 100%;
   text-align: center;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
 }
 
 .login-card h1 { color: #C9A227; font-size: 1.8rem; font-weight: 800; }
-.subtitle { color: #a1a1aa; margin-bottom: 2rem; font-size: 0.9rem; }
+.subtitle { color: #6b7280; margin-bottom: 2rem; font-size: 0.9rem; }
 
 .form-group { margin-bottom: 1.25rem; text-align: left; }
-.form-group label { display: block; color: #a1a1aa; font-size: 0.85rem; margin-bottom: 0.4rem; }
+.form-group label { display: block; color: #6b7280; font-size: 0.85rem; margin-bottom: 0.4rem; }
 .form-group input {
   width: 100%; padding: 0.75rem 1rem;
-  background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
-  border-radius: 8px; color: #fff; font-size: 1rem; box-sizing: border-box;
+  background: #f9fafb; border: 1px solid #e5e7eb;
+  border-radius: 8px; color: #1f2937; font-size: 1rem; box-sizing: border-box;
 }
-.form-group input:focus { outline: none; border-color: #C9A227; }
+.form-group input:focus { outline: none; border-color: #C9A227; box-shadow: 0 0 0 3px rgba(201,162,39,0.1); }
 
 .error { color: #ef4444; font-size: 0.85rem; margin-bottom: 1rem; }
 
 .login-btn {
   width: 100%; padding: 0.85rem;
-  background: #C9A227; color: #000; border: none;
+  background: #C9A227; color: #fff; border: none;
   border-radius: 8px; font-weight: 600; font-size: 1rem;
   cursor: pointer; transition: background 0.2s;
 }
-.login-btn:hover { background: #E5C76B; }
+.login-btn:hover { background: #d4af37; }
 .login-btn:disabled { opacity: 0.5; }
