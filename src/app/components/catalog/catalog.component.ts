@@ -329,7 +329,16 @@ export class CatalogComponent implements OnInit, AfterViewInit, OnDestroy {
     const price = priceType === 'wholesale' ? product.wholesalePricePen : priceType === 'mayor' ? product.mayorPricePen : product.retailPricePen;
     if (!price) return;
     const cartProduct = { ...product, wholesalePricePen: price, retailPricePen: price };
-    this.cart.addItem(cartProduct, qty);
+
+    // AQUÍ ESTÁ LA MAGIA: Traducimos tu "priceType" al "CatalogType" del servicio
+    let catalogType: 'CONSOLIDADO' | 'RETAIL' | 'WHOLESALE' = 'RETAIL';
+    if (priceType === 'wholesale') catalogType = 'CONSOLIDADO';
+    if (priceType === 'mayor') catalogType = 'WHOLESALE';
+    if (priceType === 'retail') catalogType = 'RETAIL';
+
+    // Ahora enviamos el catalogType como tercer parámetro
+    this.cart.addItem(cartProduct, qty, catalogType);
+
     this.cartToast.set(`${product.brand} - ${product.name} (x${qty}) agregado`);
     setTimeout(() => this.cartToast.set(''), 2500);
     // Reset qty to 1 after adding
@@ -337,12 +346,20 @@ export class CatalogComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   // === Cart ===
+  // === Cart ===
   addToCart(product: Product, priceType: 'wholesale' | 'retail'): void {
     const price = priceType === 'wholesale' ? product.wholesalePricePen : product.retailPricePen;
     if (!price) return;
-    // Override the cart service to use the correct price
+
+    // Lo mismo aquí para el botón sin cantidad
+    let catalogType: 'CONSOLIDADO' | 'RETAIL' | 'WHOLESALE' = 'RETAIL';
+    if (priceType === 'wholesale') catalogType = 'CONSOLIDADO';
+
     const cartProduct = { ...product, wholesalePricePen: price, retailPricePen: price };
-    this.cart.addItem(cartProduct, 1);
+
+    // Enviamos el catalogType
+    this.cart.addItem(cartProduct, 1, catalogType);
+
     this.cartToast.set(`${product.brand} - ${product.name} agregado`);
     setTimeout(() => this.cartToast.set(''), 2500);
   }

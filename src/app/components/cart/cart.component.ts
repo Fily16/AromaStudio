@@ -23,9 +23,17 @@ export class CartComponent {
     this.cart.removeItem(productId);
   }
 
+  // Nuevo método para redirigir al checkout del consolidado
+  goToCheckout() {
+    this.router.navigate(['/checkout']);
+  }
+
   orderViaWhatsApp() {
     const items = this.cart.cartItems();
-    let message = '¡Hola! Quiero hacer un pedido:\n\n';
+    // Añadimos al mensaje si es por mayor o menor
+    const catType = this.cart.catalogType() === 'WHOLESALE' ? 'al por mayor' : 'al por menor';
+    let message = `¡Hola! Quiero hacer un pedido ${catType}:\n\n`;
+
     for (const item of items) {
       const subtotal = (item.unitPricePen * item.quantity).toFixed(2);
       message += `• ${item.product.brand} - ${item.product.name} ${item.product.ml}ml x${item.quantity} — S/ ${subtotal}\n`;
