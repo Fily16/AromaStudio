@@ -17,6 +17,7 @@ export class ProductsComponent implements OnInit {
 
   products = signal<Product[]>([]);
   search = signal('');
+  sortOption = signal('default'); // NUEVO: Señal para la opción de ordenamiento
   editingId = signal<number | null>(null);
   editPrices = signal<{ retailPricePen: number; wholesalePricePen: number; mayorPricePen: number; priceUsd: number; weightG: number }>({
     retailPricePen: 0, wholesalePricePen: 0, mayorPricePen: 0, priceUsd: 0, weightG: 0
@@ -65,12 +66,43 @@ export class ProductsComponent implements OnInit {
     });
   }
 
+  // NUEVO: Método para manejar el cambio en el select de ordenamiento
+  onSortChange(event: Event) {
+    this.sortOption.set((event.target as HTMLSelectElement).value);
+  }
+
+  // MODIFICADO: Ahora filtra por texto y luego ordena según la opción elegida
   filteredProducts() {
     const q = this.search().toLowerCase();
-    if (!q) return this.products();
-    return this.products().filter(p =>
-      p.name.toLowerCase().includes(q) || p.brand.toLowerCase().includes(q) || p.sku.toLowerCase().includes(q)
-    );
+    let result = this.products();
+
+    // 1. Filtrar por texto (búsqueda)
+    if (q) {
+      result = result.filter(p =>
+        p.name.toLowerCase().includes(q) || p.brand.toLowerCase().includes(q) || p.sku.toLowerCase().includes(q)
+      );
+    }
+
+    // 2. Ordenar los resultados
+    const sort = this.sortOption();
+    if (sort !== 'default') {
+      result = [...result].sort((a, b) => {
+        if (sort === 'name_asc') {
+          return (a.brand + ' ' + a.name).localeCompare(b.brand + ' ' + b.name);
+        } else if (sort === 'name_desc') {
+          return (b.brand + ' ' + b.name).localeCompare(a.brand + ' ' + a.name);
+        } else if (sort === 'price_desc') {
+          return (b.priceUsd || 0) - (a.priceUsd || 0);
+        } else if (sort === 'price_asc') {
+          return (a.priceUsd || 0) - (b.priceUsd || 0);
+        } else if (sort === 'sku_asc') {
+          return a.sku.localeCompare(b.sku);
+        }
+        return 0;
+      });
+    }
+
+    return result;
   }
 
   // Costo Puesto calculations (same as Excel / PricingService)
@@ -100,7 +132,6 @@ export class ProductsComponent implements OnInit {
     }
     this.api.updateConfig(key, newValue).subscribe({
       next: () => {
-        // Update local signal immediately so prices recalculate
         if (key === 'exchange_rate') this.exchangeRate.set(Number(newValue));
         if (key === 'courier_cost_per_kg') this.courierCostPerKg.set(Number(newValue));
         this.editingConfig.set(null);
@@ -144,9 +175,7 @@ export class ProductsComponent implements OnInit {
   }
 
   savePrices(productId: number) {
-    // Save prices
     this.api.updateProductPrices(productId, this.editPrices()).subscribe(() => {
-      // Also save imageUrl if changed
       const imageUrl = this.editImageUrl();
       this.api.updateProduct(productId, { imageUrl: imageUrl || null } as any).subscribe(() => {
         this.editingId.set(null);

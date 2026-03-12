@@ -13,7 +13,6 @@
   </nav>
 
   <div class="admin-content">
-    <!-- Config bar: T/C y Courier -->
     <div class="config-bar">
       <div class="config-chip">
         <span class="chip-label">T/C Dólar:</span>
@@ -44,6 +43,16 @@
       <h1>Productos y Precios</h1>
       <div class="header-actions">
         <button class="create-btn" (click)="toggleCreate()">{{ showCreate() ? 'Cancelar' : '+ Nuevo Producto' }}</button>
+
+        <select class="search-input" style="cursor: pointer; max-width: 200px; padding-right: 10px;" (change)="onSortChange($event)">
+          <option value="default">Ordenar por...</option>
+          <option value="name_asc">Alfabético (A-Z)</option>
+          <option value="name_desc">Alfabético (Z-A)</option>
+          <option value="price_desc">Precio USD: Mayor a Menor</option>
+          <option value="price_asc">Precio USD: Menor a Mayor</option>
+          <option value="sku_asc">SKU (A-Z)</option>
+        </select>
+
         <input type="text" placeholder="Buscar producto..." (input)="onSearchInput($event)" class="search-input">
       </div>
     </div>
@@ -52,7 +61,6 @@
       <div class="message">{{ createMessage() }}</div>
     }
 
-    <!-- Create product form -->
     @if (showCreate()) {
       <div class="create-form">
         <h3>Nuevo Producto</h3>
@@ -113,20 +121,20 @@
     <div class="products-table-wrapper">
       <table class="products-table">
         <thead>
-          <tr>
-            <th>SKU</th>
-            <th>Producto</th>
-            <th>Tipo</th>
-            <th>Peso (g)</th>
-            <th>Precio USD</th>
-            <th>Puesto USD</th>
-            <th>Puesto PEN</th>
-            <th>Retail (S/)</th>
-            <th>Consolidado (S/)</th>
-            <th>Por Mayor (S/)</th>
-            <th>Disp.</th>
-            <th>Acciones</th>
-          </tr>
+        <tr>
+          <th>SKU</th>
+          <th>Producto</th>
+          <th>Tipo</th>
+          <th>Peso (g)</th>
+          <th>Precio USD</th>
+          <th>Puesto USD</th>
+          <th>Puesto PEN</th>
+          <th>Retail (S/)</th>
+          <th>Consolidado (S/)</th>
+          <th>Por Mayor (S/)</th>
+          <th>Disp.</th>
+          <th>Acciones</th>
+        </tr>
         </thead>
         <tbody>
           @for (p of filteredProducts(); track p.id) {
