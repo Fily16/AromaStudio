@@ -183,6 +183,8 @@
                   <button class="cancel-btn" (click)="cancelEdit()">X</button>
                 } @else {
                   <button class="edit-btn" (click)="startEdit(p)">Editar</button>
+
+                  <button class="delete-btn" (click)="deleteProduct(p.id)" style="background-color: #dc3545; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; margin-left: 5px; font-size: 0.85rem;">Eliminar</button>
                 }
               </td>
             </tr>

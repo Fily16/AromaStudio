@@ -200,6 +200,23 @@ export class ProductsComponent implements OnInit {
   // Create product
   toggleCreate() { this.showCreate.set(!this.showCreate()); }
 
+
+
+// NUEVO: Método para eliminar producto
+  deleteProduct(id: number) {
+    // Agregamos una confirmación para evitar borrados accidentales
+    if (confirm('¿Estás seguro de que deseas eliminar este producto? Esta acción no se puede deshacer.')) {
+      this.api.deleteProduct(id).subscribe({
+        next: () => {
+          this.loadProducts(); // Recarga la lista de productos tras eliminar
+        },
+        error: (err) => {
+          console.error('Error al eliminar producto:', err);
+          alert('No se pudo eliminar el producto. Revisa la consola para más detalles.');
+        }
+      });
+    }
+  }
   updateNewProduct(field: string, event: Event) {
     const target = event.target as HTMLInputElement | HTMLSelectElement;
     const val = target.type === 'number' ? +target.value : target.value;
