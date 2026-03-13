@@ -24,7 +24,7 @@ export class CatalogComponent implements OnInit, AfterViewInit, OnDestroy {
   cart = inject(CartService);
   private router = inject(Router);
 
-  currentView = signal<'landing' | 'retail' | 'wholesale' | 'mayor'>('landing');
+  currentView = signal<'landing' | 'retail' | 'wholesale' | 'mayor'>('retail');
 
   // All products from API
   allProducts = signal<Product[]>([]);

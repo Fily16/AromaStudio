@@ -1,7 +1,8 @@
 .checkout-page {
   min-height: 100vh;
-  background: #f8f9fa;
-  color: #1f2937;
+  background: #FAFAF8;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  color: #1a1a2e;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -9,42 +10,52 @@
 }
 
 .checkout-card {
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
+  background: #fff;
+  border: 1px solid rgba(0,0,0,0.06);
   border-radius: 16px;
   padding: 2rem;
-  max-width: 500px;
+  max-width: 520px;
   width: 100%;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.06);
 }
 
 .checkout-card h1 {
+  font-family: 'Playfair Display', serif;
   font-size: 1.5rem;
   font-weight: 700;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.4rem;
+  letter-spacing: -0.01em;
 }
 
 .subtitle {
-  color: #6b7280;
-  font-size: 0.9rem;
+  color: #94949e;
+  font-size: 0.88rem;
   margin-bottom: 1.5rem;
+  line-height: 1.5;
 }
 
+/* Order Summary */
 .order-summary {
-  background: #f9fafb;
-  border: 1px solid #e5e7eb;
-  border-radius: 10px;
-  padding: 1rem;
+  background: #FAFAF8;
+  border: 1px solid rgba(0,0,0,0.06);
+  border-radius: 12px;
+  padding: 1.15rem;
   margin-bottom: 1.5rem;
 }
 
-.order-summary h3 { font-size: 0.9rem; color: #6b7280; margin-bottom: 0.75rem; }
+.order-summary h3 {
+  font-size: 0.85rem;
+  color: #94949e;
+  margin-bottom: 0.6rem;
+  font-weight: 600;
+}
 
 .summary-item {
   display: flex;
   justify-content: space-between;
-  padding: 0.35rem 0;
-  font-size: 0.85rem;
+  padding: 0.3rem 0;
+  font-size: 0.82rem;
+  color: #4a4a5a;
 }
 
 .summary-total {
@@ -52,191 +63,239 @@
   justify-content: space-between;
   padding-top: 0.75rem;
   margin-top: 0.5rem;
-  border-top: 1px solid #e5e7eb;
+  border-top: 1px solid rgba(0,0,0,0.06);
   font-weight: 700;
-  font-size: 1.1rem;
-  color: #C9A227;
+  font-size: 1.05rem;
+  color: #1a1a2e;
 }
 
+.summary-deposit {
+  display: flex;
+  justify-content: space-between;
+  padding-top: 0.5rem;
+  font-size: 0.85rem;
+  color: #2563EB;
+  font-weight: 600;
+}
+
+/* Form */
 .form-group {
-  margin-bottom: 1.25rem;
+  margin-bottom: 1.15rem;
 }
 
 .form-group label {
   display: block;
-  font-size: 0.85rem;
-  color: #6b7280;
-  margin-bottom: 0.4rem;
+  font-size: 0.82rem;
+  color: #94949e;
+  margin-bottom: 0.35rem;
+  font-weight: 500;
 }
 
 .form-group input {
   width: 100%;
   padding: 0.75rem 1rem;
-  background: #f9fafb;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  color: #1f2937;
-  font-size: 1rem;
+  background: #FAFAF8;
+  border: 1px solid #e8e8ec;
+  border-radius: 10px;
+  color: #1a1a2e;
+  font-size: 0.95rem;
+  font-family: inherit;
   transition: border-color 0.2s;
   box-sizing: border-box;
 }
 
 .form-group input:focus {
   outline: none;
-  border-color: #C9A227;
-  box-shadow: 0 0 0 3px rgba(201,162,39,0.1);
+  border-color: #B8860B;
+  box-shadow: 0 0 0 3px rgba(184,134,11,0.08);
+}
+
+.form-group input::placeholder {
+  color: #c4c4cc;
+}
+
+/* Radio buttons - override inline styles gracefully */
+.form-group input[type="radio"] {
+  width: auto;
+  padding: 0;
+  accent-color: #B8860B;
+}
+
+.form-group input[type="checkbox"] {
+  width: auto;
+  accent-color: #B8860B;
 }
 
 .error-msg {
   color: #ef4444;
-  font-size: 0.85rem;
+  font-size: 0.82rem;
   margin-bottom: 1rem;
+  padding: 0.6rem 0.8rem;
+  background: rgba(239,68,68,0.05);
+  border-radius: 8px;
+  border: 1px solid rgba(239,68,68,0.1);
 }
 
 .submit-btn {
   width: 100%;
   padding: 0.85rem;
-  background: #C9A227;
+  background: #1a1a2e;
   color: #fff;
   border: none;
-  border-radius: 8px;
+  border-radius: 12px;
   font-weight: 600;
-  font-size: 1rem;
+  font-size: 0.95rem;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.25s;
+  font-family: inherit;
 }
 
-.submit-btn:hover { background: #d4af37; }
-.submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.submit-btn:hover {
+  background: #2d2d42;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+}
 
-/* Yape card */
-.yape-card { text-align: center; }
+.submit-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
 
-.yape-icon { margin-bottom: 1rem; }
+/* Yape Card */
+.yape-card {
+  text-align: center;
+}
+
+.yape-icon {
+  margin-bottom: 1rem;
+}
 
 .yape-amount, .yape-number {
-  background: rgba(201,162,39,0.06);
-  border: 1px solid rgba(201,162,39,0.15);
-  border-radius: 10px;
+  background: rgba(184,134,11,0.04);
+  border: 1px solid rgba(184,134,11,0.12);
+  border-radius: 12px;
   padding: 1rem;
   margin-bottom: 1rem;
 }
 
 .yape-amount .label, .yape-number .label {
   display: block;
-  font-size: 0.8rem;
-  color: #6b7280;
+  font-size: 0.78rem;
+  color: #94949e;
   margin-bottom: 0.3rem;
 }
 
 .yape-amount .amount {
   font-size: 2rem;
   font-weight: 800;
-  color: #C9A227;
+  color: #B8860B;
+  letter-spacing: -0.02em;
 }
 
 .yape-number .number {
   font-size: 1.5rem;
   font-weight: 700;
   letter-spacing: 2px;
-  color: #1f2937;
+  color: #1a1a2e;
 }
 
 .yape-instructions {
   text-align: left;
-  background: #f9fafb;
-  border-radius: 8px;
-  padding: 1rem;
+  background: #FAFAF8;
+  border-radius: 10px;
+  padding: 1rem 1.15rem;
   margin-bottom: 1.5rem;
 }
 
 .yape-instructions p {
-  padding: 0.3rem 0;
-  font-size: 0.9rem;
-  color: #6b7280;
+  padding: 0.25rem 0;
+  font-size: 0.85rem;
+  color: #4a4a5a;
+  line-height: 1.5;
 }
 
-/* Deposit preview in form */
-.summary-deposit {
-  display: flex;
-  justify-content: space-between;
-  padding-top: 0.5rem;
-  font-size: 0.9rem;
-  color: #3b82f6;
-  font-weight: 600;
+.yape-remaining-info {
+  background: rgba(37,99,235,0.04);
+  border: 1px solid rgba(37,99,235,0.12);
+  border-radius: 10px;
+  padding: 0.75rem 1rem;
+  margin-bottom: 1rem;
+  font-size: 0.82rem;
+  color: #2563EB;
+  text-align: center;
+  line-height: 1.5;
 }
 
-/* Order code display */
+/* Order Code */
 .order-code-display {
   text-align: center;
-  background: rgba(201,162,39,0.06);
-  border: 2px solid rgba(201,162,39,0.2);
-  border-radius: 12px;
+  background: rgba(184,134,11,0.04);
+  border: 2px solid rgba(184,134,11,0.15);
+  border-radius: 14px;
   padding: 1.25rem;
   margin-bottom: 1.25rem;
 }
 
 .code-label {
   display: block;
-  font-size: 0.8rem;
-  color: #6b7280;
-  margin-bottom: 0.4rem;
+  font-size: 0.78rem;
+  color: #94949e;
+  margin-bottom: 0.35rem;
 }
 
 .code-value {
   display: block;
   font-size: 2rem;
   font-weight: 800;
-  color: #C9A227;
-  font-family: monospace;
+  color: #B8860B;
+  font-family: 'JetBrains Mono', monospace;
   letter-spacing: 3px;
 }
 
 .code-hint {
   display: block;
-  font-size: 0.75rem;
-  color: #6b7280;
-  margin-top: 0.4rem;
+  font-size: 0.72rem;
+  color: #94949e;
+  margin-top: 0.35rem;
 }
 
-/* Remaining info */
-.yape-remaining-info {
-  background: rgba(59,130,246,0.06);
-  border: 1px solid rgba(59,130,246,0.15);
-  border-radius: 8px;
-  padding: 0.75rem 1rem;
-  margin-bottom: 1rem;
-  font-size: 0.85rem;
-  color: #3b82f6;
-  text-align: center;
-}
-
-/* Done info */
+/* Done / Success */
 .done-info {
   text-align: center;
   margin-bottom: 1.5rem;
 }
 
 .done-info p {
-  padding: 0.3rem 0;
-  font-size: 0.9rem;
-  color: #6b7280;
+  padding: 0.25rem 0;
+  font-size: 0.88rem;
+  color: #4a4a5a;
+  line-height: 1.5;
 }
 
-.done-detail {
-  color: #1f2937 !important;
+/* Closed / Success states */
+.closed-card, .success-card {
+  text-align: center;
 }
 
-/* Closed card */
-.closed-card { text-align: center; }
-.closed-icon { margin-bottom: 1.5rem; }
-
-/* Success card */
-.success-card { text-align: center; }
-.success-icon { margin-bottom: 1.5rem; }
+.closed-icon, .success-icon {
+  margin-bottom: 1.25rem;
+}
 
 @media (max-width: 500px) {
-  .checkout-page { padding: 1rem; }
-  .checkout-card { padding: 1.5rem; }
-  .code-value { font-size: 1.5rem; }
+  .checkout-page {
+    padding: 1rem;
+    align-items: flex-start;
+    padding-top: 2rem;
+  }
+  .checkout-card {
+    padding: 1.5rem;
+  }
+  .code-value {
+    font-size: 1.5rem;
+  }
+  .checkout-card h1 {
+    font-size: 1.3rem;
+  }
 }
