@@ -20,6 +20,11 @@ export class CheckoutComponent implements OnInit {
   clientName = signal('');
   clientPhone = signal('');
   yapeNumber = signal('903250695');
+
+  // --- NUEVAS SEÑALES PARA ACUMULAR PEDIDOS ---
+  isAddingToExisting = signal(false);
+  existingOrderCode = signal('');
+
   step = signal<'form' | 'yape' | 'done' | 'closed'>('form');
   orderId = signal<number | null>(null);
   orderCode = signal('');
@@ -59,19 +64,33 @@ export class CheckoutComponent implements OnInit {
   }
 
   submitOrder() {
+    // Validaciones
     if (!this.clientName() || !this.clientPhone()) {
       this.error.set('Por favor completa tu nombre y número de WhatsApp');
+      return;
+    }
+
+    if (this.isAddingToExisting() && !this.existingOrderCode().trim()) {
+      this.error.set('Has marcado que quieres agregar a un pedido existente. Por favor, ingresa el código (ej. AS-0012).');
       return;
     }
 
     this.loading.set(true);
     this.error.set('');
 
-    this.api.createOrder({
+    // Preparamos el payload a enviar
+    const payload: any = {
       clientName: this.clientName(),
       clientPhone: this.clientPhone(),
       items: this.cart.getOrderItems()
-    }).subscribe({
+    };
+
+    // Si el usuario quiere acumular pedido, mandamos el código
+    if (this.isAddingToExisting() && this.existingOrderCode().trim()) {
+      payload.existingOrderCode = this.existingOrderCode().trim();
+    }
+
+    this.api.createOrder(payload).subscribe({
       next: (order) => {
         this.orderId.set(order.id);
         this.orderCode.set(order.orderCode);
@@ -82,6 +101,7 @@ export class CheckoutComponent implements OnInit {
         this.loading.set(false);
       },
       error: (err) => {
+        // Mostramos el mensaje amigable de error que configuramos en el backend (ej. Celular no coincide)
         const msg = err.error?.message || 'Error al crear el pedido. Intenta de nuevo.';
         this.error.set(msg);
         this.loading.set(false);

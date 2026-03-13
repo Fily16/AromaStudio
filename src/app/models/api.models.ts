@@ -119,9 +119,12 @@ export interface CartItem {
   unitPricePen: number;
 }
 
+// --- ACTUALIZADO: NUEVOS CAMPOS ---
 export interface OrderRequest {
   clientName: string;
   clientPhone: string;
+  existingOrderCode?: string; // Opcional: El código del pedido si quiere acumular
+  yapeReference?: string;     // Opcional por ahora, lo mandaremos luego
   items: { productId: number; quantity: number; unitPricePen: number }[];
 }
 

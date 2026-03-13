@@ -44,11 +44,26 @@
         <input id="phone" type="tel" [value]="clientPhone()" (input)="clientPhone.set($any($event.target).value)" placeholder="51903250695">
       </div>
 
+      <div class="form-group add-to-existing-group" style="margin-top: 20px; background-color: #f8fafc; padding: 15px; border-radius: 8px; border: 1px solid #e2e8f0;">
+        <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; margin-bottom: 0;">
+          <input type="checkbox" [checked]="isAddingToExisting()" (change)="isAddingToExisting.set($any($event.target).checked)" style="width: auto; margin: 0;">
+          <strong>¿Quieres agregar esto a un pedido anterior?</strong>
+        </label>
+
+        @if (isAddingToExisting()) {
+          <div style="margin-top: 15px;">
+            <label for="orderCode" style="font-size: 0.9rem; color: #64748b;">Ingresa el código de tu pedido anterior (Ej: AS-0012)</label>
+            <input id="orderCode" type="text" [value]="existingOrderCode()" (input)="existingOrderCode.set($any($event.target).value)" placeholder="AS-XXXX" style="margin-top: 5px; border-color: var(--accent);">
+            <p style="font-size: 0.8rem; color: #64748b; margin-top: 5px;">* El número de WhatsApp debe coincidir con el pedido original.</p>
+          </div>
+        }
+      </div>
+
       @if (error()) {
-        <p class="error-msg">{{error()}}</p>
+        <p class="error-msg" style="margin-top: 15px;">{{error()}}</p>
       }
 
-      <button class="submit-btn" (click)="submitOrder()" [disabled]="loading()">
+      <button class="submit-btn" (click)="submitOrder()" [disabled]="loading()" style="margin-top: 20px;">
         @if (loading()) {
           Procesando...
         } @else {
@@ -64,7 +79,13 @@
         <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
       </div>
       <h1>Paga la Separación</h1>
-      <p class="subtitle">Tu pedido fue registrado. Ahora realiza el pago de separación por Yape.</p>
+
+      @if (isAddingToExisting()) {
+        <p class="subtitle" style="color: #059669; font-weight: bold;">¡Productos agregados exitosamente a tu pedido {{orderCode()}}!</p>
+        <p class="subtitle">Ahora realiza el pago de separación <strong>solo por estos nuevos productos</strong>.</p>
+      } @else {
+        <p class="subtitle">Tu pedido fue registrado. Ahora realiza el pago de separación por Yape.</p>
+      }
 
       <div class="order-code-display">
         <span class="code-label">Tu código de pedido</span>
@@ -73,7 +94,7 @@
       </div>
 
       <div class="yape-amount">
-        <span class="label">Monto de separación</span>
+        <span class="label">Monto de separación (Nuevos productos)</span>
         <span class="amount">S/ {{depositAmount() | number:'1.2-2'}}</span>
       </div>
 
@@ -111,9 +132,7 @@
 
       <div class="done-info">
         <p>Tu pedido está pendiente de verificación de pago.</p>
-        <p>Envía tu código <strong>{{orderCode()}}</strong> por WhatsApp para confirmar.</p>
-        <p class="done-detail">Separación pagada: <strong>S/ {{depositAmount() | number:'1.2-2'}}</strong></p>
-        <p class="done-detail">Pendiente (al llegar a Perú): <strong>S/ {{remainingAmount() | number:'1.2-2'}}</strong></p>
+        <p>Envía tu código <strong>{{orderCode()}}</strong> y tu <strong>voucher de Yape</strong> por WhatsApp para confirmar tu separación.</p>
       </div>
 
       <button class="submit-btn" (click)="goHome()">Volver al catálogo</button>
