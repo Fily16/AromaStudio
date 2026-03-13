@@ -17,7 +17,7 @@
       <p class="subtitle">Ingresa tus datos para procesar tu pedido del consolidado</p>
 
       <div class="order-summary">
-        <h3>Resumen del Pedido</h3>
+        <h3>Resumen del Pedido Actual</h3>
         @for (item of cart.cartItems(); track item.product.id) {
           <div class="summary-item">
             <span>{{item.product.brand}} - {{item.product.name}} x{{item.quantity}}</span>
@@ -25,7 +25,7 @@
           </div>
         }
         <div class="summary-total">
-          <span>Total del pedido</span>
+          <span>Total del carrito</span>
           <span>S/ {{cart.totalPen() | number:'1.2-2'}}</span>
         </div>
         <div class="summary-deposit">
@@ -35,13 +35,56 @@
       </div>
 
       <div class="form-group">
-        <label for="name">Nombre completo</label>
+        <label for="name">Nombre completo *</label>
         <input id="name" type="text" [value]="clientName()" (input)="clientName.set($any($event.target).value)" placeholder="Tu nombre">
       </div>
 
       <div class="form-group">
-        <label for="phone">WhatsApp (con código de país)</label>
+        <label for="phone">WhatsApp (con código de país) *</label>
         <input id="phone" type="tel" [value]="clientPhone()" (input)="clientPhone.set($any($event.target).value)" placeholder="51903250695">
+      </div>
+
+      <div class="form-group delivery-group" style="margin-top: 20px; background-color: #f8fafc; padding: 15px; border-radius: 8px; border: 1px solid #e2e8f0;">
+        <h3 style="margin-top: 0; margin-bottom: 15px; font-size: 1.1rem; color: #334155;">Método de Envío</h3>
+        <div style="display: flex; gap: 20px; margin-bottom: 15px;">
+          <label style="cursor: pointer; display: flex; align-items: center; gap: 5px;">
+            <input type="radio" name="delivery" value="LIMA" [checked]="deliveryMethod() === 'LIMA'" (change)="deliveryMethod.set('LIMA')">
+            <strong>Lima (Estación/Delivery)</strong>
+          </label>
+          <label style="cursor: pointer; display: flex; align-items: center; gap: 5px;">
+            <input type="radio" name="delivery" value="PROVINCIA" [checked]="deliveryMethod() === 'PROVINCIA'" (change)="deliveryMethod.set('PROVINCIA')">
+            <strong>Provincia (Shalom)</strong>
+          </label>
+        </div>
+
+        @if (deliveryMethod() === 'LIMA') {
+          <div style="background-color: #e0f2fe; color: #0369a1; padding: 10px; border-radius: 5px; font-size: 0.9rem; margin-bottom: 15px; line-height: 1.4;">
+            ℹ️ Las entregas gratuitas se realizan en la <strong>Estación de tren Arriola</strong>. También podemos enviarlo a tu domicilio en Lima (el costo de envío lo asume el cliente).
+          </div>
+          <div class="form-group">
+            <label>Lugar de entrega (opcional)</label>
+            <input type="text" [value]="shippingAddress()" (input)="shippingAddress.set($any($event.target).value)" placeholder="Ej: Estación Arriola o Av. Los Pinos 123, Surco">
+          </div>
+        } @else {
+          <div class="form-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+            <div class="form-group" style="margin-bottom: 0;">
+              <label>Quien recibe el paquete *</label>
+              <input type="text" [value]="shippingName()" (input)="shippingName.set($any($event.target).value)" placeholder="Nombre completo">
+            </div>
+            <div class="form-group" style="margin-bottom: 0;">
+              <label>DNI *</label>
+              <input type="text" [value]="shippingDni()" (input)="shippingDni.set($any($event.target).value)" placeholder="Número DNI">
+            </div>
+            <div class="form-group" style="margin-bottom: 0;">
+              <label>Celular de destino *</label>
+              <input type="tel" [value]="shippingPhone()" (input)="shippingPhone.set($any($event.target).value)" placeholder="Celular para Shalom">
+            </div>
+            <div class="form-group" style="margin-bottom: 0;">
+              <label>Agencia Shalom (Destino) *</label>
+              <input type="text" [value]="shippingAddress()" (input)="shippingAddress.set($any($event.target).value)" placeholder="Ej: Shalom Chiclayo Centro">
+            </div>
+          </div>
+        }
       </div>
 
       <div class="form-group add-to-existing-group" style="margin-top: 20px; background-color: #f8fafc; padding: 15px; border-radius: 8px; border: 1px solid #e2e8f0;">

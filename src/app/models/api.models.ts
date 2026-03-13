@@ -43,6 +43,11 @@ export interface Order {
   items: OrderItem[];
   createdAt: string;
   updatedAt: string;
+  deliveryMethod: string | null;
+  shippingName: string | null;
+  shippingDni: string | null;
+  shippingPhone: string | null;
+  shippingAddress: string | null;
 }
 
 export interface Consolidado {
@@ -126,6 +131,11 @@ export interface OrderRequest {
   existingOrderCode?: string; // Opcional: El código del pedido si quiere acumular
   yapeReference?: string;     // Opcional por ahora, lo mandaremos luego
   items: { productId: number; quantity: number; unitPricePen: number }[];
+  deliveryMethod?: string;
+  shippingName?: string;
+  shippingDni?: string;
+  shippingPhone?: string;
+  shippingAddress?: string;
 }
 
 export interface StockPurchaseRequest {

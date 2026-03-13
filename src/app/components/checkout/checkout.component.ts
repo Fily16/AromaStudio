@@ -21,9 +21,15 @@ export class CheckoutComponent implements OnInit {
   clientPhone = signal('');
   yapeNumber = signal('903250695');
 
-  // --- NUEVAS SEÑALES PARA ACUMULAR PEDIDOS ---
   isAddingToExisting = signal(false);
   existingOrderCode = signal('');
+
+  // --- NUEVOS CAMPOS DE ENVÍO ---
+  deliveryMethod = signal<'LIMA' | 'PROVINCIA'>('LIMA');
+  shippingName = signal('');
+  shippingDni = signal('');
+  shippingPhone = signal('');
+  shippingAddress = signal('');
 
   step = signal<'form' | 'yape' | 'done' | 'closed'>('form');
   orderId = signal<number | null>(null);
@@ -39,19 +45,11 @@ export class CheckoutComponent implements OnInit {
       this.router.navigate(['/cart']);
       return;
     }
-
-    // Check if consolidado is open
     this.api.getActiveConsolidado().subscribe({
       next: () => {
-        // Consolidado is open, proceed
-        this.api.getPublicConfig().subscribe(config => {
-          this.yapeNumber.set(config.yapeNumber);
-        });
+        this.api.getPublicConfig().subscribe(config => this.yapeNumber.set(config.yapeNumber));
       },
-      error: () => {
-        // No active consolidado
-        this.step.set('closed');
-      }
+      error: () => this.step.set('closed')
     });
   }
 
@@ -60,32 +58,42 @@ export class CheckoutComponent implements OnInit {
   }
 
   get depositPreview(): number {
-    return this.totalUnits * 20;
+    return this.totalUnits * 20; // Solo lo que hay en el carrito actual
   }
 
   submitOrder() {
-    // Validaciones
     if (!this.clientName() || !this.clientPhone()) {
       this.error.set('Por favor completa tu nombre y número de WhatsApp');
       return;
     }
 
     if (this.isAddingToExisting() && !this.existingOrderCode().trim()) {
-      this.error.set('Has marcado que quieres agregar a un pedido existente. Por favor, ingresa el código (ej. AS-0012).');
+      this.error.set('Ingresa el código de tu pedido anterior (ej. AS-0012).');
       return;
+    }
+
+    // Validación de Provincia
+    if (this.deliveryMethod() === 'PROVINCIA') {
+      if (!this.shippingName() || !this.shippingDni() || !this.shippingPhone() || !this.shippingAddress()) {
+        this.error.set('Por favor completa todos los datos obligatorios para el envío por Shalom.');
+        return;
+      }
     }
 
     this.loading.set(true);
     this.error.set('');
 
-    // Preparamos el payload a enviar
     const payload: any = {
       clientName: this.clientName(),
       clientPhone: this.clientPhone(),
+      deliveryMethod: this.deliveryMethod(),
+      shippingName: this.shippingName(),
+      shippingDni: this.shippingDni(),
+      shippingPhone: this.shippingPhone(),
+      shippingAddress: this.shippingAddress(),
       items: this.cart.getOrderItems()
     };
 
-    // Si el usuario quiere acumular pedido, mandamos el código
     if (this.isAddingToExisting() && this.existingOrderCode().trim()) {
       payload.existingOrderCode = this.existingOrderCode().trim();
     }
@@ -94,16 +102,17 @@ export class CheckoutComponent implements OnInit {
       next: (order) => {
         this.orderId.set(order.id);
         this.orderCode.set(order.orderCode);
-        this.depositAmount.set(order.depositAmountPen);
+
+        // LA SOLUCIÓN DE YAPE: En pantalla mostramos el pago SOLO del carrito actual
+        this.depositAmount.set(this.depositPreview);
+
         this.remainingAmount.set(order.remainingPen);
         this.totalAmount.set(order.totalPen);
         this.step.set('yape');
         this.loading.set(false);
       },
       error: (err) => {
-        // Mostramos el mensaje amigable de error que configuramos en el backend (ej. Celular no coincide)
-        const msg = err.error?.message || 'Error al crear el pedido. Intenta de nuevo.';
-        this.error.set(msg);
+        this.error.set(err.error?.message || 'Error al crear el pedido. Intenta de nuevo.');
         this.loading.set(false);
       }
     });

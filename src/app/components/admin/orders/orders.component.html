@@ -39,7 +39,6 @@
       <div class="message">{{ message() }}</div>
     }
 
-    <!-- Search result -->
     @if (searchError()) {
       <div class="search-error">{{ searchError() }}</div>
     }
@@ -56,6 +55,25 @@
             <strong>{{ order.clientName }}</strong>
             <span>{{ order.clientPhone }}</span>
           </div>
+
+          @if (order.deliveryMethod) {
+            <div class="order-shipping" style="background-color: #f1f5f9; padding: 10px; margin-top: 10px; margin-bottom: 10px; border-radius: 6px; font-size: 0.85rem; border-left: 4px solid var(--primary);">
+              <div style="font-weight: bold; margin-bottom: 5px; color: var(--primary);">
+                Envío: {{ order.deliveryMethod }}
+              </div>
+              @if (order.deliveryMethod === 'PROVINCIA') {
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px;">
+                  <span><strong>Recibe:</strong> {{ order.shippingName }}</span>
+                  <span><strong>DNI:</strong> {{ order.shippingDni }}</span>
+                  <span><strong>Celular:</strong> {{ order.shippingPhone }}</span>
+                  <span><strong>Agencia:</strong> {{ order.shippingAddress }}</span>
+                </div>
+              } @else {
+                <span><strong>Lugar/Dirección:</strong> {{ order.shippingAddress || 'Coordinar por WhatsApp' }}</span>
+              }
+            </div>
+          }
+
           <div class="order-items">
             @for (item of order.items; track item.id) {
               <div class="order-item-row">
@@ -76,7 +94,6 @@
       </div>
     }
 
-    <!-- Consolidados summary -->
     @for (c of consolidados(); track c.id) {
       <div class="consolidado-card" [class.open]="c.status === 'ABIERTO'" [class.entregado]="c.status === 'ENTREGADO'">
         <div class="consolidado-header">
@@ -103,7 +120,6 @@
 
         @if (breakdownConsolidadoId() === c.id && breakdown()) {
           <div class="breakdown-grid">
-            <!-- Consolidado (Clientes) -->
             <div class="breakdown-card">
               <h4>Consolidado <span class="card-subtitle">(Clientes)</span></h4>
               <div class="bd-row"><span>Pedidos</span><span>{{ breakdown()!.consolidado.orderCount }}</span></div>
@@ -130,7 +146,6 @@
               }
             </div>
 
-            <!-- Mi Compra -->
             <div class="breakdown-card">
               <h4>Mi Compra <span class="card-subtitle">(Para tienda)</span></h4>
               <div class="bd-row"><span>Pedidos</span><span>{{ breakdown()!.miCompra.orderCount }}</span></div>
@@ -152,7 +167,6 @@
               <div class="bd-no-profit">(sin ganancia)</div>
             </div>
 
-            <!-- Total -->
             <div class="breakdown-card total-card">
               <h4>Total <span class="card-subtitle">(Todo junto)</span></h4>
               <div class="bd-row"><span>Pedidos</span><span>{{ breakdown()!.total.orderCount }}</span></div>
@@ -177,7 +191,6 @@
       </div>
     }
 
-    <!-- Orders list -->
     @if (loading()) {
       <p class="loading">Cargando pedidos...</p>
     } @else if (orders().length === 0) {
@@ -195,6 +208,25 @@
               <strong>{{ order.clientName }}</strong>
               <span>{{ order.clientPhone }}</span>
             </div>
+
+            @if (order.deliveryMethod) {
+              <div class="order-shipping" style="background-color: #f1f5f9; padding: 10px; margin-top: 10px; margin-bottom: 10px; border-radius: 6px; font-size: 0.85rem; border-left: 4px solid var(--primary);">
+                <div style="font-weight: bold; margin-bottom: 5px; color: var(--primary);">
+                  Envío: {{ order.deliveryMethod }}
+                </div>
+                @if (order.deliveryMethod === 'PROVINCIA') {
+                  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px;">
+                    <span><strong>Recibe:</strong> {{ order.shippingName }}</span>
+                    <span><strong>DNI:</strong> {{ order.shippingDni }}</span>
+                    <span><strong>Celular:</strong> {{ order.shippingPhone }}</span>
+                    <span><strong>Agencia:</strong> {{ order.shippingAddress }}</span>
+                  </div>
+                } @else {
+                  <span><strong>Lugar/Dirección:</strong> {{ order.shippingAddress || 'Coordinar por WhatsApp' }}</span>
+                }
+              </div>
+            }
+
             <div class="order-items">
               @for (item of order.items; track item.id) {
                 <div class="order-item-row">
@@ -212,7 +244,6 @@
                 }
               </div>
 
-              <!-- Action buttons based on status -->
               @if (order.paymentStatus === 'PENDIENTE_SEPARACION') {
                 @if (activeActionOrderId() === order.id && activeActionType() === 'deposit') {
                   <div class="inline-action">
