@@ -35,6 +35,21 @@ export class ConfigComponent implements OnInit {
     google_sheet_url: 'Google Sheet URL'
   };
 
+  // NUEVO: Método de reinicio
+  resetSystem() {
+    if (confirm('🚨 ¡ATENCIÓN! Esto borrará TODAS las ventas, el inventario de tienda, los pedidos de clientes y los consolidados. Tus perfumes y precios NO se borrarán. ¿Estás absolutamente seguro de empezar desde cero?')) {
+      this.api.factoryResetOperations().subscribe({
+        next: (res) => {
+          alert(res.message);
+          window.location.reload(); // Recarga la página para mostrar todo en cero
+        },
+        error: (err) => {
+          console.error(err);
+          alert('Hubo un error al reiniciar. Revisa la consola.');
+        }
+      });
+    }
+  }
   ngOnInit() { this.load(); }
 
   load() {

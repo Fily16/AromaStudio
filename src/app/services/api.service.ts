@@ -181,4 +181,8 @@ export class ApiService {
       headers: this.authHeaders()
     });
   }
+  // --- Factory Reset ---
+  factoryResetOperations(): Observable<any> {
+    return this.http.delete(`${this.url}/admin/factory-reset-operations`, { headers: this.authHeaders() });
+  }
 }
