@@ -62,6 +62,10 @@ export class ApiService {
     return this.http.get<Order>(`${this.url}/orders/code/${code}`);
   }
 
+  editOrderByClient(request: OrderRequest): Observable<Order> {
+    return this.http.put<Order>(`${this.url}/orders/edit-by-client`, request);
+  }
+
   // --- Orders (admin) ---
   getOrders(status?: string): Observable<Order[]> {
     const p: any = {};
@@ -85,6 +89,14 @@ export class ApiService {
     return this.http.put<Order>(`${this.url}/orders/${orderId}/reject`, {}, { headers: this.authHeaders() });
   }
 
+  updateOrderClient(orderId: number, data: { clientName?: string; clientPhone?: string }): Observable<Order> {
+    return this.http.put<Order>(`${this.url}/orders/${orderId}/update-client`, data, { headers: this.authHeaders() });
+  }
+
+  deleteOrder(orderId: number): Observable<void> {
+    return this.http.delete<void>(`${this.url}/orders/${orderId}`, { headers: this.authHeaders() });
+  }
+
   enableMerchandise(consolidadoId: number): Observable<any> {
     return this.http.post(`${this.url}/admin/enable-merchandise/${consolidadoId}`, {}, { headers: this.authHeaders() });
   }
@@ -104,6 +116,10 @@ export class ApiService {
 
   closeConsolidado(id: number): Observable<Consolidado> {
     return this.http.put<Consolidado>(`${this.url}/consolidados/${id}/close`, {}, { headers: this.authHeaders() });
+  }
+
+  deleteConsolidado(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.url}/consolidados/${id}`, { headers: this.authHeaders() });
   }
 
   // --- Retail (public) ---

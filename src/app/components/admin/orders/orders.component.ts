@@ -15,10 +15,12 @@ import { Order, Consolidado, FullBreakdownResponse } from '../../../models/api.m
 export class OrdersComponent implements OnInit {
   private api = inject(ApiService);
 
-  orders = signal<Order[]>([]);
   consolidados = signal<Consolidado[]>([]);
+  consolidadoOrders = signal<Record<number, Order[]>>({});
+  expandedConsolidadoId = signal<number | null>(null);
   filter = signal<string>('');
   loading = signal(false);
+  loadingOrders = signal(false);
   message = signal('');
   breakdown = signal<FullBreakdownResponse | null>(null);
   breakdownConsolidadoId = signal<number | null>(null);
@@ -33,18 +35,53 @@ export class OrdersComponent implements OnInit {
   activeActionType = signal<'deposit' | 'rest' | null>(null);
   yapeRefInput = signal('');
 
+  // Edit client
+  editingOrderId = signal<number | null>(null);
+  editName = signal('');
+  editPhone = signal('');
+
   ngOnInit() {
-    this.loadOrders();
-    this.api.getConsolidados().subscribe(c => this.consolidados.set(c));
+    this.loadConsolidados();
   }
 
-  loadOrders() {
+  loadConsolidados() {
     this.loading.set(true);
-    const status = this.filter() || undefined;
-    this.api.getOrders(status).subscribe({
-      next: (o) => { this.orders.set(o); this.loading.set(false); },
+    this.api.getConsolidados().subscribe({
+      next: (c) => {
+        // Sort by id descending (newest first)
+        this.consolidados.set(c.sort((a, b) => b.id - a.id));
+        this.loading.set(false);
+      },
       error: () => this.loading.set(false)
     });
+  }
+
+  // --- Expand/collapse consolidado orders ---
+  toggleOrders(consolidadoId: number) {
+    if (this.expandedConsolidadoId() === consolidadoId) {
+      this.expandedConsolidadoId.set(null);
+      return;
+    }
+    this.expandedConsolidadoId.set(consolidadoId);
+    this.loadConsolidadoOrders(consolidadoId);
+  }
+
+  loadConsolidadoOrders(consolidadoId: number) {
+    this.loadingOrders.set(true);
+    this.api.getConsolidadoOrders(consolidadoId).subscribe({
+      next: (orders) => {
+        const filtered = this.filter()
+          ? orders.filter(o => o.paymentStatus === this.filter())
+          : orders;
+        this.consolidadoOrders.update(map => ({ ...map, [consolidadoId]: filtered }));
+        this.loadingOrders.set(false);
+      },
+      error: () => this.loadingOrders.set(false)
+    });
+  }
+
+  getOrdersForConsolidado(consolidadoId: number): Order[] {
+    return this.consolidadoOrders()[consolidadoId] || [];
   }
 
   // --- Search by code ---
@@ -91,7 +128,7 @@ export class OrdersComponent implements OnInit {
     obs.subscribe({
       next: () => {
         this.cancelAction();
-        this.loadOrders();
+        this.refreshExpandedOrders();
         this.showMessage(type === 'deposit' ? 'Separación verificada' : 'Pago final verificado');
       },
       error: () => this.showMessage('Error al verificar pago')
@@ -101,8 +138,68 @@ export class OrdersComponent implements OnInit {
   reject(orderId: number) {
     if (confirm('¿Rechazar este pedido?')) {
       this.api.rejectPayment(orderId).subscribe(() => {
-        this.loadOrders();
+        this.refreshExpandedOrders();
         this.showMessage('Pedido rechazado');
+      });
+    }
+  }
+
+  // --- Edit client info ---
+  startEdit(order: Order) {
+    this.editingOrderId.set(order.id);
+    this.editName.set(order.clientName);
+    this.editPhone.set(order.clientPhone);
+  }
+
+  cancelEdit() {
+    this.editingOrderId.set(null);
+    this.editName.set('');
+    this.editPhone.set('');
+  }
+
+  saveEdit() {
+    const orderId = this.editingOrderId();
+    if (!orderId) return;
+    this.api.updateOrderClient(orderId, {
+      clientName: this.editName(),
+      clientPhone: this.editPhone()
+    }).subscribe({
+      next: () => {
+        this.cancelEdit();
+        this.refreshExpandedOrders();
+        this.showMessage('Datos del cliente actualizados');
+      },
+      error: () => this.showMessage('Error al actualizar datos')
+    });
+  }
+
+  onEditName(event: Event) { this.editName.set((event.target as HTMLInputElement).value); }
+  onEditPhone(event: Event) { this.editPhone.set((event.target as HTMLInputElement).value); }
+
+  // --- Delete rejected order ---
+  deleteOrder(orderId: number) {
+    if (confirm('¿Eliminar este pedido rechazado? Esta acción no se puede deshacer.')) {
+      this.api.deleteOrder(orderId).subscribe({
+        next: () => {
+          this.refreshExpandedOrders();
+          this.loadConsolidados();
+          this.showMessage('Pedido eliminado');
+        },
+        error: () => this.showMessage('Error al eliminar pedido')
+      });
+    }
+  }
+
+  // --- Delete consolidado ---
+  deleteConsolidado(id: number) {
+    if (confirm('¿Eliminar este consolidado y TODOS sus pedidos? Esta acción no se puede deshacer.')) {
+      this.api.deleteConsolidado(id).subscribe({
+        next: () => {
+          this.expandedConsolidadoId.set(null);
+          this.loadConsolidados();
+          this.showMessage('Consolidado eliminado');
+        },
+        error: () => this.showMessage('Error al eliminar consolidado')
       });
     }
   }
@@ -111,7 +208,7 @@ export class OrdersComponent implements OnInit {
   closeConsolidado(id: number) {
     if (confirm('¿Cerrar este consolidado? No se podrán agregar más pedidos.')) {
       this.api.closeConsolidado(id).subscribe(() => {
-        this.api.getConsolidados().subscribe(c => this.consolidados.set(c));
+        this.loadConsolidados();
         this.showMessage('Consolidado cerrado');
       });
     }
@@ -121,9 +218,9 @@ export class OrdersComponent implements OnInit {
     if (confirm('¿Habilitar mercancía? Esto moverá los productos de tienda al inventario y habilitará el segundo pago para clientes.')) {
       this.api.enableMerchandise(consolidadoId).subscribe({
         next: () => {
-          this.api.getConsolidados().subscribe(c => this.consolidados.set(c));
-          this.loadOrders();
-          this.showMessage('Mercancía habilitada. Stock de tienda agregado al inventario. Segundo pago habilitado para clientes.');
+          this.loadConsolidados();
+          this.refreshExpandedOrders();
+          this.showMessage('Mercancía habilitada. Stock de tienda agregado al inventario.');
         },
         error: () => this.showMessage('Error al habilitar mercancía')
       });
@@ -133,7 +230,8 @@ export class OrdersComponent implements OnInit {
   // --- Filters ---
   onFilterChange(event: Event) {
     this.filter.set((event.target as HTMLSelectElement).value);
-    this.loadOrders();
+    const expanded = this.expandedConsolidadoId();
+    if (expanded) this.loadConsolidadoOrders(expanded);
   }
 
   onSearchInput(event: Event) {
@@ -166,6 +264,11 @@ export class OrdersComponent implements OnInit {
       'RECHAZADO': 'Rechazado'
     };
     return labels[status] || status;
+  }
+
+  private refreshExpandedOrders() {
+    const expanded = this.expandedConsolidadoId();
+    if (expanded) this.loadConsolidadoOrders(expanded);
   }
 
   private showMessage(msg: string) {

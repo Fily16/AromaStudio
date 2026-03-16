@@ -5,7 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { DecimalPipe } from '@angular/common';
 import { ApiService } from '../../services/api.service';
 import { CartService } from '../../services/cart.service';
-import { Product } from '../../models/api.models';
+import { Product, Order } from '../../models/api.models';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
@@ -378,5 +378,145 @@ export class CatalogComponent implements OnInit, AfterViewInit, OnDestroy {
   getRetailWhatsAppLink(product: Product): string {
     const message = `¡Hola! Estoy interesado/a en:\n\n${product.brand} - ${product.name} ${product.ml}ml\nPrecio: S/ ${product.retailPricePen}\n\n¿Tienen disponibilidad? ¿Cuál es el proceso para realizar la compra?`;
     return `https://wa.me/51903250695?text=${encodeURIComponent(message)}`;
+  }
+
+  // === Edit Order Modal ===
+  showEditModal = signal(false);
+  editStep = signal<'lookup' | 'edit' | 'done'>('lookup');
+  editOrderCode = signal('');
+  editOrderPhone = signal('');
+  editOrder = signal<Order | null>(null);
+  editItems = signal<{ productId: number; product: Product; quantity: number; unitPrice: number }[]>([]);
+  editError = signal('');
+  editLoading = signal(false);
+  editMessage = signal('');
+
+  editOldUnits = signal(0);
+
+  editTotalUnits = computed(() => this.editItems().reduce((sum, i) => sum + i.quantity, 0));
+  editNewTotal = computed(() => this.editItems().reduce((sum, i) => sum + i.quantity * i.unitPrice, 0));
+  editExtraUnits = computed(() => Math.max(0, this.editTotalUnits() - this.editOldUnits()));
+  editExtraDeposit = computed(() => this.editExtraUnits() * 20); // S/20 per unit
+  editCurrentDeposit = computed(() => {
+    const order = this.editOrder();
+    return order ? (order.depositAmountPen || 0) : 0;
+  });
+  editTotalDeposit = computed(() => this.editCurrentDeposit() + this.editExtraDeposit());
+  editRemaining = computed(() => this.editNewTotal() - this.editTotalDeposit());
+
+  // Products available for adding (consolidado products)
+  editAvailableProducts = computed(() => {
+    const currentIds = new Set(this.editItems().map(i => i.productId));
+    return this.wholesaleProducts().filter(p => !currentIds.has(p.id));
+  });
+
+  openEditModal() {
+    this.showEditModal.set(true);
+    this.editStep.set('lookup');
+    this.editOrderCode.set('');
+    this.editOrderPhone.set('');
+    this.editOrder.set(null);
+    this.editItems.set([]);
+    this.editError.set('');
+    this.editMessage.set('');
+  }
+
+  closeEditModal() {
+    this.showEditModal.set(false);
+  }
+
+  onEditCodeInput(event: Event) { this.editOrderCode.set((event.target as HTMLInputElement).value); }
+  onEditPhoneInput(event: Event) { this.editOrderPhone.set((event.target as HTMLInputElement).value); }
+
+  lookupOrder() {
+    const code = this.editOrderCode().trim().toUpperCase();
+    const phone = this.editOrderPhone().trim();
+    if (!code || !phone) {
+      this.editError.set('Ingresa tu código de pedido y número de celular.');
+      return;
+    }
+    this.editError.set('');
+    this.editLoading.set(true);
+
+    this.api.getOrderByCode(code).subscribe({
+      next: (order) => {
+        if (order.clientPhone !== phone) {
+          this.editError.set('El número de celular no coincide con este pedido.');
+          this.editLoading.set(false);
+          return;
+        }
+        this.editOrder.set(order);
+        this.editOldUnits.set(order.items.reduce((sum, i) => sum + i.quantity, 0));
+        // Load items into editable list
+        this.editItems.set(order.items.map(i => ({
+          productId: i.product.id,
+          product: i.product,
+          quantity: i.quantity,
+          unitPrice: i.unitPricePen
+        })));
+        this.editStep.set('edit');
+        this.editLoading.set(false);
+      },
+      error: () => {
+        this.editError.set('No se encontró un pedido con ese código.');
+        this.editLoading.set(false);
+      }
+    });
+  }
+
+  editChangeItemQty(index: number, delta: number) {
+    this.editItems.update(items => {
+      const copy = [...items];
+      copy[index] = { ...copy[index], quantity: Math.max(1, copy[index].quantity + delta) };
+      return copy;
+    });
+  }
+
+  editRemoveItem(index: number) {
+    this.editItems.update(items => items.filter((_, i) => i !== index));
+  }
+
+  editAddProduct(product: Product) {
+    const price = product.wholesalePricePen ?? 0;
+    this.editItems.update(items => [...items, {
+      productId: product.id,
+      product,
+      quantity: 1,
+      unitPrice: price
+    }]);
+  }
+
+  editSave() {
+    const items = this.editItems();
+    if (items.length === 0) {
+      this.editError.set('El pedido debe tener al menos un producto.');
+      return;
+    }
+    this.editError.set('');
+    this.editLoading.set(true);
+
+    const request = {
+      clientName: this.editOrder()!.clientName,
+      clientPhone: this.editOrderPhone(),
+      existingOrderCode: this.editOrderCode().trim().toUpperCase(),
+      items: items.map(i => ({ productId: i.productId, quantity: i.quantity, unitPricePen: i.unitPrice }))
+    };
+
+    this.api.editOrderByClient(request).subscribe({
+      next: (order) => {
+        this.editOrder.set(order);
+        this.editStep.set('done');
+        this.editLoading.set(false);
+        if (this.editExtraUnits() > 0) {
+          this.editMessage.set(`Pedido actualizado. Debes pagar S/ ${this.editExtraDeposit().toFixed(2)} adicional de adelanto por las ${this.editExtraUnits()} unidades nuevas.`);
+        } else {
+          this.editMessage.set('Pedido actualizado correctamente. No hay adelanto adicional.');
+        }
+      },
+      error: (err) => {
+        this.editError.set(err.error?.message || 'Error al guardar los cambios.');
+        this.editLoading.set(false);
+      }
+    });
   }
 }
