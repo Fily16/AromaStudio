@@ -108,6 +108,16 @@ export class CheckoutComponent implements OnInit {
 
         this.remainingAmount.set(order.remainingPen);
         this.totalAmount.set(order.totalPen);
+
+        // TikTok Pixel: PlaceAnOrder event
+        if (typeof (window as any).ttq !== 'undefined') {
+          (window as any).ttq.track('PlaceAnOrder', {
+            content_type: 'product',
+            value: order.totalPen,
+            currency: 'PEN'
+          });
+        }
+
         this.step.set('yape');
         this.loading.set(false);
       },

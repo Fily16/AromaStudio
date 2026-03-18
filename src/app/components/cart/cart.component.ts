@@ -39,6 +39,15 @@ export class CartComponent {
       message += `• ${item.product.brand} - ${item.product.name} ${item.product.ml}ml x${item.quantity} — S/ ${subtotal}\n`;
     }
     message += `\nTotal: S/ ${this.cart.totalPen().toFixed(2)}`;
+
+    // TikTok Pixel: Contact event (WhatsApp)
+    if (typeof (window as any).ttq !== 'undefined') {
+      (window as any).ttq.track('Contact', {
+        value: this.cart.totalPen(),
+        currency: 'PEN'
+      });
+    }
+
     const url = `https://wa.me/51903250695?text=${encodeURIComponent(message)}`;
     window.open(url, '_blank');
     this.cart.clear();

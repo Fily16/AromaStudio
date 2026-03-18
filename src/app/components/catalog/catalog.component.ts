@@ -339,6 +339,19 @@ export class CatalogComponent implements OnInit, AfterViewInit, OnDestroy {
     // Ahora enviamos el catalogType como tercer parámetro
     this.cart.addItem(cartProduct, qty, catalogType);
 
+    // TikTok Pixel: AddToCart event
+    if (typeof (window as any).ttq !== 'undefined') {
+      (window as any).ttq.track('AddToCart', {
+        content_id: product.id.toString(),
+        content_name: `${product.brand} - ${product.name}`,
+        content_type: 'product',
+        quantity: qty,
+        price: price,
+        value: price * qty,
+        currency: 'PEN'
+      });
+    }
+
     this.cartToast.set(`${product.brand} - ${product.name} (x${qty}) agregado`);
     setTimeout(() => this.cartToast.set(''), 2500);
     // Reset qty to 1 after adding
@@ -359,6 +372,19 @@ export class CatalogComponent implements OnInit, AfterViewInit, OnDestroy {
 
     // Enviamos el catalogType
     this.cart.addItem(cartProduct, 1, catalogType);
+
+    // TikTok Pixel: AddToCart event
+    if (typeof (window as any).ttq !== 'undefined') {
+      (window as any).ttq.track('AddToCart', {
+        content_id: product.id.toString(),
+        content_name: `${product.brand} - ${product.name}`,
+        content_type: 'product',
+        quantity: 1,
+        price: price,
+        value: price,
+        currency: 'PEN'
+      });
+    }
 
     this.cartToast.set(`${product.brand} - ${product.name} agregado`);
     setTimeout(() => this.cartToast.set(''), 2500);
