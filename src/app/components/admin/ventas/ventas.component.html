@@ -57,11 +57,11 @@
             <span class="stat-label">Ventas Totales</span>
           </div>
           <div class="stat-card highlight">
-            <span class="stat-value">S/ {{ s.totalIngresos | number:'1.2-2' }}</span>
+            <span class="stat-value">S/ {{ (ventas().length > 0 ? realIngresos() : s.totalIngresos) | number:'1.2-2' }}</span>
             <span class="stat-label">Ingresos</span>
           </div>
           <div class="stat-card profit">
-            <span class="stat-value">S/ {{ s.totalGanancia | number:'1.2-2' }}</span>
+            <span class="stat-value">S/ {{ (ventas().length > 0 ? realGanancia() : s.totalGanancia) | number:'1.2-2' }}</span>
             <span class="stat-label">Ganancia Tienda</span>
           </div>
           <div class="stat-card">

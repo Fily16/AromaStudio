@@ -104,6 +104,14 @@ export class VentasComponent implements OnInit {
     this.groupedVentas().some(g => g.ventas.length > 0)
   );
 
+  // Real ganancia calculated from corrected ventas
+  realGanancia = computed(() =>
+    this.ventas().reduce((sum, v) => sum + v.ganancia, 0)
+  );
+  realIngresos = computed(() =>
+    this.ventas().reduce((sum, v) => sum + (v.precioVenta * v.cantidad), 0)
+  );
+
   // Products for sync
   products = signal<Product[]>([]);
   retailStock = signal<Record<number, number>>({});
