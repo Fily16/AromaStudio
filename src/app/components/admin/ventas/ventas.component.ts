@@ -200,23 +200,43 @@ export class VentasComponent implements OnInit {
   }
 
   loadVentas() {
-    // Load from backend (has correct costs from inventory)
-    this.api.getRetailSales().subscribe({
-      next: (sales: RetailSale[]) => {
-        const rows: VentaRow[] = sales.map(s => ({
-          fecha: new Date(s.saleDate).toLocaleDateString('es-PE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
-          producto: s.product.name,
-          marca: s.product.brand,
-          cantidad: s.quantity,
-          precioVenta: s.salePricePen,
-          costoUnit: s.costPen / s.quantity,
-          subtotal: s.salePricePen * s.quantity,
-          ganancia: s.profitPen,
-          canal: s.channel
-        }));
-        // Most recent first
-        rows.reverse();
-        this.ventas.set(rows);
+    if (!this.scriptUrl()) return;
+    // Load ventas from Google Sheets
+    this.api.googleProxyGet('ventas').subscribe({
+      next: (v: VentaRow[]) => {
+        // Load real costs from backend inventory to fix costs
+        this.api.getRetailInventory(false).subscribe({
+          next: (inventory) => {
+            // Build cost map: average cost per product name
+            const costMap: Record<string, number> = {};
+            const qtyMap: Record<string, number> = {};
+            for (const inv of inventory) {
+              const key = `${inv.product.brand} - ${inv.product.name}`;
+              const cost = inv.costPerUnitPen ?? 0;
+              const qty = inv.quantity ?? 0;
+              if (cost > 0) {
+                costMap[key] = (costMap[key] || 0) + cost * Math.max(qty, 1);
+                qtyMap[key] = (qtyMap[key] || 0) + Math.max(qty, 1);
+              }
+            }
+
+            // Replace Sheet cost with real inventory cost
+            const fixed = v.map(venta => {
+              const key = `${venta.marca} - ${venta.producto}`;
+              if (qtyMap[key] && costMap[key]) {
+                const realCost = costMap[key] / qtyMap[key];
+                return {
+                  ...venta,
+                  costoUnit: realCost,
+                  ganancia: (venta.precioVenta * venta.cantidad) - (realCost * venta.cantidad)
+                };
+              }
+              return venta;
+            });
+            this.ventas.set(fixed);
+          },
+          error: () => this.ventas.set(v) // fallback: use Sheet costs
+        });
       },
       error: () => {}
     });
