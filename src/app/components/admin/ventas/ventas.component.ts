@@ -230,34 +230,59 @@ export class VentasComponent implements OnInit {
       next: (products) => {
         this.api.getRetailStock().subscribe({
           next: (stock) => {
-            const payload = products
-              .filter(p => (stock[p.id] ?? 0) > 0)
-              .map(p => ({
-                id: p.id,
-                brand: p.brand,
-                name: p.name,
-                ml: p.ml,
-                costPen: p.wholesalePricePen || 0,
-                stock: stock[p.id] ?? 0,
-                imageUrl: p.imageUrl || ''
-              }));
+            // Load inventory to get REAL cost per unit (not consolidado price)
+            this.api.getRetailInventory(true).subscribe({
+              next: (inventory) => {
+                // Calculate average cost per product from inventory
+                const costMap: Record<number, number> = {};
+                const qtyMap: Record<number, number> = {};
+                for (const inv of inventory) {
+                  const pid = inv.product.id;
+                  const cost = inv.costPerUnitPen ?? 0;
+                  const qty = inv.quantity ?? 0;
+                  if (qty > 0) {
+                    costMap[pid] = (costMap[pid] || 0) + cost * qty;
+                    qtyMap[pid] = (qtyMap[pid] || 0) + qty;
+                  }
+                }
 
-            this.message.set(`Enviando ${payload.length} productos al Google Sheet...`);
+                const payload = products
+                  .filter(p => (stock[p.id] ?? 0) > 0)
+                  .map(p => {
+                    // Use real cost from inventory, fallback to wholesalePricePen
+                    const realCost = qtyMap[p.id] ? costMap[p.id] / qtyMap[p.id] : (p.wholesalePricePen || 0);
+                    return {
+                      id: p.id,
+                      brand: p.brand,
+                      name: p.name,
+                      ml: p.ml,
+                      costPen: realCost,
+                      stock: stock[p.id] ?? 0,
+                      imageUrl: p.imageUrl || ''
+                    };
+                  });
 
-            this.api.googleProxyPost({
-              action: 'syncStock',
-              products: payload,
-              backendUrl: this.backendUrl() || '',
-              apiKey: this.apiKey() || ''
-            }).subscribe({
-              next: () => {
-                this.message.set('Productos sincronizados. Importando ventas del Sheet...');
-                // Step 2: Read stock from Sheet and adjust backend
-                this.importSheetStock();
+                this.message.set(`Enviando ${payload.length} productos al Google Sheet...`);
+
+                this.api.googleProxyPost({
+                  action: 'syncStock',
+                  products: payload,
+                  backendUrl: this.backendUrl() || '',
+                  apiKey: this.apiKey() || ''
+                }).subscribe({
+                  next: () => {
+                    this.message.set('Productos sincronizados. Importando ventas del Sheet...');
+                    this.importSheetStock();
+                  },
+                  error: (err) => {
+                    this.syncing.set(false);
+                    this.message.set('Error al sincronizar: ' + (err.message || 'Error de red'));
+                  }
+                });
               },
-              error: (err) => {
+              error: () => {
                 this.syncing.set(false);
-                this.message.set('Error al sincronizar: ' + (err.message || 'Error de red'));
+                this.message.set('Error al obtener inventario');
               }
             });
           },
