@@ -2,7 +2,7 @@ import { Component, inject, signal, computed, OnInit } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { DecimalPipe } from '@angular/common';
 import { ApiService } from '../../../services/api.service';
-import { Order, Product } from '../../../models/api.models';
+import { Order, Product, RetailSale } from '../../../models/api.models';
 
 interface VentaRow {
   fecha: string;
@@ -200,9 +200,24 @@ export class VentasComponent implements OnInit {
   }
 
   loadVentas() {
-    if (!this.scriptUrl()) return;
-    this.api.googleProxyGet('ventas').subscribe({
-      next: (v: VentaRow[]) => this.ventas.set(v),
+    // Load from backend (has correct costs from inventory)
+    this.api.getRetailSales().subscribe({
+      next: (sales: RetailSale[]) => {
+        const rows: VentaRow[] = sales.map(s => ({
+          fecha: new Date(s.saleDate).toLocaleDateString('es-PE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
+          producto: s.product.name,
+          marca: s.product.brand,
+          cantidad: s.quantity,
+          precioVenta: s.salePricePen,
+          costoUnit: s.costPen / s.quantity,
+          subtotal: s.salePricePen * s.quantity,
+          ganancia: s.profitPen,
+          canal: s.channel
+        }));
+        // Most recent first
+        rows.reverse();
+        this.ventas.set(rows);
+      },
       error: () => {}
     });
   }
