@@ -390,13 +390,20 @@ export class CatalogComponent implements OnInit, AfterViewInit, OnDestroy {
   editError = signal('');
   editLoading = signal(false);
   editMessage = signal('');
-
   editOldUnits = signal(0);
+
+  // Swap picker state
+  editSwapIndex = signal<number | null>(null);
+  editPickerSearch = signal('');
+  editPickerMode = signal<'swap' | 'add' | null>(null);
+
+  // Add product search
+  editAddSearch = signal('');
 
   editTotalUnits = computed(() => this.editItems().reduce((sum, i) => sum + i.quantity, 0));
   editNewTotal = computed(() => this.editItems().reduce((sum, i) => sum + i.quantity * i.unitPrice, 0));
   editExtraUnits = computed(() => Math.max(0, this.editTotalUnits() - this.editOldUnits()));
-  editExtraDeposit = computed(() => this.editExtraUnits() * 20); // S/20 per unit
+  editExtraDeposit = computed(() => this.editExtraUnits() * 20);
   editCurrentDeposit = computed(() => {
     const order = this.editOrder();
     return order ? (order.depositAmountPen || 0) : 0;
@@ -404,10 +411,32 @@ export class CatalogComponent implements OnInit, AfterViewInit, OnDestroy {
   editTotalDeposit = computed(() => this.editCurrentDeposit() + this.editExtraDeposit());
   editRemaining = computed(() => this.editNewTotal() - this.editTotalDeposit());
 
-  // Products available for adding (consolidado products)
+  // Products available for adding (not already in the order)
   editAvailableProducts = computed(() => {
     const currentIds = new Set(this.editItems().map(i => i.productId));
-    return this.wholesaleProducts().filter(p => !currentIds.has(p.id));
+    const search = this.editAddSearch().toLowerCase().trim();
+    let products = this.wholesaleProducts().filter(p => !currentIds.has(p.id));
+    if (search) {
+      products = products.filter(p =>
+        p.name.toLowerCase().includes(search) || p.brand.toLowerCase().includes(search)
+      );
+    }
+    return products;
+  });
+
+  // Products for swap picker (excludes current items except the one being swapped)
+  editSwapProducts = computed(() => {
+    const swapIdx = this.editSwapIndex();
+    const items = this.editItems();
+    const excludeIds = new Set(items.filter((_, i) => i !== swapIdx).map(i => i.productId));
+    const search = this.editPickerSearch().toLowerCase().trim();
+    let products = this.wholesaleProducts().filter(p => !excludeIds.has(p.id));
+    if (search) {
+      products = products.filter(p =>
+        p.name.toLowerCase().includes(search) || p.brand.toLowerCase().includes(search)
+      );
+    }
+    return products;
   });
 
   openEditModal() {
@@ -419,18 +448,20 @@ export class CatalogComponent implements OnInit, AfterViewInit, OnDestroy {
     this.editItems.set([]);
     this.editError.set('');
     this.editMessage.set('');
+    this.editSwapIndex.set(null);
+    this.editPickerMode.set(null);
+    this.editPickerSearch.set('');
+    this.editAddSearch.set('');
   }
 
-  closeEditModal() {
-    this.showEditModal.set(false);
-  }
+  closeEditModal() { this.showEditModal.set(false); }
 
   onEditCodeInput(event: Event) { this.editOrderCode.set((event.target as HTMLInputElement).value); }
   onEditPhoneInput(event: Event) { this.editOrderPhone.set((event.target as HTMLInputElement).value); }
 
   lookupOrder() {
     const code = this.editOrderCode().trim().toUpperCase();
-    const phone = this.editOrderPhone().trim();
+    const phone = this.editOrderPhone().replace(/\s+/g, '').trim();
     if (!code || !phone) {
       this.editError.set('Ingresa tu código de pedido y número de celular.');
       return;
@@ -440,14 +471,13 @@ export class CatalogComponent implements OnInit, AfterViewInit, OnDestroy {
 
     this.api.getOrderByCode(code).subscribe({
       next: (order) => {
-        if (order.clientPhone !== phone) {
+        if (order.clientPhone.replace(/\s+/g, '') !== phone) {
           this.editError.set('El número de celular no coincide con este pedido.');
           this.editLoading.set(false);
           return;
         }
         this.editOrder.set(order);
         this.editOldUnits.set(order.items.reduce((sum, i) => sum + i.quantity, 0));
-        // Load items into editable list
         this.editItems.set(order.items.map(i => ({
           productId: i.product.id,
           product: i.product,
@@ -476,6 +506,33 @@ export class CatalogComponent implements OnInit, AfterViewInit, OnDestroy {
     this.editItems.update(items => items.filter((_, i) => i !== index));
   }
 
+  // Open swap picker for a specific item
+  openSwapPicker(index: number) {
+    this.editSwapIndex.set(index);
+    this.editPickerMode.set('swap');
+    this.editPickerSearch.set('');
+  }
+
+  closeSwapPicker() {
+    this.editSwapIndex.set(null);
+    this.editPickerMode.set(null);
+    this.editPickerSearch.set('');
+  }
+
+  // Swap item at index with new product
+  editSwapProduct(product: Product) {
+    const idx = this.editSwapIndex();
+    if (idx === null) return;
+    const price = product.wholesalePricePen ?? 0;
+    this.editItems.update(items => {
+      const copy = [...items];
+      copy[idx] = { ...copy[idx], productId: product.id, product, unitPrice: price };
+      return copy;
+    });
+    this.closeSwapPicker();
+  }
+
+  // Add product from picker
   editAddProduct(product: Product) {
     const price = product.wholesalePricePen ?? 0;
     this.editItems.update(items => [...items, {
@@ -485,6 +542,9 @@ export class CatalogComponent implements OnInit, AfterViewInit, OnDestroy {
       unitPrice: price
     }]);
   }
+
+  onEditPickerSearch(event: Event) { this.editPickerSearch.set((event.target as HTMLInputElement).value); }
+  onEditAddSearch(event: Event) { this.editAddSearch.set((event.target as HTMLInputElement).value); }
 
   editSave() {
     const items = this.editItems();

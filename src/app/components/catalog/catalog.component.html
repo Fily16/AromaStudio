@@ -519,40 +519,70 @@
             <div class="edit-items-list">
               @for (item of editItems(); track item.productId; let i = $index) {
                 <div class="edit-item">
+                  <div class="edit-item-thumb">
+                    @if (item.product.imageUrl) {
+                      <img [src]="item.product.imageUrl" [alt]="item.product.name" />
+                    } @else {
+                      <div class="edit-item-no-img">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="1.2"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/></svg>
+                      </div>
+                    }
+                  </div>
                   <div class="edit-item-info">
-                    <strong>{{ item.product.brand }}</strong> - {{ item.product.name }}
+                    <strong>{{ item.product.brand }}</strong>
+                    <span class="edit-item-name">{{ item.product.name }} · {{ item.product.ml }}ml</span>
                     <span class="edit-item-price">S/ {{ item.unitPrice | number:'1.2-2' }} c/u</span>
                   </div>
-                  <div class="edit-item-controls">
-                    <button class="qty-btn" (click)="editChangeItemQty(i, -1)">−</button>
-                    <span class="qty-val">{{ item.quantity }}</span>
-                    <button class="qty-btn" (click)="editChangeItemQty(i, 1)">+</button>
-                    <button class="edit-remove-btn" (click)="editRemoveItem(i)">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
-                    </button>
-                  </div>
-                  <div class="edit-item-subtotal">
-                    S/ {{ (item.quantity * item.unitPrice) | number:'1.2-2' }}
+                  <div class="edit-item-right">
+                    <div class="edit-item-controls">
+                      <button class="qty-btn" (click)="editChangeItemQty(i, -1)">−</button>
+                      <span class="qty-val">{{ item.quantity }}</span>
+                      <button class="qty-btn" (click)="editChangeItemQty(i, 1)">+</button>
+                    </div>
+                    <div class="edit-item-actions">
+                      <button class="edit-swap-btn" (click)="openSwapPicker(i)" title="Cambiar por otro perfume">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 16V4m0 0L3 8m4-4l4 4"/><path d="M17 8v12m0 0l4-4m-4 4l-4-4"/></svg>
+                        Cambiar
+                      </button>
+                      <button class="edit-remove-btn" (click)="editRemoveItem(i)" title="Eliminar">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
+                      </button>
+                    </div>
+                    <div class="edit-item-subtotal">S/ {{ (item.quantity * item.unitPrice) | number:'1.2-2' }}</div>
                   </div>
                 </div>
               }
             </div>
 
-            <!-- Add product -->
-            @if (editAvailableProducts().length > 0) {
-              <div class="edit-add-section">
-                <h4>Agregar otro producto</h4>
-                <div class="edit-add-list">
-                  @for (p of editAvailableProducts(); track p.id) {
-                    <button class="edit-add-item" (click)="editAddProduct(p)">
-                      <span>{{ p.brand }} - {{ p.name }}</span>
-                      <span>S/ {{ p.wholesalePricePen | number:'1.2-2' }}</span>
-                      <span class="edit-add-plus">+</span>
-                    </button>
-                  }
-                </div>
+            <!-- Add product section with images and search -->
+            <div class="edit-add-section">
+              <h4>Agregar otro producto</h4>
+              <div class="edit-add-search">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                <input type="text" placeholder="Buscar perfume..." [value]="editAddSearch()" (input)="onEditAddSearch($event)" />
               </div>
-            }
+              <div class="edit-add-grid">
+                @for (p of editAvailableProducts(); track p.id) {
+                  <button class="edit-product-card" (click)="editAddProduct(p)">
+                    <div class="edit-product-img">
+                      @if (p.imageUrl) {
+                        <img [src]="p.imageUrl" [alt]="p.name" loading="lazy" />
+                      } @else {
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="1"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/></svg>
+                      }
+                    </div>
+                    <div class="edit-product-details">
+                      <span class="edit-product-brand">{{ p.brand }}</span>
+                      <span class="edit-product-name">{{ p.name }}</span>
+                      <span class="edit-product-price">S/ {{ p.wholesalePricePen | number:'1.0-0' }}</span>
+                    </div>
+                    <span class="edit-add-plus">+</span>
+                  </button>
+                } @empty {
+                  <p class="edit-no-results">No se encontraron perfumes</p>
+                }
+              </div>
+            </div>
 
             <!-- Summary -->
             <div class="edit-summary">
@@ -595,6 +625,44 @@
             <button class="edit-submit-btn" (click)="closeEditModal()">Cerrar</button>
           </div>
         }
+      </div>
+    </div>
+  }
+
+  <!-- ===== SWAP PICKER OVERLAY ===== -->
+  @if (editPickerMode() === 'swap') {
+    <div class="picker-overlay" (click)="closeSwapPicker()">
+      <div class="picker-panel" (click)="$event.stopPropagation()">
+        <div class="picker-header">
+          <h3>Cambiar perfume</h3>
+          <button class="picker-close" (click)="closeSwapPicker()">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+          </button>
+        </div>
+        <div class="picker-search">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+          <input type="text" placeholder="Buscar perfume por nombre o marca..." [value]="editPickerSearch()" (input)="onEditPickerSearch($event)" autofocus />
+        </div>
+        <div class="picker-list">
+          @for (p of editSwapProducts(); track p.id) {
+            <button class="picker-item" (click)="editSwapProduct(p)">
+              <div class="picker-item-img">
+                @if (p.imageUrl) {
+                  <img [src]="p.imageUrl" [alt]="p.name" loading="lazy" />
+                } @else {
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="1"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/></svg>
+                }
+              </div>
+              <div class="picker-item-info">
+                <span class="picker-item-brand">{{ p.brand }}</span>
+                <span class="picker-item-name">{{ p.name }} · {{ p.ml }}ml</span>
+              </div>
+              <span class="picker-item-price">S/ {{ p.wholesalePricePen | number:'1.0-0' }}</span>
+            </button>
+          } @empty {
+            <p class="picker-empty">No se encontraron perfumes</p>
+          }
+        </div>
       </div>
     </div>
   }
