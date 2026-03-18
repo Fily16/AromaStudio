@@ -591,13 +591,13 @@
                 <span class="edit-total">S/ {{ editNewTotal() | number:'1.2-2' }}</span>
               </div>
               <div class="edit-summary-row">
-                <span>Adelanto ya pagado ({{ editOldUnits() }} uds x S/20)</span>
-                <span>S/ {{ editCurrentDeposit() | number:'1.2-2' }}</span>
+                <span>Separación ({{ editTotalUnits() }} uds x S/20)</span>
+                <span>S/ {{ editCorrectDeposit() | number:'1.2-2' }}</span>
               </div>
               @if (editExtraUnits() > 0) {
                 <div class="edit-summary-row extra">
-                  <span>Adelanto adicional ({{ editExtraUnits() }} uds nuevas x S/20)</span>
-                  <span>S/ {{ editExtraDeposit() | number:'1.2-2' }}</span>
+                  <span>Adelanto extra por {{ editExtraUnits() }} uds nuevas</span>
+                  <span>+ S/ {{ editExtraDeposit() | number:'1.2-2' }}</span>
                 </div>
               }
               <div class="edit-summary-row remaining">

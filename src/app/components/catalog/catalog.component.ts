@@ -402,13 +402,12 @@ export class CatalogComponent implements OnInit, AfterViewInit, OnDestroy {
 
   editTotalUnits = computed(() => this.editItems().reduce((sum, i) => sum + i.quantity, 0));
   editNewTotal = computed(() => this.editItems().reduce((sum, i) => sum + i.quantity * i.unitPrice, 0));
+  // Deposit is always totalUnits × S/20
+  editCorrectDeposit = computed(() => this.editTotalUnits() * 20);
   editExtraUnits = computed(() => Math.max(0, this.editTotalUnits() - this.editOldUnits()));
   editExtraDeposit = computed(() => this.editExtraUnits() * 20);
-  editCurrentDeposit = computed(() => {
-    const order = this.editOrder();
-    return order ? (order.depositAmountPen || 0) : 0;
-  });
-  editTotalDeposit = computed(() => this.editCurrentDeposit() + this.editExtraDeposit());
+  editCurrentDeposit = computed(() => this.editOldUnits() * 20);
+  editTotalDeposit = computed(() => this.editCorrectDeposit());
   editRemaining = computed(() => this.editNewTotal() - this.editTotalDeposit());
 
   // Products available for adding (not already in the order)
@@ -557,7 +556,7 @@ export class CatalogComponent implements OnInit, AfterViewInit, OnDestroy {
 
     const request = {
       clientName: this.editOrder()!.clientName,
-      clientPhone: this.editOrderPhone(),
+      clientPhone: this.editOrderPhone().replace(/\s+/g, ''),
       existingOrderCode: this.editOrderCode().trim().toUpperCase(),
       items: items.map(i => ({ productId: i.productId, quantity: i.quantity, unitPricePen: i.unitPrice }))
     };
