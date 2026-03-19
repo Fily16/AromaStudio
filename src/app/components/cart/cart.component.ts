@@ -25,6 +25,15 @@ export class CartComponent {
 
   // Nuevo método para redirigir al checkout del consolidado
   goToCheckout() {
+    // TikTok Pixel: InitiateCheckout event
+    if (typeof (window as any).ttq !== 'undefined') {
+      (window as any).ttq.track('InitiateCheckout', {
+        content_type: 'product',
+        value: this.cart.totalPen(),
+        currency: 'PEN',
+        quantity: this.cart.cartItems().reduce((sum, item) => sum + item.quantity, 0)
+      });
+    }
     this.router.navigate(['/checkout']);
   }
 

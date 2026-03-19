@@ -105,6 +105,20 @@ export class CatalogComponent implements OnInit, AfterViewInit, OnDestroy {
     if (view !== 'landing') {
       ScrollTrigger.getAll().forEach(st => st.kill());
       this.initCatalogAnimations();
+
+      // TikTok Pixel: ViewContent event (usuario entra a catálogo)
+      if (typeof (window as any).ttq !== 'undefined') {
+        const viewNames: Record<string, string> = {
+          retail: 'Catálogo Retail',
+          wholesale: 'Catálogo Consolidado',
+          mayor: 'Catálogo Por Mayor'
+        };
+        (window as any).ttq.track('ViewContent', {
+          content_type: 'product_group',
+          content_name: viewNames[view] || view,
+          currency: 'PEN'
+        });
+      }
     }
   }
 
@@ -239,7 +253,15 @@ export class CatalogComponent implements OnInit, AfterViewInit, OnDestroy {
 
   // === Event handlers ===
   onSearchChange(event: Event): void {
-    this.searchQuery.set((event.target as HTMLInputElement).value);
+    const query = (event.target as HTMLInputElement).value;
+    this.searchQuery.set(query);
+    // TikTok Pixel: Search event
+    if (query.length >= 3 && typeof (window as any).ttq !== 'undefined') {
+      (window as any).ttq.track('Search', {
+        query: query,
+        content_type: 'product'
+      });
+    }
   }
 
   onCategoryChange(category: 'all' | 'men' | 'women' | 'unisex'): void {
@@ -258,7 +280,11 @@ export class CatalogComponent implements OnInit, AfterViewInit, OnDestroy {
 
   // Mayor event handlers
   onMayorSearchChange(event: Event): void {
-    this.mayorSearch.set((event.target as HTMLInputElement).value);
+    const query = (event.target as HTMLInputElement).value;
+    this.mayorSearch.set(query);
+    if (query.length >= 3 && typeof (window as any).ttq !== 'undefined') {
+      (window as any).ttq.track('Search', { query, content_type: 'product' });
+    }
   }
 
   onMayorCategoryChange(category: 'all' | 'men' | 'women' | 'unisex'): void {
@@ -281,7 +307,11 @@ export class CatalogComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   onWholesaleSearchChange(event: Event): void {
-    this.wholesaleSearch.set((event.target as HTMLInputElement).value);
+    const query = (event.target as HTMLInputElement).value;
+    this.wholesaleSearch.set(query);
+    if (query.length >= 3 && typeof (window as any).ttq !== 'undefined') {
+      (window as any).ttq.track('Search', { query, content_type: 'product' });
+    }
   }
 
   onWholesaleBrandChange(brand: string): void {

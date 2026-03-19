@@ -45,6 +45,17 @@ export class CheckoutComponent implements OnInit {
       this.router.navigate(['/cart']);
       return;
     }
+
+    // TikTok Pixel: InitiateCheckout (entró a la página de checkout consolidado)
+    if (typeof (window as any).ttq !== 'undefined') {
+      (window as any).ttq.track('InitiateCheckout', {
+        content_type: 'product',
+        value: this.cart.totalPen(),
+        currency: 'PEN',
+        quantity: this.cart.cartItems().reduce((sum, item) => sum + item.quantity, 0)
+      });
+    }
+
     this.api.getActiveConsolidado().subscribe({
       next: () => {
         this.api.getPublicConfig().subscribe(config => this.yapeNumber.set(config.yapeNumber));
@@ -129,6 +140,15 @@ export class CheckoutComponent implements OnInit {
   }
 
   confirmYape() {
+    // TikTok Pixel: CompletePayment event (confirmó Yape)
+    if (typeof (window as any).ttq !== 'undefined') {
+      (window as any).ttq.track('CompletePayment', {
+        content_type: 'product',
+        value: this.depositAmount(),
+        currency: 'PEN',
+        order_id: this.orderCode()
+      });
+    }
     this.step.set('done');
     this.cart.clear();
   }
