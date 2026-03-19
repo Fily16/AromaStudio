@@ -1,5 +1,6 @@
 {
   "rewrites": [
+    { "source": "/tiktok5I2oL2X7x7x5GO81dCqW0O8IIMjGR0D3.txt", "destination": "/tiktok5I2oL2X7x7x5GO81dCqW0O8IIMjGR0D3.txt" },
     { "source": "/(.*)", "destination": "/" }
   ]
 }
