@@ -436,6 +436,16 @@ export class CatalogComponent implements OnInit, AfterViewInit, OnDestroy {
     return `https://wa.me/51903250695?text=${encodeURIComponent(message)}`;
   }
 
+  // === TikTok Pixel: Contact event (WhatsApp FAB) ===
+  trackWhatsAppContact(): void {
+    try {
+      (window as any).ttq?.track('Contact', {
+        content_type: 'product',
+        content_name: 'WhatsApp FAB',
+      });
+    } catch {}
+  }
+
   // === Edit Order Modal ===
   showEditModal = signal(false);
   editStep = signal<'lookup' | 'edit' | 'done'>('lookup');
