@@ -49,7 +49,7 @@ export class CartComponent {
     }
     message += `\nTotal: S/ ${this.cart.totalPen().toFixed(2)}`;
 
-    // TikTok Pixel: Contact event (WhatsApp)
+    // TikTok Pixel: Contact event (WhatsApp) — delay para que el pixel envíe antes de navegar
     if (typeof (window as any).ttq !== 'undefined') {
       (window as any).ttq.track('Contact', {
         value: this.cart.totalPen(),
@@ -58,8 +58,10 @@ export class CartComponent {
     }
 
     const url = `https://wa.me/51903250695?text=${encodeURIComponent(message)}`;
-    window.open(url, '_blank');
-    this.cart.clear();
+    setTimeout(() => {
+      window.open(url, '_blank');
+      this.cart.clear();
+    }, 300);
   }
 
   goBack() {

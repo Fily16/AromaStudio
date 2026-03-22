@@ -437,13 +437,18 @@ export class CatalogComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   // === TikTok Pixel: Contact event (WhatsApp FAB) ===
-  trackWhatsAppContact(): void {
+  trackWhatsAppContact(event: Event): void {
+    event.preventDefault();
     try {
       (window as any).ttq?.track('Contact', {
         content_type: 'product',
         content_name: 'WhatsApp FAB',
       });
     } catch {}
+    // Delay para que el pixel envíe el evento antes de navegar
+    setTimeout(() => {
+      window.open('https://wa.me/51903250695', '_blank');
+    }, 300);
   }
 
   // === Edit Order Modal ===
