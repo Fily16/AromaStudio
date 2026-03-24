@@ -1,0 +1,121 @@
+@if (visible()) {
+  <!-- Backdrop -->
+  <div
+    class="ob-backdrop"
+    [class.entering]="entering()"
+    [class.leaving]="leaving()"
+  ></div>
+
+  <!-- Card centrada -->
+  <div
+    class="ob-card"
+    [class.entering]="entering()"
+    [class.leaving]="leaving()"
+  >
+    <!-- Cerrar -->
+    <button class="ob-close" (click)="dismiss()" aria-label="Cerrar">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+      </svg>
+    </button>
+
+    <!-- Avatar persona -->
+    <div class="ob-avatar-wrap">
+      <div class="ob-avatar" [class]="'mood-' + step().mascotMood">
+        <!-- Persona alegre saludando -->
+        <svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <!-- Cuerpo -->
+          <ellipse cx="60" cy="105" rx="28" ry="14" fill="#E8E0D4"/>
+          <rect x="42" y="68" width="36" height="38" rx="10" fill="#5B5B5B"/>
+          <!-- Cuello -->
+          <rect x="54" y="60" width="12" height="14" rx="4" fill="#D4A574"/>
+          <!-- Cabeza -->
+          <circle cx="60" cy="42" r="24" fill="#D4A574"/>
+          <!-- Pelo -->
+          <path d="M36 38c0-14 10-26 24-26s24 12 24 26c0 2-1 3-2 3h-4c0-10-8-18-18-18s-18 8-18 18h-4c-1 0-2-1-2-3z" fill="#3D2B1F"/>
+          <!-- Cejas -->
+          <path d="M48 34h8" stroke="#3D2B1F" stroke-width="2" stroke-linecap="round"/>
+          <path d="M64 34h8" stroke="#3D2B1F" stroke-width="2" stroke-linecap="round"/>
+          <!-- Ojos -->
+          <ellipse cx="52" cy="40" rx="3.5" ry="4" fill="#fff"/>
+          <ellipse cx="68" cy="40" rx="3.5" ry="4" fill="#fff"/>
+          <circle class="ob-pupil-l" cx="53" cy="41" r="2" fill="#2C2C2E"/>
+          <circle class="ob-pupil-r" cx="69" cy="41" r="2" fill="#2C2C2E"/>
+          <!-- Sonrisa grande -->
+          <path class="ob-smile" d="M50 50c2 5 8 7 10 7s8-2 10-7" stroke="#2C2C2E" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+          <!-- Rubor -->
+          <ellipse cx="44" cy="48" rx="5" ry="3" fill="rgba(255,150,130,0.35)"/>
+          <ellipse cx="76" cy="48" rx="5" ry="3" fill="rgba(255,150,130,0.35)"/>
+          <!-- Mano derecha saludando -->
+          <g class="ob-hand-wave">
+            <circle cx="100" cy="32" r="7" fill="#D4A574"/>
+            <rect x="94" y="38" width="12" height="20" rx="6" fill="#D4A574"/>
+            <!-- Manga -->
+            <rect x="92" y="52" width="16" height="10" rx="5" fill="#5B5B5B"/>
+            <!-- Dedos de la mano -->
+            <circle cx="96" cy="30" r="2.5" fill="#D4A574"/>
+            <circle cx="100" cy="28" r="2.5" fill="#D4A574"/>
+            <circle cx="104" cy="30" r="2.5" fill="#D4A574"/>
+          </g>
+          <!-- Mano izquierda abajo -->
+          <g>
+            <rect x="28" y="72" width="12" height="18" rx="6" fill="#D4A574"/>
+            <circle cx="34" cy="90" r="5" fill="#D4A574"/>
+          </g>
+        </svg>
+      </div>
+      <!-- Brillos alrededor -->
+      <span class="ob-sparkle s1">&#10022;</span>
+      <span class="ob-sparkle s2">&#10022;</span>
+      <span class="ob-sparkle s3">&#10022;</span>
+    </div>
+
+    <!-- Saludo -->
+    <div class="ob-greeting">Hola!</div>
+
+    <!-- Titulo -->
+    <h2 class="ob-title">{{ step().title }}</h2>
+
+    <!-- Linea decorativa -->
+    <div class="ob-divider"></div>
+
+    <!-- Texto con typewriter -->
+    <div class="ob-body" (click)="skipTyping()">
+      @for (line of typedLines(); track $index) {
+        <p class="ob-line" [class.highlight]="line.highlight">
+          @if (line.icon) {
+            <span class="ob-line-icon">{{ line.icon }}</span>
+          }
+          <span>{{ line.text }}</span>
+        </p>
+      }
+      <!-- sin cursor, texto aparece de inmediato -->
+    </div>
+
+    <!-- Boton -->
+    <button
+      class="ob-btn"
+      [class.ready]="typingDone()"
+      (click)="typingDone() ? dismiss() : skipTyping()"
+    >
+      @if (typingDone()) {
+        <span>Entendido</span>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="20 6 9 17 4 12"/>
+        </svg>
+      } @else {
+        <span>Saltar</span>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+          <path d="M5 4l10 8-10 8V4z"/><line x1="19" y1="5" x2="19" y2="19"/>
+        </svg>
+      }
+    </button>
+
+    <!-- Dots -->
+    <div class="ob-dots">
+      <span class="ob-dot" [class.active]="section() === 'intro' || section() === 'retail'"></span>
+      <span class="ob-dot" [class.active]="section() === 'mayor'"></span>
+      <span class="ob-dot" [class.active]="section() === 'wholesale'"></span>
+    </div>
+  </div>
+}

@@ -6,6 +6,7 @@ import { DecimalPipe } from '@angular/common';
 import { ApiService } from '../../services/api.service';
 import { CartService } from '../../services/cart.service';
 import { Product, Order } from '../../models/api.models';
+import { OnboardingComponent } from '../onboarding/onboarding.component';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
@@ -14,7 +15,7 @@ gsap.registerPlugin(ScrollTrigger);
 @Component({
   selector: 'app-catalog',
   standalone: true,
-  imports: [FormsModule, DecimalPipe, RouterLink],
+  imports: [FormsModule, DecimalPipe, RouterLink, OnboardingComponent],
   templateUrl: './catalog.component.html',
   styleUrl: './catalog.component.css'
 })
@@ -52,6 +53,9 @@ export class CatalogComponent implements OnInit, AfterViewInit, OnDestroy {
 
   // Quantity selector per product
   selectedQty = signal<Record<number, number>>({});
+
+  // Onboarding: seccion activa para mostrar mensaje contextual
+  onboardingSection = signal<string>('intro');
 
   ngOnInit() {
     this.api.getProducts({ onlyAvailable: true }).subscribe({
@@ -101,6 +105,10 @@ export class CatalogComponent implements OnInit, AfterViewInit, OnDestroy {
 
   setView(view: 'landing' | 'retail' | 'wholesale' | 'mayor'): void {
     this.currentView.set(view);
+    // Trigger onboarding para la seccion (solo si es primera vez, lo maneja el componente)
+    if (view !== 'landing') {
+      this.onboardingSection.set(view);
+    }
     window.scrollTo({ top: 0, behavior: 'smooth' });
     if (view !== 'landing') {
       ScrollTrigger.getAll().forEach(st => st.kill());
