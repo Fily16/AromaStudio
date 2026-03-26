@@ -19,7 +19,7 @@ export class CheckoutComponent implements OnInit {
 
   clientName = signal('');
   clientPhone = signal('');
-  yapeNumber = signal('903250695');
+  yapeNumber = signal('981587009');
 
   isAddingToExisting = signal(false);
   existingOrderCode = signal('');

@@ -12,7 +12,7 @@ import { DecimalPipe, NgClass } from '@angular/common';
 export class PerfumeCardComponent {
   perfume = input.required<Perfume>();
 
-  private readonly whatsappNumber = '51903250695';
+  private readonly whatsappNumber = '51981587009';
 
   getCategoryLabel(category: string): string {
     const labels: Record<string, string> = {

@@ -311,7 +311,7 @@ export class CatalogComponent implements OnInit, AfterViewInit, OnDestroy {
 
   getMayorWhatsAppLink(product: Product): string {
     const message = `¡Hola! Estoy interesado/a en compra por mayor:\n\n${product.brand} - ${product.name} ${product.ml}ml\nPrecio por mayor: S/ ${product.mayorPricePen}\n\n¿Cuál es la cantidad mínima y el proceso de compra?`;
-    return `https://wa.me/51903250695?text=${encodeURIComponent(message)}`;
+    return `https://wa.me/51981587009?text=${encodeURIComponent(message)}`;
   }
 
   onWholesaleSearchChange(event: Event): void {
@@ -436,12 +436,12 @@ export class CatalogComponent implements OnInit, AfterViewInit, OnDestroy {
   getWhatsAppLink(product: Product, priceType: 'wholesale' | 'retail'): string {
     const price = priceType === 'wholesale' ? product.wholesalePricePen : product.retailPricePen;
     const message = `¡Hola! Me interesa:\n\n${product.brand} - ${product.name} ${product.ml}ml\nPrecio: S/ ${price}\n\n¿Tienen disponibilidad?`;
-    return `https://wa.me/51903250695?text=${encodeURIComponent(message)}`;
+    return `https://wa.me/51981587009?text=${encodeURIComponent(message)}`;
   }
 
   getRetailWhatsAppLink(product: Product): string {
     const message = `¡Hola! Estoy interesado/a en:\n\n${product.brand} - ${product.name} ${product.ml}ml\nPrecio: S/ ${product.retailPricePen}\n\n¿Tienen disponibilidad? ¿Cuál es el proceso para realizar la compra?`;
-    return `https://wa.me/51903250695?text=${encodeURIComponent(message)}`;
+    return `https://wa.me/51981587009?text=${encodeURIComponent(message)}`;
   }
 
   // === TikTok Pixel: Contact event (WhatsApp FAB) ===
@@ -455,7 +455,7 @@ export class CatalogComponent implements OnInit, AfterViewInit, OnDestroy {
     } catch {}
     // Delay para que el pixel envíe el evento antes de navegar
     setTimeout(() => {
-      window.open('https://wa.me/51903250695', '_blank');
+      window.open('https://wa.me/51981587009', '_blank');
     }, 300);
   }
 

@@ -57,7 +57,7 @@ export class CartComponent {
       });
     }
 
-    const url = `https://wa.me/51903250695?text=${encodeURIComponent(message)}`;
+    const url = `https://wa.me/51981587009?text=${encodeURIComponent(message)}`;
     setTimeout(() => {
       window.open(url, '_blank');
       this.cart.clear();

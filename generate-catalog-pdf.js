@@ -241,7 +241,7 @@ function generateHTML() {
 
       <div class="page-footer">
         <span>AromaStudio</span>
-        <span>WhatsApp: 903 250 695</span>
+        <span>WhatsApp: 981 587 009</span>
       </div>
     </div>`;
   }
@@ -284,7 +284,7 @@ function generateHTML() {
 
       <div class="page-footer">
         <span>AromaStudio</span>
-        <span>WhatsApp: 903 250 695</span>
+        <span>WhatsApp: 981 587 009</span>
       </div>
     </div>`;
   }
@@ -660,7 +660,7 @@ function generateHTML() {
       <div class="cover-year">2026</div>
       <div class="cover-count">${totalPages} FRAGANCIAS</div>
     </div>
-    <div class="cover-contact">WhatsApp: 903 250 695</div>
+    <div class="cover-contact">WhatsApp: 981 587 009</div>
   </div>
 
   <!-- ═══ PRODUCT PAGES ═══ -->
