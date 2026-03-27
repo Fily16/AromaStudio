@@ -127,6 +127,19 @@ export class CatalogComponent implements OnInit, AfterViewInit, OnDestroy {
           currency: 'PEN'
         });
       }
+      // Meta Pixel: ViewContent
+      if (typeof (window as any).fbq !== 'undefined') {
+        const viewNames: Record<string, string> = {
+          retail: 'Catálogo Retail',
+          wholesale: 'Catálogo Consolidado',
+          mayor: 'Catálogo Por Mayor'
+        };
+        (window as any).fbq('track', 'ViewContent', {
+          content_type: 'product_group',
+          content_name: viewNames[view] || view,
+          currency: 'PEN'
+        });
+      }
     }
   }
 
@@ -270,6 +283,10 @@ export class CatalogComponent implements OnInit, AfterViewInit, OnDestroy {
         content_type: 'product'
       });
     }
+    // Meta Pixel: Search
+    if (query.length >= 3 && typeof (window as any).fbq !== 'undefined') {
+      (window as any).fbq('track', 'Search', { search_string: query, content_type: 'product' });
+    }
   }
 
   onCategoryChange(category: 'all' | 'men' | 'women' | 'unisex'): void {
@@ -292,6 +309,9 @@ export class CatalogComponent implements OnInit, AfterViewInit, OnDestroy {
     this.mayorSearch.set(query);
     if (query.length >= 3 && typeof (window as any).ttq !== 'undefined') {
       (window as any).ttq.track('Search', { query, content_type: 'product' });
+    }
+    if (query.length >= 3 && typeof (window as any).fbq !== 'undefined') {
+      (window as any).fbq('track', 'Search', { search_string: query, content_type: 'product' });
     }
   }
 
@@ -319,6 +339,9 @@ export class CatalogComponent implements OnInit, AfterViewInit, OnDestroy {
     this.wholesaleSearch.set(query);
     if (query.length >= 3 && typeof (window as any).ttq !== 'undefined') {
       (window as any).ttq.track('Search', { query, content_type: 'product' });
+    }
+    if (query.length >= 3 && typeof (window as any).fbq !== 'undefined') {
+      (window as any).fbq('track', 'Search', { search_string: query, content_type: 'product' });
     }
   }
 
@@ -389,6 +412,16 @@ export class CatalogComponent implements OnInit, AfterViewInit, OnDestroy {
         currency: 'PEN'
       });
     }
+    // Meta Pixel: AddToCart
+    if (typeof (window as any).fbq !== 'undefined') {
+      (window as any).fbq('track', 'AddToCart', {
+        content_ids: [product.id.toString()],
+        content_name: `${product.brand} - ${product.name}`,
+        content_type: 'product',
+        value: price * qty,
+        currency: 'PEN'
+      });
+    }
 
     this.cartToast.set(`${product.brand} - ${product.name} (x${qty}) agregado`);
     setTimeout(() => this.cartToast.set(''), 2500);
@@ -419,6 +452,16 @@ export class CatalogComponent implements OnInit, AfterViewInit, OnDestroy {
         content_type: 'product',
         quantity: 1,
         price: price,
+        value: price,
+        currency: 'PEN'
+      });
+    }
+    // Meta Pixel: AddToCart
+    if (typeof (window as any).fbq !== 'undefined') {
+      (window as any).fbq('track', 'AddToCart', {
+        content_ids: [product.id.toString()],
+        content_name: `${product.brand} - ${product.name}`,
+        content_type: 'product',
         value: price,
         currency: 'PEN'
       });

@@ -34,6 +34,14 @@ export class CartComponent {
         quantity: this.cart.cartItems().reduce((sum, item) => sum + item.quantity, 0)
       });
     }
+    // Meta Pixel: InitiateCheckout
+    if (typeof (window as any).fbq !== 'undefined') {
+      (window as any).fbq('track', 'InitiateCheckout', {
+        value: this.cart.totalPen(),
+        currency: 'PEN',
+        num_items: this.cart.cartItems().reduce((sum, item) => sum + item.quantity, 0)
+      });
+    }
     this.router.navigate(['/checkout']);
   }
 
@@ -52,6 +60,13 @@ export class CartComponent {
     // TikTok Pixel: Contact event (WhatsApp) — delay para que el pixel envíe antes de navegar
     if (typeof (window as any).ttq !== 'undefined') {
       (window as any).ttq.track('Contact', {
+        value: this.cart.totalPen(),
+        currency: 'PEN'
+      });
+    }
+    // Meta Pixel: Contact
+    if (typeof (window as any).fbq !== 'undefined') {
+      (window as any).fbq('track', 'Contact', {
         value: this.cart.totalPen(),
         currency: 'PEN'
       });

@@ -55,6 +55,14 @@ export class CheckoutComponent implements OnInit {
         quantity: this.cart.cartItems().reduce((sum, item) => sum + item.quantity, 0)
       });
     }
+    // Meta Pixel: InitiateCheckout
+    if (typeof (window as any).fbq !== 'undefined') {
+      (window as any).fbq('track', 'InitiateCheckout', {
+        value: this.cart.totalPen(),
+        currency: 'PEN',
+        num_items: this.cart.cartItems().reduce((sum, item) => sum + item.quantity, 0)
+      });
+    }
 
     this.api.getActiveConsolidado().subscribe({
       next: () => {
@@ -128,6 +136,14 @@ export class CheckoutComponent implements OnInit {
             currency: 'PEN'
           });
         }
+        // Meta Pixel: Purchase
+        if (typeof (window as any).fbq !== 'undefined') {
+          (window as any).fbq('track', 'Purchase', {
+            value: order.totalPen,
+            currency: 'PEN',
+            content_type: 'product'
+          });
+        }
 
         this.step.set('yape');
         this.loading.set(false);
@@ -147,6 +163,14 @@ export class CheckoutComponent implements OnInit {
         value: this.depositAmount(),
         currency: 'PEN',
         order_id: this.orderCode()
+      });
+    }
+    // Meta Pixel: Purchase (pago confirmado)
+    if (typeof (window as any).fbq !== 'undefined') {
+      (window as any).fbq('track', 'Purchase', {
+        value: this.depositAmount(),
+        currency: 'PEN',
+        content_type: 'product'
       });
     }
     this.step.set('done');
