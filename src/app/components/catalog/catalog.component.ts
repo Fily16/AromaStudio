@@ -487,12 +487,18 @@ export class CatalogComponent implements OnInit, AfterViewInit, OnDestroy {
     return `https://wa.me/51981587009?text=${encodeURIComponent(message)}`;
   }
 
-  // === TikTok Pixel: Contact event (WhatsApp FAB) ===
+  // === TikTok + Meta Pixel: Contact event (WhatsApp FAB) ===
   trackWhatsAppContact(event: Event): void {
     event.preventDefault();
     try {
       (window as any).ttq?.track('Contact', {
         content_type: 'product',
+        content_name: 'WhatsApp FAB',
+      });
+    } catch {}
+    // Meta Pixel: Contact (WhatsApp FAB)
+    try {
+      (window as any).fbq?.('track', 'Contact', {
         content_name: 'WhatsApp FAB',
       });
     } catch {}
