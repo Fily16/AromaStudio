@@ -134,6 +134,13 @@
                 <h4>Consolidado <span class="card-subtitle">(Clientes)</span></h4>
                 <div class="bd-row"><span>Pedidos</span><span>{{ breakdown()!.consolidado.orderCount }}</span></div>
                 <div class="bd-row"><span>Unidades</span><span>{{ breakdown()!.consolidado.totalUnits }}</span></div>
+                @if (breakdown()!.consolidado.productCounts?.length) {
+                  <div class="product-counts">
+                    @for (pc of breakdown()!.consolidado.productCounts; track pc.productId) {
+                      <div class="bd-row product-row"><span>{{ pc.brand }} - {{ pc.name }} {{ pc.ml }}ml</span><span>x{{ pc.quantity }}</span></div>
+                    }
+                  </div>
+                }
                 <div class="bd-row"><span>Peso perfumes</span><span>{{ (breakdown()!.consolidado.weightPerfumesG / 1000) | number:'1.1-1' }} kg</span></div>
                 <div class="bd-row"><span>Cajas</span><span>{{ breakdown()!.consolidado.boxesNeeded }}</span></div>
                 <div class="bd-row"><span>Peso cajas</span><span>{{ (breakdown()!.consolidado.weightBoxesG / 1000) | number:'1.1-1' }} kg</span></div>
@@ -160,6 +167,13 @@
                 <h4>Mi Compra <span class="card-subtitle">(Para tienda)</span></h4>
                 <div class="bd-row"><span>Pedidos</span><span>{{ breakdown()!.miCompra.orderCount }}</span></div>
                 <div class="bd-row"><span>Unidades</span><span>{{ breakdown()!.miCompra.totalUnits }}</span></div>
+                @if (breakdown()!.miCompra.productCounts?.length) {
+                  <div class="product-counts">
+                    @for (pc of breakdown()!.miCompra.productCounts; track pc.productId) {
+                      <div class="bd-row product-row"><span>{{ pc.brand }} - {{ pc.name }} {{ pc.ml }}ml</span><span>x{{ pc.quantity }}</span></div>
+                    }
+                  </div>
+                }
                 <div class="bd-row"><span>Peso perfumes</span><span>{{ (breakdown()!.miCompra.weightPerfumesG / 1000) | number:'1.1-1' }} kg</span></div>
                 <div class="bd-row"><span>Cajas</span><span>{{ breakdown()!.miCompra.boxesNeeded }}</span></div>
                 <div class="bd-row"><span>Peso cajas</span><span>{{ (breakdown()!.miCompra.weightBoxesG / 1000) | number:'1.1-1' }} kg</span></div>
@@ -181,6 +195,13 @@
                 <h4>Total <span class="card-subtitle">(Todo junto)</span></h4>
                 <div class="bd-row"><span>Pedidos</span><span>{{ breakdown()!.total.orderCount }}</span></div>
                 <div class="bd-row"><span>Unidades</span><span>{{ breakdown()!.total.totalUnits }}</span></div>
+                @if (breakdown()!.total.productCounts?.length) {
+                  <div class="product-counts">
+                    @for (pc of breakdown()!.total.productCounts; track pc.productId) {
+                      <div class="bd-row product-row"><span>{{ pc.brand }} - {{ pc.name }} {{ pc.ml }}ml</span><span>x{{ pc.quantity }}</span></div>
+                    }
+                  </div>
+                }
                 <div class="bd-row"><span>Peso perfumes</span><span>{{ (breakdown()!.total.weightPerfumesG / 1000) | number:'1.1-1' }} kg</span></div>
                 <div class="bd-row"><span>Cajas</span><span>{{ breakdown()!.total.boxesNeeded }}</span></div>
                 <div class="bd-row"><span>Peso cajas</span><span>{{ (breakdown()!.total.weightBoxesG / 1000) | number:'1.1-1' }} kg</span></div>
@@ -284,6 +305,9 @@
 
                         @if (order.paymentStatus === 'SEPARADO') {
                           <div class="status-info">Esperando llegada de mercancía</div>
+                          <div class="order-actions">
+                            <button class="delete-order-btn" (click)="deleteOrder(order.id)">Eliminar Pedido</button>
+                          </div>
                         }
 
                         @if (order.paymentStatus === 'PENDIENTE_RESTO') {

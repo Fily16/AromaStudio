@@ -142,9 +142,18 @@ export interface StockPurchaseRequest {
   items: { productId: number; quantity: number }[];
 }
 
+export interface ProductCount {
+  productId: number;
+  brand: string;
+  name: string;
+  ml: number;
+  quantity: number;
+}
+
 export interface BreakdownSection {
   orderCount: number;
   totalUnits: number;
+  productCounts: ProductCount[];
   weightPerfumesG: number;
   boxesNeeded: number;
   weightBoxesG: number;

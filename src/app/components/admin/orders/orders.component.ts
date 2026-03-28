@@ -176,9 +176,9 @@ export class OrdersComponent implements OnInit {
   onEditName(event: Event) { this.editName.set((event.target as HTMLInputElement).value); }
   onEditPhone(event: Event) { this.editPhone.set((event.target as HTMLInputElement).value); }
 
-  // --- Delete rejected order ---
+  // --- Delete rejected or separated order ---
   deleteOrder(orderId: number) {
-    if (confirm('¿Eliminar este pedido rechazado? Esta acción no se puede deshacer.')) {
+    if (confirm('¿Eliminar este pedido? Esta acción no se puede deshacer.')) {
       this.api.deleteOrder(orderId).subscribe({
         next: () => {
           this.refreshExpandedOrders();

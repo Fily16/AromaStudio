@@ -255,6 +255,9 @@
 .bd-row.profit { color: #16a34a; font-weight: 600; }
 .bd-divider { border-top: 1px solid #e5e7eb; margin: 0.4rem 0; }
 .bd-no-profit { text-align: center; color: #6b7280; font-size: 0.8rem; margin-top: 0.75rem; font-style: italic; }
+.product-counts { background: rgba(0,0,0,0.02); border-radius: 6px; padding: 0.3rem 0.5rem; margin: 0.25rem 0 0.4rem; border-left: 2px solid #C9A227; }
+.product-counts .product-row { font-size: 0.78rem; color: #4b5563; padding: 0.15rem 0; }
+.product-counts .product-row span:last-child { font-weight: 600; color: #1f2937; }
 
 @media (max-width: 900px) {
   .breakdown-grid { grid-template-columns: 1fr; }
