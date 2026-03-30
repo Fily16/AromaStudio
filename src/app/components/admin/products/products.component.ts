@@ -17,11 +17,14 @@ export class ProductsComponent implements OnInit {
 
   products = signal<Product[]>([]);
   search = signal('');
-  sortOption = signal('default'); // NUEVO: Señal para la opción de ordenamiento
+  sortOption = signal('default');
+  visibleCount = signal(50);
   editingId = signal<number | null>(null);
   editPrices = signal<{ retailPricePen: number; wholesalePricePen: number; mayorPricePen: number; priceUsd: number; weightG: number }>({
     retailPricePen: 0, wholesalePricePen: 0, mayorPricePen: 0, priceUsd: 0, weightG: 0
   });
+  editName = signal('');
+  editBrand = signal('');
 
   // Config values
   exchangeRate = signal(3.75);
@@ -105,6 +108,18 @@ export class ProductsComponent implements OnInit {
     return result;
   }
 
+  visibleProducts() {
+    return this.filteredProducts().slice(0, this.visibleCount());
+  }
+
+  hasMore() {
+    return this.visibleCount() < this.filteredProducts().length;
+  }
+
+  loadMore() {
+    this.visibleCount.update(v => v + 50);
+  }
+
   // Costo Puesto calculations (same as Excel / PricingService)
   landedCostUsd(p: Product): number {
     const shippingUsd = ((p.weightG || 0) / 1000) * this.courierCostPerKg();
@@ -161,6 +176,8 @@ export class ProductsComponent implements OnInit {
       priceUsd: product.priceUsd,
       weightG: product.weightG ?? 0
     });
+    this.editName.set(product.name);
+    this.editBrand.set(product.brand);
     this.editImageUrl.set(product.imageUrl || '');
   }
 
@@ -177,7 +194,11 @@ export class ProductsComponent implements OnInit {
   savePrices(productId: number) {
     this.api.updateProductPrices(productId, this.editPrices()).subscribe(() => {
       const imageUrl = this.editImageUrl();
-      this.api.updateProduct(productId, { imageUrl: imageUrl || null } as any).subscribe(() => {
+      this.api.updateProduct(productId, {
+        name: this.editName(),
+        brand: this.editBrand(),
+        imageUrl: imageUrl || null
+      } as any).subscribe(() => {
         this.editingId.set(null);
         this.loadProducts();
       });
@@ -190,6 +211,7 @@ export class ProductsComponent implements OnInit {
 
   onSearchInput(event: Event) {
     this.search.set((event.target as HTMLInputElement).value);
+    this.visibleCount.set(50);
   }
 
   updateEditField(field: string, event: Event) {

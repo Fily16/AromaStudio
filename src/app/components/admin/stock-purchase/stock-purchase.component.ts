@@ -17,6 +17,7 @@ export class StockPurchaseComponent implements OnInit {
 
   products = signal<Product[]>([]);
   search = signal('');
+  visibleCount = signal(50);
   cart = signal<Map<number, { product: Product; quantity: number }>>(new Map());
   preview = signal<BreakdownSection | null>(null);
   message = signal('');
@@ -51,8 +52,21 @@ export class StockPurchaseComponent implements OnInit {
     );
   }
 
+  visibleProducts() {
+    return this.filteredProducts().slice(0, this.visibleCount());
+  }
+
+  hasMore() {
+    return this.visibleCount() < this.filteredProducts().length;
+  }
+
+  loadMore() {
+    this.visibleCount.update(v => v + 50);
+  }
+
   onSearchInput(event: Event) {
     this.search.set((event.target as HTMLInputElement).value);
+    this.visibleCount.set(50);
   }
 
   getCartQty(productId: number): number {

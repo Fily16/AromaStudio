@@ -38,7 +38,7 @@
             </tr>
           </thead>
           <tbody>
-            @for (p of filteredProducts(); track p.id) {
+            @for (p of visibleProducts(); track p.id) {
               <tr>
                 <td class="sku">{{ p.sku }}</td>
                 <td><strong>{{ p.brand }}</strong> - {{ p.name }} {{ p.ml }}ml</td>
@@ -57,6 +57,13 @@
             }
           </tbody>
         </table>
+        @if (hasMore()) {
+          <div style="text-align:center;padding:16px;">
+            <button class="btn-preview" (click)="loadMore()">
+              Cargar más ({{visibleCount()}} de {{filteredProducts().length}})
+            </button>
+          </div>
+        }
       </div>
 
       <!-- Sidebar: Cart + Preview -->
