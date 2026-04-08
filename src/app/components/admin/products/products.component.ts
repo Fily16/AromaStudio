@@ -25,6 +25,8 @@ export class ProductsComponent implements OnInit {
   });
   editName = signal('');
   editBrand = signal('');
+  editSku = signal('');
+  editCategory = signal<string>('unisex');
 
   // Config values
   exchangeRate = signal(3.75);
@@ -178,6 +180,8 @@ export class ProductsComponent implements OnInit {
     });
     this.editName.set(product.name);
     this.editBrand.set(product.brand);
+    this.editSku.set(product.sku);
+    this.editCategory.set(product.category || 'unisex');
     this.editImageUrl.set(product.imageUrl || '');
   }
 
@@ -197,6 +201,8 @@ export class ProductsComponent implements OnInit {
       this.api.updateProduct(productId, {
         name: this.editName(),
         brand: this.editBrand(),
+        sku: this.editSku(),
+        category: this.editCategory(),
         imageUrl: imageUrl || null
       } as any).subscribe(() => {
         this.editingId.set(null);
