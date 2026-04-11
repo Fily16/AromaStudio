@@ -1,9 +1,10 @@
-import { Component, inject, signal, OnInit } from '@angular/core';
+import { Component, inject, signal, computed, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { DecimalPipe } from '@angular/common';
 import { CartService } from '../../services/cart.service';
 import { ApiService } from '../../services/api.service';
+import { SHALOM_AGENCIES, ShalomAgency } from '../../data/shalom-agencies';
 
 @Component({
   selector: 'app-checkout',
@@ -19,19 +20,30 @@ export class CheckoutComponent implements OnInit {
 
   clientName = signal('');
   clientPhone = signal('');
-  yapeNumber = signal('981587009');
 
   isAddingToExisting = signal(false);
   existingOrderCode = signal('');
 
-  // --- NUEVOS CAMPOS DE ENVÍO ---
-  deliveryMethod = signal<'LIMA' | 'PROVINCIA'>('LIMA');
+  deliveryMethod = signal<'LIMA' | 'SHALOM'>('LIMA');
   shippingName = signal('');
   shippingDni = signal('');
   shippingPhone = signal('');
   shippingAddress = signal('');
 
-  step = signal<'form' | 'yape' | 'done' | 'closed'>('form');
+  // Shalom agency search
+  agencySearch = signal('');
+  agencyDropdownOpen = signal(false);
+  selectedAgency = signal<ShalomAgency | null>(null);
+
+  filteredAgencies = computed(() => {
+    const q = this.agencySearch().toLowerCase().trim();
+    if (!q) return SHALOM_AGENCIES.slice(0, 20);
+    return SHALOM_AGENCIES.filter(a =>
+      a.nombre.toLowerCase().includes(q) || a.direccion.toLowerCase().includes(q)
+    ).slice(0, 20);
+  });
+
+  step = signal<'form' | 'done' | 'closed'>('form');
   orderId = signal<number | null>(null);
   orderCode = signal('');
   depositAmount = signal(0);
@@ -40,13 +52,16 @@ export class CheckoutComponent implements OnInit {
   loading = signal(false);
   error = signal('');
 
+  // Save cart items for WhatsApp message after clearing cart
+  savedCartItems = signal<{ brand: string; name: string; ml: number; quantity: number; unitPricePen: number }[]>([]);
+  savedTotalPen = signal(0);
+
   ngOnInit() {
     if (this.cart.isEmpty()) {
       this.router.navigate(['/cart']);
       return;
     }
 
-    // TikTok Pixel: InitiateCheckout (entró a la página de checkout consolidado)
     if (typeof (window as any).ttq !== 'undefined') {
       (window as any).ttq.track('InitiateCheckout', {
         content_type: 'product',
@@ -55,7 +70,6 @@ export class CheckoutComponent implements OnInit {
         quantity: this.cart.cartItems().reduce((sum, item) => sum + item.quantity, 0)
       });
     }
-    // Meta Pixel: InitiateCheckout
     if (typeof (window as any).fbq !== 'undefined') {
       (window as any).fbq('track', 'InitiateCheckout', {
         value: this.cart.totalPen(),
@@ -65,9 +79,7 @@ export class CheckoutComponent implements OnInit {
     }
 
     this.api.getActiveConsolidado().subscribe({
-      next: () => {
-        this.api.getPublicConfig().subscribe(config => this.yapeNumber.set(config.yapeNumber));
-      },
+      next: () => {},
       error: () => this.step.set('closed')
     });
   }
@@ -77,7 +89,30 @@ export class CheckoutComponent implements OnInit {
   }
 
   get depositPreview(): number {
-    return this.totalUnits * 20; // Solo lo que hay en el carrito actual
+    return this.totalUnits * 20;
+  }
+
+  // Agency search methods
+  onAgencySearchInput(event: Event) {
+    this.agencySearch.set((event.target as HTMLInputElement).value);
+    this.selectedAgency.set(null);
+    this.shippingAddress.set('');
+    this.agencyDropdownOpen.set(true);
+  }
+
+  selectAgency(agency: ShalomAgency) {
+    this.selectedAgency.set(agency);
+    this.agencySearch.set(agency.nombre);
+    this.shippingAddress.set(`Shalom ${agency.nombre} - ${agency.direccion}`);
+    this.agencyDropdownOpen.set(false);
+  }
+
+  onAgencyFocus() {
+    this.agencyDropdownOpen.set(true);
+  }
+
+  onAgencyBlur() {
+    setTimeout(() => this.agencyDropdownOpen.set(false), 200);
   }
 
   submitOrder() {
@@ -91,13 +126,26 @@ export class CheckoutComponent implements OnInit {
       return;
     }
 
-    // Validación de Provincia
-    if (this.deliveryMethod() === 'PROVINCIA') {
-      if (!this.shippingName() || !this.shippingDni() || !this.shippingPhone() || !this.shippingAddress()) {
+    if (this.deliveryMethod() === 'SHALOM') {
+      if (!this.shippingName() || !this.shippingDni() || !this.shippingPhone()) {
         this.error.set('Por favor completa todos los datos obligatorios para el envío por Shalom.');
         return;
       }
+      if (!this.selectedAgency()) {
+        this.error.set('Por favor selecciona una agencia Shalom de la lista.');
+        return;
+      }
     }
+
+    // Save cart items before they get cleared
+    this.savedCartItems.set(this.cart.cartItems().map(i => ({
+      brand: i.product.brand,
+      name: i.product.name,
+      ml: i.product.ml,
+      quantity: i.quantity,
+      unitPricePen: i.unitPricePen
+    })));
+    this.savedTotalPen.set(this.cart.totalPen());
 
     this.loading.set(true);
     this.error.set('');
@@ -121,14 +169,10 @@ export class CheckoutComponent implements OnInit {
       next: (order) => {
         this.orderId.set(order.id);
         this.orderCode.set(order.orderCode);
-
-        // LA SOLUCIÓN DE YAPE: En pantalla mostramos el pago SOLO del carrito actual
         this.depositAmount.set(this.depositPreview);
-
         this.remainingAmount.set(order.remainingPen);
         this.totalAmount.set(order.totalPen);
 
-        // TikTok Pixel: PlaceAnOrder event
         if (typeof (window as any).ttq !== 'undefined') {
           (window as any).ttq.track('PlaceAnOrder', {
             content_type: 'product',
@@ -136,7 +180,6 @@ export class CheckoutComponent implements OnInit {
             currency: 'PEN'
           });
         }
-        // Meta Pixel: Purchase
         if (typeof (window as any).fbq !== 'undefined') {
           (window as any).fbq('track', 'Purchase', {
             value: order.totalPen,
@@ -145,7 +188,8 @@ export class CheckoutComponent implements OnInit {
           });
         }
 
-        this.step.set('yape');
+        this.step.set('done');
+        this.cart.clear();
         this.loading.set(false);
       },
       error: (err) => {
@@ -155,26 +199,24 @@ export class CheckoutComponent implements OnInit {
     });
   }
 
-  confirmYape() {
-    // TikTok Pixel: CompletePayment event (confirmó Yape)
-    if (typeof (window as any).ttq !== 'undefined') {
-      (window as any).ttq.track('CompletePayment', {
-        content_type: 'product',
-        value: this.depositAmount(),
-        currency: 'PEN',
-        order_id: this.orderCode()
-      });
+  sendWhatsApp() {
+    const items = this.savedCartItems();
+    let message = `Hola, soy *${this.clientName()}*.\nMi código de pedido es *${this.orderCode()}*.\n\nQuiero confirmar mi pedido:\n\n`;
+
+    for (const item of items) {
+      const subtotal = (item.unitPricePen * item.quantity).toFixed(2);
+      message += `• ${item.brand} - ${item.name} ${item.ml}ml x${item.quantity} — S/ ${subtotal}\n`;
     }
-    // Meta Pixel: Purchase (pago confirmado)
-    if (typeof (window as any).fbq !== 'undefined') {
-      (window as any).fbq('track', 'Purchase', {
-        value: this.depositAmount(),
-        currency: 'PEN',
-        content_type: 'product'
-      });
+
+    message += `\n*Total: S/ ${this.savedTotalPen().toFixed(2)}*`;
+    message += `\n*Separación: S/ ${this.depositAmount().toFixed(2)}*`;
+
+    if (this.deliveryMethod() === 'SHALOM' && this.selectedAgency()) {
+      message += `\n\nEnvío a: Shalom ${this.selectedAgency()!.nombre}`;
     }
-    this.step.set('done');
-    this.cart.clear();
+
+    const url = `https://wa.me/51981587009?text=${encodeURIComponent(message)}`;
+    window.open(url, '_blank');
   }
 
   goHome() {

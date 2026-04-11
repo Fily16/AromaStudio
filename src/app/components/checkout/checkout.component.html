@@ -52,20 +52,23 @@
             <strong>Lima (Estación/Delivery)</strong>
           </label>
           <label style="cursor: pointer; display: flex; align-items: center; gap: 5px;">
-            <input type="radio" name="delivery" value="PROVINCIA" [checked]="deliveryMethod() === 'PROVINCIA'" (change)="deliveryMethod.set('PROVINCIA')">
-            <strong>Provincia (Shalom)</strong>
+            <input type="radio" name="delivery" value="SHALOM" [checked]="deliveryMethod() === 'SHALOM'" (change)="deliveryMethod.set('SHALOM')">
+            <strong>Recojo en Shalom</strong>
           </label>
         </div>
 
         @if (deliveryMethod() === 'LIMA') {
           <div style="background-color: #e0f2fe; color: #0369a1; padding: 10px; border-radius: 5px; font-size: 0.9rem; margin-bottom: 15px; line-height: 1.4;">
-            ℹ️ Las entregas gratuitas se realizan en la <strong>Estación de tren Arriola</strong>. También podemos enviarlo a tu domicilio en Lima (el costo de envío lo asume el cliente).
+            Las entregas gratuitas se realizan en la <strong>Estación de tren Arriola</strong>. También podemos enviarlo a tu domicilio en Lima (el costo de envío lo asume el cliente).
           </div>
           <div class="form-group">
             <label>Lugar de entrega (opcional)</label>
             <input type="text" [value]="shippingAddress()" (input)="shippingAddress.set($any($event.target).value)" placeholder="Ej: Estación Arriola o Av. Los Pinos 123, Surco">
           </div>
         } @else {
+          <div style="background-color: #fef3c7; color: #92400e; padding: 10px; border-radius: 5px; font-size: 0.9rem; margin-bottom: 15px; line-height: 1.4;">
+            Tu pedido será enviado a la agencia Shalom que selecciones. El costo de envío lo asume el cliente.
+          </div>
           <div class="form-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
             <div class="form-group" style="margin-bottom: 0;">
               <label>Quien recibe el paquete *</label>
@@ -79,10 +82,53 @@
               <label>Celular de destino *</label>
               <input type="tel" [value]="shippingPhone()" (input)="shippingPhone.set($any($event.target).value)" placeholder="Celular para Shalom">
             </div>
-            <div class="form-group" style="margin-bottom: 0;">
-              <label>Agencia Shalom (Destino) *</label>
-              <input type="text" [value]="shippingAddress()" (input)="shippingAddress.set($any($event.target).value)" placeholder="Ej: Shalom Chiclayo Centro">
-            </div>
+          </div>
+
+          <!-- Shalom Agency Search -->
+          <div class="form-group" style="margin-top: 15px; position: relative;">
+            <label>Agencia Shalom (Destino) *</label>
+            <input type="text"
+              [value]="agencySearch()"
+              (input)="onAgencySearchInput($event)"
+              (focus)="onAgencyFocus()"
+              (blur)="onAgencyBlur()"
+              placeholder="Buscar agencia... ej: Chiclayo, Trujillo, Arequipa"
+              autocomplete="off"
+              [style.border-color]="selectedAgency() ? '#10b981' : ''"
+              [style.background-color]="selectedAgency() ? '#f0fdf4' : ''">
+
+            @if (selectedAgency()) {
+              <div style="margin-top: 8px; padding: 10px; background: #ecfdf5; border: 1px solid #6ee7b7; border-radius: 6px; font-size: 0.85rem;">
+                <strong style="color: #065f46;">{{selectedAgency()!.nombre}}</strong>
+                <span style="display: inline-block; margin-left: 8px; padding: 2px 8px; border-radius: 10px; font-size: 0.75rem; background: #dbeafe; color: #1e40af;">{{selectedAgency()!.tipo}}</span>
+                <div style="color: #047857; margin-top: 4px;">{{selectedAgency()!.direccion}}</div>
+              </div>
+            }
+
+            @if (agencyDropdownOpen() && !selectedAgency()) {
+              <div style="position: absolute; left: 0; right: 0; top: 100%; z-index: 50; background: white; border: 1px solid #e2e8f0; border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.15); max-height: 280px; overflow-y: auto; margin-top: 4px;">
+                @if (filteredAgencies().length === 0) {
+                  <div style="padding: 16px; text-align: center; color: #94a3b8; font-size: 0.9rem;">No se encontraron agencias</div>
+                } @else {
+                  @for (agency of filteredAgencies(); track agency.nombre) {
+                    <div (mousedown)="selectAgency(agency)"
+                      style="padding: 10px 14px; cursor: pointer; border-bottom: 1px solid #f1f5f9; transition: background 0.15s;"
+                      onmouseover="this.style.backgroundColor='#f0f9ff'"
+                      onmouseout="this.style.backgroundColor='white'">
+                      <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <strong style="color: #1e293b; font-size: 0.9rem;">{{agency.nombre}}</strong>
+                        <span style="padding: 2px 8px; border-radius: 10px; font-size: 0.7rem; font-weight: 600;"
+                          [style.background]="agency.tipo === 'Grande' ? '#dcfce7' : agency.tipo === 'Mediana' ? '#dbeafe' : agency.tipo === 'Micro' ? '#fef9c3' : agency.tipo === 'Mini-micro' ? '#ffedd5' : '#f3e8ff'"
+                          [style.color]="agency.tipo === 'Grande' ? '#166534' : agency.tipo === 'Mediana' ? '#1e40af' : agency.tipo === 'Micro' ? '#854d0e' : agency.tipo === 'Mini-micro' ? '#c2410c' : '#7e22ce'">
+                          {{agency.tipo}}
+                        </span>
+                      </div>
+                      <div style="color: #64748b; font-size: 0.8rem; margin-top: 3px; line-height: 1.3;">{{agency.direccion}}</div>
+                    </div>
+                  }
+                }
+              </div>
+            }
           </div>
         }
       </div>
@@ -110,54 +156,9 @@
         @if (loading()) {
           Procesando...
         } @else {
-          Generar pedido y ver datos de Yape
+          Generar pedido
         }
       </button>
-    </div>
-  }
-
-  @if (step() === 'yape') {
-    <div class="checkout-card yape-card">
-      <div class="yape-icon">
-        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
-      </div>
-      <h1>Paga la Separación</h1>
-
-      @if (isAddingToExisting()) {
-        <p class="subtitle" style="color: #059669; font-weight: bold;">¡Productos agregados exitosamente a tu pedido {{orderCode()}}!</p>
-        <p class="subtitle">Ahora realiza el pago de separación <strong>solo por estos nuevos productos</strong>.</p>
-      } @else {
-        <p class="subtitle">Tu pedido fue registrado. Ahora realiza el pago de separación por Yape.</p>
-      }
-
-      <div class="order-code-display">
-        <span class="code-label">Tu código de pedido</span>
-        <span class="code-value">{{orderCode()}}</span>
-        <span class="code-hint">Guarda este código para consultas</span>
-      </div>
-
-      <div class="yape-amount">
-        <span class="label">Monto de separación (Nuevos productos)</span>
-        <span class="amount">S/ {{depositAmount() | number:'1.2-2'}}</span>
-      </div>
-
-      <div class="yape-remaining-info">
-        El resto <strong>S/ {{remainingAmount() | number:'1.2-2'}}</strong> lo pagarás cuando la mercancía llegue a Perú.
-      </div>
-
-      <div class="yape-number">
-        <span class="label">Número de Yape</span>
-        <span class="number">{{yapeNumber()}}</span>
-      </div>
-
-      <div class="yape-instructions">
-        <p>1. Abre tu app de Yape</p>
-        <p>2. Yapea al número <strong>{{yapeNumber()}}</strong></p>
-        <p>3. Monto exacto: <strong>S/ {{depositAmount() | number:'1.2-2'}}</strong></p>
-        <p>4. Una vez realizado el pago, haz clic en el botón de abajo</p>
-      </div>
-
-      <button class="submit-btn" (click)="confirmYape()">Ya realicé el Yape</button>
     </div>
   }
 
@@ -166,19 +167,44 @@
       <div class="success-icon">
         <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#34d399" stroke-width="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
       </div>
-      <h1>Pedido Registrado</h1>
+      <h1>Pedido Generado</h1>
 
       <div class="order-code-display">
         <span class="code-label">Tu código de pedido</span>
         <span class="code-value">{{orderCode()}}</span>
+        <span class="code-hint">Guarda este código para consultas</span>
       </div>
 
-      <div class="done-info">
-        <p>Tu pedido está pendiente de verificación de pago.</p>
-        <p>Envía tu código <strong>{{orderCode()}}</strong> y tu <strong>voucher de Yape</strong> por WhatsApp para confirmar tu separación.</p>
+      <div class="order-summary" style="margin-top: 20px;">
+        <h3>Resumen de tu pedido</h3>
+        @for (item of savedCartItems(); track $index) {
+          <div class="summary-item">
+            <span>{{item.brand}} - {{item.name}} {{item.ml}}ml x{{item.quantity}}</span>
+            <span>S/ {{(item.unitPricePen * item.quantity) | number:'1.2-2'}}</span>
+          </div>
+        }
+        <div class="summary-total">
+          <span>Total</span>
+          <span>S/ {{savedTotalPen() | number:'1.2-2'}}</span>
+        </div>
+        <div class="summary-deposit">
+          <span>Separación</span>
+          <span>S/ {{depositAmount() | number:'1.2-2'}}</span>
+        </div>
       </div>
 
-      <button class="submit-btn" (click)="goHome()">Volver al catálogo</button>
+      <div class="done-info" style="margin-top: 20px;">
+        <p>Envía tu resumen por WhatsApp para confirmar tu pedido y coordinar el pago de separación.</p>
+      </div>
+
+      <button class="submit-btn" (click)="sendWhatsApp()" style="margin-top: 15px; background: #25d366; display: flex; align-items: center; justify-content: center; gap: 10px;">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+        Enviar resumen al WhatsApp
+      </button>
+
+      <button class="submit-btn" (click)="goHome()" style="margin-top: 10px; background: #64748b;">
+        Volver al catálogo
+      </button>
     </div>
   }
 
