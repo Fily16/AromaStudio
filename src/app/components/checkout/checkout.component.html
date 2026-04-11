@@ -84,52 +84,42 @@
             </div>
           </div>
 
-          <!-- Shalom Agency Search -->
-          <div class="form-group" style="margin-top: 15px; position: relative;">
-            <label>Agencia Shalom (Destino) *</label>
-            <input type="text"
-              [value]="agencySearch()"
-              (input)="onAgencySearchInput($event)"
-              (focus)="onAgencyFocus()"
-              (blur)="onAgencyBlur()"
-              placeholder="Buscar agencia... ej: Chiclayo, Trujillo, Arequipa"
-              autocomplete="off"
-              [style.border-color]="selectedAgency() ? '#10b981' : ''"
-              [style.background-color]="selectedAgency() ? '#f0fdf4' : ''">
-
-            @if (selectedAgency()) {
-              <div style="margin-top: 8px; padding: 10px; background: #ecfdf5; border: 1px solid #6ee7b7; border-radius: 6px; font-size: 0.85rem;">
-                <strong style="color: #065f46;">{{selectedAgency()!.nombre}}</strong>
-                <span style="display: inline-block; margin-left: 8px; padding: 2px 8px; border-radius: 10px; font-size: 0.75rem; background: #dbeafe; color: #1e40af;">{{selectedAgency()!.tipo}}</span>
-                <div style="color: #047857; margin-top: 4px;">{{selectedAgency()!.direccion}}</div>
-              </div>
-            }
-
-            @if (agencyDropdownOpen() && !selectedAgency()) {
-              <div style="position: absolute; left: 0; right: 0; top: 100%; z-index: 50; background: white; border: 1px solid #e2e8f0; border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.15); max-height: 280px; overflow-y: auto; margin-top: 4px;">
-                @if (filteredAgencies().length === 0) {
-                  <div style="padding: 16px; text-align: center; color: #94a3b8; font-size: 0.9rem;">No se encontraron agencias</div>
-                } @else {
-                  @for (agency of filteredAgencies(); track agency.nombre) {
-                    <div (mousedown)="selectAgency(agency)"
-                      style="padding: 10px 14px; cursor: pointer; border-bottom: 1px solid #f1f5f9; transition: background 0.15s;"
-                      onmouseover="this.style.backgroundColor='#f0f9ff'"
-                      onmouseout="this.style.backgroundColor='white'">
-                      <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <strong style="color: #1e293b; font-size: 0.9rem;">{{agency.nombre}}</strong>
-                        <span style="padding: 2px 8px; border-radius: 10px; font-size: 0.7rem; font-weight: 600;"
-                          [style.background]="agency.tipo === 'Grande' ? '#dcfce7' : agency.tipo === 'Mediana' ? '#dbeafe' : agency.tipo === 'Micro' ? '#fef9c3' : agency.tipo === 'Mini-micro' ? '#ffedd5' : '#f3e8ff'"
-                          [style.color]="agency.tipo === 'Grande' ? '#166534' : agency.tipo === 'Mediana' ? '#1e40af' : agency.tipo === 'Micro' ? '#854d0e' : agency.tipo === 'Mini-micro' ? '#c2410c' : '#7e22ce'">
-                          {{agency.tipo}}
-                        </span>
-                      </div>
-                      <div style="color: #64748b; font-size: 0.8rem; margin-top: 3px; line-height: 1.3;">{{agency.direccion}}</div>
-                    </div>
-                  }
-                }
-              </div>
-            }
+          <!-- Shalom Agency Filter -->
+          <div class="form-group" style="margin-top: 15px;">
+            <label>Departamento *</label>
+            <select (change)="onDepartmentChange($any($event.target).value)" [value]="selectedDepartment()"
+              style="width: 100%; padding: 10px 12px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 0.95rem; background: white; cursor: pointer;">
+              <option value="">Selecciona un departamento</option>
+              @for (dept of departments; track dept) {
+                <option [value]="dept">{{dept}}</option>
+              }
+            </select>
           </div>
+
+          @if (selectedDepartment()) {
+            <div class="form-group" style="margin-top: 10px;">
+              <label>Agencia Shalom *</label>
+              <select (change)="onAgencyChange($any($event.target).value)" [value]="selectedAgency()?.nombre || ''"
+                style="width: 100%; padding: 10px 12px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 0.95rem; background: white; cursor: pointer;"
+                [style.border-color]="selectedAgency() ? '#10b981' : ''"
+                [style.background-color]="selectedAgency() ? '#f0fdf4' : ''">
+                <option value="">Selecciona una agencia ({{agenciesForDepartment().length}})</option>
+                @for (agency of agenciesForDepartment(); track agency.nombre) {
+                  <option [value]="agency.nombre">{{agency.nombre}}</option>
+                }
+              </select>
+            </div>
+          }
+
+          @if (selectedAgency()) {
+            <div style="margin-top: 8px; padding: 10px; background: #ecfdf5; border: 1px solid #6ee7b7; border-radius: 6px; font-size: 0.85rem;">
+              <div style="display: flex; align-items: center; gap: 6px;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                <strong style="color: #065f46;">{{selectedAgency()!.nombre}}</strong>
+              </div>
+              <div style="color: #047857; margin-top: 4px; font-size: 0.8rem; line-height: 1.4;">{{selectedAgency()!.direccion}}</div>
+            </div>
+          }
         }
       </div>
 

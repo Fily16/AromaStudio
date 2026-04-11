@@ -6,6 +6,12 @@
       "runtimeExecutable": "node",
       "runtimeArgs": ["node_modules/@angular/cli/bin/ng.js", "serve", "--port", "4201"],
       "port": 4201
+    },
+    {
+      "name": "remotion-studio",
+      "runtimeExecutable": "cmd",
+      "runtimeArgs": ["/c", "cd /d C:\\Users\\Fily\\Negocios\\PERFUMES\\remotion-demo && npx remotion studio src/index.ts --port 3001"],
+      "port": 3001
     }
   ]
 }

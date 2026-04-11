@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { DecimalPipe } from '@angular/common';
 import { CartService } from '../../services/cart.service';
 import { ApiService } from '../../services/api.service';
-import { SHALOM_AGENCIES, ShalomAgency } from '../../data/shalom-agencies';
+import { SHALOM_AGENCIES, SHALOM_DEPARTMENTS, ShalomAgency } from '../../data/shalom-agencies';
 
 @Component({
   selector: 'app-checkout',
@@ -30,17 +30,15 @@ export class CheckoutComponent implements OnInit {
   shippingPhone = signal('');
   shippingAddress = signal('');
 
-  // Shalom agency search
-  agencySearch = signal('');
-  agencyDropdownOpen = signal(false);
+  // Shalom agency filter
+  departments = SHALOM_DEPARTMENTS;
+  selectedDepartment = signal('');
   selectedAgency = signal<ShalomAgency | null>(null);
 
-  filteredAgencies = computed(() => {
-    const q = this.agencySearch().toLowerCase().trim();
-    if (!q) return SHALOM_AGENCIES.slice(0, 20);
-    return SHALOM_AGENCIES.filter(a =>
-      a.nombre.toLowerCase().includes(q) || a.direccion.toLowerCase().includes(q)
-    ).slice(0, 20);
+  agenciesForDepartment = computed(() => {
+    const dept = this.selectedDepartment();
+    if (!dept) return [];
+    return SHALOM_AGENCIES.filter(a => a.departamento === dept);
   });
 
   step = signal<'form' | 'done' | 'closed'>('form');
@@ -92,27 +90,16 @@ export class CheckoutComponent implements OnInit {
     return this.totalUnits * 20;
   }
 
-  // Agency search methods
-  onAgencySearchInput(event: Event) {
-    this.agencySearch.set((event.target as HTMLInputElement).value);
+  onDepartmentChange(dept: string) {
+    this.selectedDepartment.set(dept);
     this.selectedAgency.set(null);
     this.shippingAddress.set('');
-    this.agencyDropdownOpen.set(true);
   }
 
-  selectAgency(agency: ShalomAgency) {
+  onAgencyChange(nombre: string) {
+    const agency = this.agenciesForDepartment().find(a => a.nombre === nombre) || null;
     this.selectedAgency.set(agency);
-    this.agencySearch.set(agency.nombre);
-    this.shippingAddress.set(`Shalom ${agency.nombre} - ${agency.direccion}`);
-    this.agencyDropdownOpen.set(false);
-  }
-
-  onAgencyFocus() {
-    this.agencyDropdownOpen.set(true);
-  }
-
-  onAgencyBlur() {
-    setTimeout(() => this.agencyDropdownOpen.set(false), 200);
+    this.shippingAddress.set(agency ? `Shalom ${agency.nombre} - ${agency.direccion}` : '');
   }
 
   submitOrder() {
