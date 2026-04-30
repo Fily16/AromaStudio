@@ -1,61 +1,33 @@
-import { Component, computed, inject, signal, AfterViewInit, OnDestroy, OnInit, PLATFORM_ID, effect } from '@angular/core';
-import { isPlatformBrowser } from '@angular/common';
+import { Component, computed, inject, signal, OnInit, effect } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { DecimalPipe } from '@angular/common';
 import { ApiService } from '../../services/api.service';
 import { CartService } from '../../services/cart.service';
 import { Product, Order } from '../../models/api.models';
-import { OnboardingComponent } from '../onboarding/onboarding.component';
-import { gsap } from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
-
-gsap.registerPlugin(ScrollTrigger);
 
 @Component({
   selector: 'app-catalog',
   standalone: true,
-  imports: [FormsModule, DecimalPipe, RouterLink, OnboardingComponent],
+  imports: [FormsModule, DecimalPipe, RouterLink],
   templateUrl: './catalog.component.html',
   styleUrl: './catalog.component.css'
 })
-export class CatalogComponent implements OnInit, AfterViewInit, OnDestroy {
+export class CatalogComponent implements OnInit {
   private api = inject(ApiService);
-  private platformId = inject(PLATFORM_ID);
-  cart = inject(CartService);
   private router = inject(Router);
+  cart = inject(CartService);
 
-  currentView = signal<'landing' | 'retail' | 'wholesale' | 'mayor'>('retail');
-
-  // All products from API
   allProducts = signal<Product[]>([]);
-  retailStock = signal<Record<number, number>>({});
   loading = signal(true);
 
-  // Retail filters
   searchQuery = signal('');
-  selectedCategory = signal<'all' | 'men' | 'women' | 'unisex'>('all');
-  sortBy = signal<'name' | 'price-asc' | 'price-desc' | 'brand'>('name');
+  brandFilter = signal('Todos');
+  currentPage = signal(1);
+  itemsPerPage = 15;
 
-  // Wholesale filters
-  wholesaleSearch = signal('');
-  wholesalePage = signal(1);
-  wholesaleItemsPerPage = 15;
-  wholesaleBrandFilter = signal('Todos');
-
-  // Por Mayor filters
-  mayorSearch = signal('');
-  mayorCategory = signal<'all' | 'men' | 'women' | 'unisex'>('all');
-  mayorSortBy = signal<'name' | 'price-asc' | 'price-desc' | 'brand'>('name');
-
-  // Cart toast
   cartToast = signal('');
-
-  // Quantity selector per product
   selectedQty = signal<Record<number, number>>({});
-
-  // Onboarding: seccion activa para mostrar mensaje contextual
-  onboardingSection = signal<string>('intro');
 
   ngOnInit() {
     this.api.getProducts({ onlyAvailable: true }).subscribe({
@@ -65,136 +37,36 @@ export class CatalogComponent implements OnInit, AfterViewInit, OnDestroy {
       },
       error: () => this.loading.set(false)
     });
-    this.api.getRetailStock().subscribe({
-      next: (stock) => this.retailStock.set(stock),
-      error: () => {} // silently ignore if endpoint not available
-    });
-  }
 
-  ngAfterViewInit(): void {
-    if (isPlatformBrowser(this.platformId)) {
-      setTimeout(() => this.initScrollAnimations(), 100);
-    }
-  }
-
-  ngOnDestroy(): void {
-    ScrollTrigger.getAll().forEach(st => st.kill());
-  }
-
-  private initScrollAnimations(): void {
-    if (this.currentView() === 'landing') {
-      gsap.from('.landing-logo', { y: 40, opacity: 0, duration: 1, ease: 'power3.out' });
-      gsap.from('.landing-tagline', { y: 30, opacity: 0, duration: 1, delay: 0.2, ease: 'power3.out' });
-      gsap.from('.landing-buttons', { y: 30, opacity: 0, duration: 1, delay: 0.4, ease: 'power3.out' });
-    }
-  }
-
-  initCatalogAnimations(): void {
-    if (!isPlatformBrowser(this.platformId)) return;
-    setTimeout(() => {
-      gsap.from('.section-header', { y: -30, opacity: 0, duration: 0.8, ease: 'power3.out' });
-      gsap.from('.filters-section, .wholesale-filters', { y: 20, opacity: 0, duration: 0.8, delay: 0.2, ease: 'power3.out' });
-      gsap.utils.toArray<HTMLElement>('.perfume-card-wrapper, .wholesale-card').forEach((card, i) => {
-        gsap.from(card, {
-          y: 60, opacity: 0, duration: 0.8, delay: i * 0.05, ease: 'power3.out',
-          scrollTrigger: { trigger: card, start: 'top 90%', toggleActions: 'play none none none' }
-        });
+    try {
+      (window as any).ttq?.track('ViewContent', {
+        content_type: 'product_group',
+        content_name: 'Catálogo',
+        currency: 'PEN'
       });
-    }, 100);
+    } catch {}
+    try {
+      (window as any).fbq?.('track', 'ViewContent', {
+        content_type: 'product_group',
+        content_name: 'Catálogo',
+        currency: 'PEN'
+      });
+    } catch {}
   }
 
-  setView(view: 'landing' | 'retail' | 'wholesale' | 'mayor'): void {
-    this.currentView.set(view);
-    // Trigger onboarding para la seccion (solo si es primera vez, lo maneja el componente)
-    if (view !== 'landing') {
-      this.onboardingSection.set(view);
-    }
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-    if (view !== 'landing') {
-      ScrollTrigger.getAll().forEach(st => st.kill());
-      this.initCatalogAnimations();
-
-      // TikTok Pixel: ViewContent event (usuario entra a catálogo)
-      if (typeof (window as any).ttq !== 'undefined') {
-        const viewNames: Record<string, string> = {
-          retail: 'Catálogo Retail',
-          wholesale: 'Catálogo Consolidado',
-          mayor: 'Catálogo Por Mayor'
-        };
-        (window as any).ttq.track('ViewContent', {
-          content_type: 'product_group',
-          content_name: viewNames[view] || view,
-          currency: 'PEN'
-        });
-      }
-      // Meta Pixel: ViewContent
-      if (typeof (window as any).fbq !== 'undefined') {
-        const viewNames: Record<string, string> = {
-          retail: 'Catálogo Retail',
-          wholesale: 'Catálogo Consolidado',
-          mayor: 'Catálogo Por Mayor'
-        };
-        (window as any).fbq('track', 'ViewContent', {
-          content_type: 'product_group',
-          content_name: viewNames[view] || view,
-          currency: 'PEN'
-        });
-      }
-    }
-  }
-
-  // === Retail products (only those with actual stock) ===
-  retailProducts = computed(() => {
-    const stock = this.retailStock();
-    return this.allProducts().filter(p =>
-      p.retailPricePen && p.retailPricePen > 0 && (stock[p.id] ?? 0) > 0
-    );
-  });
-
-  getStock(productId: number): number {
-    return this.retailStock()[productId] ?? 0;
-  }
-
-  filteredRetailProducts = computed(() => {
-    let products = [...this.retailProducts()];
-    const query = this.searchQuery().toLowerCase();
-    if (query) {
-      products = products.filter(p =>
-        p.name.toLowerCase().includes(query) ||
-        p.brand.toLowerCase().includes(query) ||
-        (p.description || '').toLowerCase().includes(query)
-      );
-    }
-    const category = this.selectedCategory();
-    if (category !== 'all') {
-      products = products.filter(p => p.category === category);
-    }
-    const sort = this.sortBy();
-    switch (sort) {
-      case 'name': products.sort((a, b) => a.name.localeCompare(b.name)); break;
-      case 'price-asc': products.sort((a, b) => (a.retailPricePen ?? 0) - (b.retailPricePen ?? 0)); break;
-      case 'price-desc': products.sort((a, b) => (b.retailPricePen ?? 0) - (a.retailPricePen ?? 0)); break;
-      case 'brand': products.sort((a, b) => a.brand.localeCompare(b.brand)); break;
-    }
-    return products;
-  });
-
-  retailCount = computed(() => this.filteredRetailProducts().length);
-
-  // === Wholesale products ===
   wholesaleProducts = computed(() => {
     return this.allProducts().filter(p => p.wholesalePricePen && p.wholesalePricePen > 0);
   });
 
-  wholesaleBrands = computed(() => {
-    const brands = [...new Set(this.wholesaleProducts().map(p => p.brand))];
-    return ['Todos', ...brands.sort()];
+  brands = computed(() => {
+    const brandSet = [...new Set(this.wholesaleProducts().map(p => p.brand))];
+    return ['Todos', ...brandSet.sort()];
   });
 
-  filteredWholesaleProducts = computed(() => {
+  filteredProducts = computed(() => {
     let products = [...this.wholesaleProducts()];
-    const query = this.wholesaleSearch().toLowerCase().trim();
-    const brand = this.wholesaleBrandFilter();
+    const query = this.searchQuery().toLowerCase().trim();
+    const brand = this.brandFilter();
     if (query) {
       products = products.filter(p =>
         p.name.toLowerCase().includes(query) || p.brand.toLowerCase().includes(query)
@@ -206,159 +78,46 @@ export class CatalogComponent implements OnInit, AfterViewInit, OnDestroy {
     return products;
   });
 
-  wholesaleTotalPages = computed(() =>
-    Math.ceil(this.filteredWholesaleProducts().length / this.wholesaleItemsPerPage)
+  totalPages = computed(() =>
+    Math.ceil(this.filteredProducts().length / this.itemsPerPage)
   );
 
-  paginatedWholesaleProducts = computed(() => {
-    const start = (this.wholesalePage() - 1) * this.wholesaleItemsPerPage;
-    return this.filteredWholesaleProducts().slice(start, start + this.wholesaleItemsPerPage);
+  paginatedProducts = computed(() => {
+    const start = (this.currentPage() - 1) * this.itemsPerPage;
+    return this.filteredProducts().slice(start, start + this.itemsPerPage);
   });
 
-  wholesaleResultsCount = computed(() => this.filteredWholesaleProducts().length);
+  resultsCount = computed(() => this.filteredProducts().length);
 
-  // === Por Mayor products (same stock as retail, mayor prices) ===
-  mayorProducts = computed(() => {
-    const stock = this.retailStock();
-    return this.allProducts().filter(p =>
-      p.mayorPricePen && p.mayorPricePen > 0 && (stock[p.id] ?? 0) > 0
-    );
+  private resetPage = effect(() => {
+    this.searchQuery();
+    this.brandFilter();
+    this.currentPage.set(1);
   });
 
-  filteredMayorProducts = computed(() => {
-    let products = [...this.mayorProducts()];
-    const query = this.mayorSearch().toLowerCase();
-    if (query) {
-      products = products.filter(p =>
-        p.name.toLowerCase().includes(query) ||
-        p.brand.toLowerCase().includes(query) ||
-        (p.description || '').toLowerCase().includes(query)
-      );
-    }
-    const category = this.mayorCategory();
-    if (category !== 'all') {
-      products = products.filter(p => p.category === category);
-    }
-    const sort = this.mayorSortBy();
-    switch (sort) {
-      case 'name': products.sort((a, b) => a.name.localeCompare(b.name)); break;
-      case 'price-asc': products.sort((a, b) => (a.mayorPricePen ?? 0) - (b.mayorPricePen ?? 0)); break;
-      case 'price-desc': products.sort((a, b) => (b.mayorPricePen ?? 0) - (a.mayorPricePen ?? 0)); break;
-      case 'brand': products.sort((a, b) => a.brand.localeCompare(b.brand)); break;
-    }
-    return products;
-  });
-
-  mayorCount = computed(() => this.filteredMayorProducts().length);
-
-  private searchEffect = effect(() => {
-    this.wholesaleSearch();
-    this.wholesaleBrandFilter();
-    this.wholesalePage.set(1);
-  });
-
-  // === Categories & sorting ===
-  categories = [
-    { value: 'all', label: 'Todos' },
-    { value: 'men', label: 'Hombre' },
-    { value: 'women', label: 'Mujer' },
-    { value: 'unisex', label: 'Unisex' }
-  ];
-
-  sortOptions = [
-    { value: 'name', label: 'Nombre A-Z' },
-    { value: 'price-asc', label: 'Precio: Menor a Mayor' },
-    { value: 'price-desc', label: 'Precio: Mayor a Menor' },
-    { value: 'brand', label: 'Marca' }
-  ];
-
-  // === Event handlers ===
-  onSearchChange(event: Event): void {
+  onSearchChange(event: Event) {
     const query = (event.target as HTMLInputElement).value;
     this.searchQuery.set(query);
-    // TikTok Pixel: Search event
-    if (query.length >= 3 && typeof (window as any).ttq !== 'undefined') {
-      (window as any).ttq.track('Search', {
-        query: query,
-        content_type: 'product'
-      });
-    }
-    // Meta Pixel: Search
-    if (query.length >= 3 && typeof (window as any).fbq !== 'undefined') {
-      (window as any).fbq('track', 'Search', { search_string: query, content_type: 'product' });
+    if (query.length >= 3) {
+      try { (window as any).ttq?.track('Search', { query, content_type: 'product' }); } catch {}
+      try { (window as any).fbq?.('track', 'Search', { search_string: query, content_type: 'product' }); } catch {}
     }
   }
 
-  onCategoryChange(category: 'all' | 'men' | 'women' | 'unisex'): void {
-    this.selectedCategory.set(category);
+  onBrandChange(brand: string) {
+    this.brandFilter.set(brand);
   }
 
-  onSortChange(event: Event): void {
-    this.sortBy.set((event.target as HTMLSelectElement).value as any);
-  }
-
-  clearFilters(): void {
-    this.searchQuery.set('');
-    this.selectedCategory.set('all');
-    this.sortBy.set('name');
-  }
-
-  // Mayor event handlers
-  onMayorSearchChange(event: Event): void {
-    const query = (event.target as HTMLInputElement).value;
-    this.mayorSearch.set(query);
-    if (query.length >= 3 && typeof (window as any).ttq !== 'undefined') {
-      (window as any).ttq.track('Search', { query, content_type: 'product' });
-    }
-    if (query.length >= 3 && typeof (window as any).fbq !== 'undefined') {
-      (window as any).fbq('track', 'Search', { search_string: query, content_type: 'product' });
-    }
-  }
-
-  onMayorCategoryChange(category: 'all' | 'men' | 'women' | 'unisex'): void {
-    this.mayorCategory.set(category);
-  }
-
-  onMayorSortChange(event: Event): void {
-    this.mayorSortBy.set((event.target as HTMLSelectElement).value as any);
-  }
-
-  clearMayorFilters(): void {
-    this.mayorSearch.set('');
-    this.mayorCategory.set('all');
-    this.mayorSortBy.set('name');
-  }
-
-  getMayorWhatsAppLink(product: Product): string {
-    const message = `¡Hola! Estoy interesado/a en compra por mayor:\n\n${product.brand} - ${product.name} ${product.ml}ml\nPrecio por mayor: S/ ${product.mayorPricePen}\n\n¿Cuál es la cantidad mínima y el proceso de compra?`;
-    return `https://wa.me/51981587009?text=${encodeURIComponent(message)}`;
-  }
-
-  onWholesaleSearchChange(event: Event): void {
-    const query = (event.target as HTMLInputElement).value;
-    this.wholesaleSearch.set(query);
-    if (query.length >= 3 && typeof (window as any).ttq !== 'undefined') {
-      (window as any).ttq.track('Search', { query, content_type: 'product' });
-    }
-    if (query.length >= 3 && typeof (window as any).fbq !== 'undefined') {
-      (window as any).fbq('track', 'Search', { search_string: query, content_type: 'product' });
-    }
-  }
-
-  onWholesaleBrandChange(brand: string): void {
-    this.wholesaleBrandFilter.set(brand);
-  }
-
-  goToPage(page: number): void {
-    if (page >= 1 && page <= this.wholesaleTotalPages()) {
-      this.wholesalePage.set(page);
+  goToPage(page: number) {
+    if (page >= 1 && page <= this.totalPages()) {
+      this.currentPage.set(page);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   }
 
   getPageNumbers(): number[] {
-    const total = this.wholesaleTotalPages();
-    const current = this.wholesalePage();
+    const total = this.totalPages();
+    const current = this.currentPage();
     const pages: number[] = [];
     if (total <= 7) {
       for (let i = 1; i <= total; i++) pages.push(i);
@@ -374,138 +133,59 @@ export class CatalogComponent implements OnInit, AfterViewInit, OnDestroy {
     return pages;
   }
 
-  // === Quantity selector ===
+  goToProduct(id: number) {
+    this.router.navigate(['/producto', id]);
+  }
+
   getQty(productId: number): number {
     return this.selectedQty()[productId] ?? 1;
   }
 
-  changeQty(productId: number, delta: number): void {
-    const current = this.getQty(productId);
-    const next = Math.max(1, current + delta);
+  changeQty(productId: number, delta: number) {
+    const next = Math.max(1, this.getQty(productId) + delta);
     this.selectedQty.update(q => ({ ...q, [productId]: next }));
   }
 
-  addToCartWithQty(product: Product, priceType: 'wholesale' | 'retail' | 'mayor'): void {
+  addToCart(product: Product) {
     const qty = this.getQty(product.id);
-    const price = priceType === 'wholesale' ? product.wholesalePricePen : priceType === 'mayor' ? product.mayorPricePen : product.retailPricePen;
-    if (!price) return;
-    const cartProduct = { ...product, wholesalePricePen: price, retailPricePen: price };
+    if (!product.wholesalePricePen) return;
+    this.cart.addItem(product, qty, 'CONSOLIDADO');
 
-    // AQUÍ ESTÁ LA MAGIA: Traducimos tu "priceType" al "CatalogType" del servicio
-    let catalogType: 'CONSOLIDADO' | 'RETAIL' | 'WHOLESALE' = 'RETAIL';
-    if (priceType === 'wholesale') catalogType = 'CONSOLIDADO';
-    if (priceType === 'mayor') catalogType = 'WHOLESALE';
-    if (priceType === 'retail') catalogType = 'RETAIL';
-
-    // Ahora enviamos el catalogType como tercer parámetro
-    this.cart.addItem(cartProduct, qty, catalogType);
-
-    // TikTok Pixel: AddToCart event
-    if (typeof (window as any).ttq !== 'undefined') {
-      (window as any).ttq.track('AddToCart', {
+    try {
+      (window as any).ttq?.track('AddToCart', {
         content_id: product.id.toString(),
         content_name: `${product.brand} - ${product.name}`,
         content_type: 'product',
         quantity: qty,
-        price: price,
-        value: price * qty,
+        price: product.wholesalePricePen,
+        value: product.wholesalePricePen * qty,
         currency: 'PEN'
       });
-    }
-    // Meta Pixel: AddToCart
-    if (typeof (window as any).fbq !== 'undefined') {
-      (window as any).fbq('track', 'AddToCart', {
+    } catch {}
+    try {
+      (window as any).fbq?.('track', 'AddToCart', {
         content_ids: [product.id.toString()],
         content_name: `${product.brand} - ${product.name}`,
         content_type: 'product',
-        value: price * qty,
+        value: product.wholesalePricePen * qty,
         currency: 'PEN'
       });
-    }
+    } catch {}
 
     this.cartToast.set(`${product.brand} - ${product.name} (x${qty}) agregado`);
     setTimeout(() => this.cartToast.set(''), 2500);
-    // Reset qty to 1 after adding
     this.selectedQty.update(q => ({ ...q, [product.id]: 1 }));
   }
 
-  // === Cart ===
-  // === Cart ===
-  addToCart(product: Product, priceType: 'wholesale' | 'retail'): void {
-    const price = priceType === 'wholesale' ? product.wholesalePricePen : product.retailPricePen;
-    if (!price) return;
-
-    // Lo mismo aquí para el botón sin cantidad
-    let catalogType: 'CONSOLIDADO' | 'RETAIL' | 'WHOLESALE' = 'RETAIL';
-    if (priceType === 'wholesale') catalogType = 'CONSOLIDADO';
-
-    const cartProduct = { ...product, wholesalePricePen: price, retailPricePen: price };
-
-    // Enviamos el catalogType
-    this.cart.addItem(cartProduct, 1, catalogType);
-
-    // TikTok Pixel: AddToCart event
-    if (typeof (window as any).ttq !== 'undefined') {
-      (window as any).ttq.track('AddToCart', {
-        content_id: product.id.toString(),
-        content_name: `${product.brand} - ${product.name}`,
-        content_type: 'product',
-        quantity: 1,
-        price: price,
-        value: price,
-        currency: 'PEN'
-      });
-    }
-    // Meta Pixel: AddToCart
-    if (typeof (window as any).fbq !== 'undefined') {
-      (window as any).fbq('track', 'AddToCart', {
-        content_ids: [product.id.toString()],
-        content_name: `${product.brand} - ${product.name}`,
-        content_type: 'product',
-        value: price,
-        currency: 'PEN'
-      });
-    }
-
-    this.cartToast.set(`${product.brand} - ${product.name} agregado`);
-    setTimeout(() => this.cartToast.set(''), 2500);
-  }
-
-  goToCart(): void {
+  goToCart() {
     this.router.navigate(['/cart']);
   }
 
-  // === WhatsApp ===
-  getWhatsAppLink(product: Product, priceType: 'wholesale' | 'retail'): string {
-    const price = priceType === 'wholesale' ? product.wholesalePricePen : product.retailPricePen;
-    const message = `¡Hola! Me interesa:\n\n${product.brand} - ${product.name} ${product.ml}ml\nPrecio: S/ ${price}\n\n¿Tienen disponibilidad?`;
-    return `https://wa.me/51981587009?text=${encodeURIComponent(message)}`;
-  }
-
-  getRetailWhatsAppLink(product: Product): string {
-    const message = `¡Hola! Estoy interesado/a en:\n\n${product.brand} - ${product.name} ${product.ml}ml\nPrecio: S/ ${product.retailPricePen}\n\n¿Tienen disponibilidad? ¿Cuál es el proceso para realizar la compra?`;
-    return `https://wa.me/51981587009?text=${encodeURIComponent(message)}`;
-  }
-
-  // === TikTok + Meta Pixel: Contact event (WhatsApp FAB) ===
-  trackWhatsAppContact(event: Event): void {
+  trackWhatsAppContact(event: Event) {
     event.preventDefault();
-    try {
-      (window as any).ttq?.track('Contact', {
-        content_type: 'product',
-        content_name: 'WhatsApp FAB',
-      });
-    } catch {}
-    // Meta Pixel: Contact (WhatsApp FAB)
-    try {
-      (window as any).fbq?.('track', 'Contact', {
-        content_name: 'WhatsApp FAB',
-      });
-    } catch {}
-    // Delay para que el pixel envíe el evento antes de navegar
-    setTimeout(() => {
-      window.open('https://wa.me/51981587009', '_blank');
-    }, 300);
+    try { (window as any).ttq?.track('Contact', { content_type: 'product', content_name: 'WhatsApp FAB' }); } catch {}
+    try { (window as any).fbq?.('track', 'Contact', { content_name: 'WhatsApp FAB' }); } catch {}
+    setTimeout(() => { window.open('https://wa.me/51981587009', '_blank'); }, 300);
   }
 
   // === Edit Order Modal ===
@@ -520,25 +200,19 @@ export class CatalogComponent implements OnInit, AfterViewInit, OnDestroy {
   editMessage = signal('');
   editOldUnits = signal(0);
 
-  // Swap picker state
   editSwapIndex = signal<number | null>(null);
   editPickerSearch = signal('');
   editPickerMode = signal<'swap' | 'add' | null>(null);
-
-  // Add product search
   editAddSearch = signal('');
 
   editTotalUnits = computed(() => this.editItems().reduce((sum, i) => sum + i.quantity, 0));
   editNewTotal = computed(() => this.editItems().reduce((sum, i) => sum + i.quantity * i.unitPrice, 0));
-  // Deposit is always totalUnits × S/20
   editCorrectDeposit = computed(() => this.editTotalUnits() * 20);
   editExtraUnits = computed(() => Math.max(0, this.editTotalUnits() - this.editOldUnits()));
   editExtraDeposit = computed(() => this.editExtraUnits() * 20);
-  editCurrentDeposit = computed(() => this.editOldUnits() * 20);
   editTotalDeposit = computed(() => this.editCorrectDeposit());
   editRemaining = computed(() => this.editNewTotal() - this.editTotalDeposit());
 
-  // Products available for adding (not already in the order)
   editAvailableProducts = computed(() => {
     const currentIds = new Set(this.editItems().map(i => i.productId));
     const search = this.editAddSearch().toLowerCase().trim();
@@ -551,7 +225,6 @@ export class CatalogComponent implements OnInit, AfterViewInit, OnDestroy {
     return products;
   });
 
-  // Products for swap picker (excludes current items except the one being swapped)
   editSwapProducts = computed(() => {
     const swapIdx = this.editSwapIndex();
     const items = this.editItems();
@@ -633,7 +306,6 @@ export class CatalogComponent implements OnInit, AfterViewInit, OnDestroy {
     this.editItems.update(items => items.filter((_, i) => i !== index));
   }
 
-  // Open swap picker for a specific item
   openSwapPicker(index: number) {
     this.editSwapIndex.set(index);
     this.editPickerMode.set('swap');
@@ -646,7 +318,6 @@ export class CatalogComponent implements OnInit, AfterViewInit, OnDestroy {
     this.editPickerSearch.set('');
   }
 
-  // Swap item at index with new product
   editSwapProduct(product: Product) {
     const idx = this.editSwapIndex();
     if (idx === null) return;
@@ -659,7 +330,6 @@ export class CatalogComponent implements OnInit, AfterViewInit, OnDestroy {
     this.closeSwapPicker();
   }
 
-  // Add product from picker
   editAddProduct(product: Product) {
     const price = product.wholesalePricePen ?? 0;
     this.editItems.update(items => [...items, {
