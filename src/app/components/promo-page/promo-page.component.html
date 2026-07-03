@@ -1,0 +1,56 @@
+@if (toast()) { <div class="pp-toast">{{ toast() }}</div> }
+
+@if (loading()) {
+  <div class="pp-wrap"><p class="pp-muted">Cargando promoción…</p></div>
+} @else if (notFound()) {
+  <div class="pp-wrap">
+    <h1>Promoción no disponible</h1>
+    <p class="pp-muted">Puede que haya terminado o ya no exista.</p>
+    <a routerLink="/catalogo" class="pp-btn ghost">Ver catálogo</a>
+  </div>
+} @else if (promo(); as p) {
+  <div class="pp-wrap">
+    <a routerLink="/" class="pp-back">← Volver</a>
+    <div class="pp-grid">
+      <div class="pp-media">
+        @if (p.imageData || p.imageUrl) { <img [src]="p.imageData || p.imageUrl" [alt]="p.name"> }
+        @else { <div class="pp-noimg">{{ p.name }}</div> }
+        <span class="pp-badge">PROMO</span>
+      </div>
+
+      <div class="pp-info">
+        <h1>{{ p.name }}</h1>
+        @if (p.validUntil) { <p class="pp-valid">Válido hasta {{ p.validUntil }}</p> }
+
+        <div class="pp-perfumes">
+          <span class="pp-perfumes-label">Incluye {{ p.items.length }} perfume(s):</span>
+          <div class="pp-perfume-grid">
+            @for (it of p.items; track $index) {
+              <div class="pp-perfume">
+                <div class="pp-perfume-img">
+                  @if (it.imageUrl) { <img [src]="it.imageUrl" [alt]="it.name"> } @else { <span>{{ it.name }}</span> }
+                </div>
+                <span class="pp-perfume-name">{{ it.name }}</span>
+              </div>
+            }
+          </div>
+        </div>
+
+        <div class="pp-price-row">
+          <div class="pp-price">S/ {{ p.pricePen | number:'1.0-0' }}</div>
+          @if (p.stockQty > 0) {
+            <span class="pp-stock">Quedan {{ p.stockQty }}</span>
+          } @else {
+            <span class="pp-stock out">Agotado</span>
+          }
+        </div>
+
+        <button class="pp-btn big" (click)="add()" [disabled]="soldOut()">
+          {{ soldOut() ? 'Agotado' : 'Agregar al carrito' }}
+        </button>
+        <button class="pp-btn ghost" (click)="goCart()">Ir al carrito</button>
+        <p class="pp-muted small">Entrega inmediata. Puedes combinarla con productos en stock u otras promos.</p>
+      </div>
+    </div>
+  </div>
+}

@@ -1,91 +1,298 @@
-<div class="cart-page">
-  <div class="cart-container">
-    <!-- Header -->
-    <div class="cart-header">
-      <button class="back-btn" (click)="goBack()">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
-        Volver
-      </button>
-      <div class="header-title">
-        <h1>Tu Carrito</h1>
-        <span class="badge-count">{{cart.itemCount()}}</span>
+<div class="as-container cart-wrap">
+
+  @if (phase() === 'done') {
+    <!-- ===== LISTO ===== -->
+    <div class="co-done">
+      <div class="co-done-check">✓</div>
+      <h1>¡Pedido registrado!</h1>
+      <p class="co-done-code">Tu código: <b>{{ successCode() }}</b></p>
+      <div class="co-done-box">
+        <div class="sum-row"><span>Total</span><b>S/ {{ successTotal() | number:'1.0-0' }}</b></div>
+        @if (successDeposit() > 0) {
+          <div class="sum-row muted"><span>Separación sugerida</span><span>S/ {{ successDeposit() | number:'1.0-0' }}</span></div>
+        }
       </div>
+      <p class="co-done-note">Envíanos tu pedido por WhatsApp para coordinar el pago y la entrega.</p>
+      <button class="as-btn as-btn-wa as-btn-block" (click)="sendCheckoutWhatsApp()">Confirmar por WhatsApp</button>
+      <button class="as-btn as-btn-block co-ghost" (click)="finishHome()">Volver al inicio</button>
     </div>
 
-    @if (cart.isEmpty()) {
-      <div class="empty-state">
-        <div class="empty-icon">
-          <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" opacity="0.35">
-            <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 01-8 0"/>
-          </svg>
-        </div>
-        <p class="empty-text">Tu carrito está vacío</p>
-        <p class="empty-sub">Explora nuestro catálogo y agrega tus fragancias favoritas</p>
-        <button class="primary-btn" (click)="goBack()">Explorar catálogo</button>
+  } @else if (cart.isEmpty()) {
+    <!-- ===== VACÍO ===== -->
+    <div class="cart-empty">
+      <div class="cart-empty-icon">
+        <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.4">
+          <circle cx="9" cy="21" r="1.6"/><circle cx="18" cy="21" r="1.6"/>
+          <path d="M2.5 3h2l2.2 12.4a2 2 0 0 0 2 1.6h8.7a2 2 0 0 0 2-1.6L23 7H6"/>
+        </svg>
       </div>
-    } @else {
-      <div class="cart-body">
+      <h2>Tu carrito está vacío</h2>
+      <p>Explora el catálogo y agrega tus perfumes favoritos.</p>
+      <a class="as-btn as-btn-primary" routerLink="/catalogo">Ver catálogo</a>
+    </div>
+
+  } @else {
+    <div class="flow" [class.is-checkout]="phase() === 'checkout'">
+
+      <!-- ===================== FASE BOLSA ===================== -->
+      @if (phase() === 'bag') {
+      <h1 class="cart-title">Tu pedido</h1>
+
+      <div class="cart-layout">
         <!-- Items -->
-        <div class="items-list">
+        <div class="cart-items">
+          @if (cart.catalogType() !== 'STOCK') {
+            <div class="min-bar" [class.done]="minReached()">
+              @if (minReached()) {
+                <span class="min-msg">✓ ¡Pedido mínimo alcanzado! Ya puedes finalizar.</span>
+              } @else {
+                <span class="min-msg">Te {{ unitsLeft() === 1 ? 'falta' : 'faltan' }} <strong>{{ unitsLeft() }}</strong> {{ unitsLeft() === 1 ? 'unidad' : 'unidades' }} para el pedido mínimo al por mayor</span>
+              }
+              <div class="min-track"><div class="min-fill" [style.width.%]="progressPct()"></div></div>
+            </div>
+          } @else {
+            <div class="min-bar done"><span class="min-msg">Entrega inmediata · sin mínimo (puedes llevar 1)</span></div>
+          }
+
           @for (item of cart.cartItems(); track item.product.id) {
-            <div class="cart-item">
-              <div class="item-left">
-                <h3 class="item-name">{{item.product.brand}} — {{item.product.name}}</h3>
-                <p class="item-detail">{{item.product.ml}} ml</p>
-                <p class="item-unit-price">S/ {{item.unitPricePen | number:'1.2-2'}} c/u</p>
+            <div class="line">
+              <a class="line-thumb" [routerLink]="['/producto', item.product.id]">
+                @if (item.product.imageUrl) { <img [src]="item.product.imageUrl" [alt]="item.product.name"> }
+              </a>
+              <div class="line-info">
+                <a class="line-name" [routerLink]="['/producto', item.product.id]">
+                  <span class="line-brand">{{ item.product.brand }}</span>
+                  {{ item.product.name }} @if (item.product.ml) { · {{ item.product.ml }}ml }
+                </a>
+                <span class="line-unit">S/ {{ item.unitPricePen | number:'1.0-0' }} c/u</span>
+                <button class="line-remove" (click)="remove(item.product.id)">Quitar</button>
               </div>
-              <div class="item-right">
-                <div class="qty-control">
-                  <button (click)="cart.updateQuantity(item.product.id, item.quantity - 1)">−</button>
-                  <input type="number" [value]="item.quantity" (change)="updateQty(item.product.id, $event)" min="1">
-                  <button (click)="cart.updateQuantity(item.product.id, item.quantity + 1)">+</button>
+              <div class="line-right">
+                <div class="line-qty">
+                  <button (click)="changeQty(item.product.id, item.quantity, -1)" aria-label="Menos">−</button>
+                  <span>{{ item.quantity }}</span>
+                  <span class="plus-wrap">
+                    <button (click)="changeQty(item.product.id, item.quantity, 1)" aria-label="Más">+</button>
+                    @if (stockHitId() === item.product.id) { <span class="stockhit">¡Ya no hay más! Aprovecha los últimos</span> }
+                  </span>
                 </div>
-                <span class="item-subtotal">S/ {{(item.unitPricePen * item.quantity) | number:'1.2-2'}}</span>
-                <button class="remove-btn" (click)="remove(item.product.id)" title="Eliminar">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
-                </button>
+                <span class="line-sub">S/ {{ (item.unitPricePen * item.quantity) | number:'1.0-0' }}</span>
               </div>
             </div>
           }
+
+          <!-- Líneas de promoción (packs) -->
+          @for (pl of cart.promoItems(); track pl.promo.id) {
+            <div class="line line-promo">
+              <a class="line-thumb" [routerLink]="['/promocion', pl.promo.id]">
+                @if (pl.promo.imageData || pl.promo.imageUrl) { <img [src]="pl.promo.imageData || pl.promo.imageUrl" [alt]="pl.promo.name"> }
+              </a>
+              <div class="line-info">
+                <a class="line-name" [routerLink]="['/promocion', pl.promo.id]">
+                  <span class="line-brand promo-tag">PROMO</span>
+                  {{ pl.promo.name }}
+                </a>
+                <span class="line-unit">{{ pl.promo.items.length }} perfumes · S/ {{ pl.promo.pricePen | number:'1.0-0' }} c/u</span>
+                <button class="line-remove" (click)="removePromoLine(pl.promo.id)">Quitar</button>
+              </div>
+              <div class="line-right">
+                <div class="line-qty">
+                  <button (click)="changePromoQty(pl.promo.id, pl.quantity, -1, pl.promo.stockQty)" aria-label="Menos">−</button>
+                  <span>{{ pl.quantity }}</span>
+                  <button (click)="changePromoQty(pl.promo.id, pl.quantity, 1, pl.promo.stockQty)" aria-label="Más">+</button>
+                </div>
+                <span class="line-sub">S/ {{ (pl.promo.pricePen * pl.quantity) | number:'1.0-0' }}</span>
+              </div>
+            </div>
+          }
+
+          <button class="cart-keep" (click)="goBack()">← Seguir comprando</button>
         </div>
 
-        <!-- Summary -->
-        <div class="summary-card">
-          <h2>Resumen del pedido</h2>
-          <div class="summary-line">
-            <span>Productos ({{cart.itemCount()}})</span>
-            <span>S/ {{cart.totalPen() | number:'1.2-2'}}</span>
+        <!-- Resumen -->
+        <aside class="cart-summary">
+          <h3>Resumen</h3>
+          <div class="sum-row"><span>Productos ({{ totalUnits() }})</span><span>S/ {{ cart.totalPen() | number:'1.0-0' }}</span></div>
+          @if (cart.promoItems().length) {
+            <div class="sum-row muted"><span>Promociones ({{ cart.promoItems().length }})</span><span>incluidas</span></div>
+          }
+          @if (cart.catalogType() !== 'STOCK') {
+            <div class="sum-row muted"><span>Separación sugerida ({{ totalUnits() }} × S/20)</span><span>S/ {{ depositPen() | number:'1.0-0' }}</span></div>
+          }
+          <div class="sum-total"><span>Total</span><span>S/ {{ cart.totalPen() | number:'1.0-0' }}</span></div>
+
+          <button class="as-btn as-btn-primary as-btn-block sum-cta" (click)="goToCheckout()"
+                  [disabled]="!minReached() && cart.catalogType() !== 'STOCK'">
+            Continuar pedido
+          </button>
+          <button class="as-btn as-btn-wa as-btn-block" (click)="orderViaWhatsApp()">Pedir por WhatsApp</button>
+          @if (!minReached() && cart.catalogType() !== 'STOCK') {
+            <p class="sum-note">Agrega {{ unitsLeft() }} más para finalizar, o pídelo directo por WhatsApp.</p>
+          }
+          <p class="sum-secure">El pago y el envío se coordinan por WhatsApp. Productos 100% originales.</p>
+        </aside>
+      </div>
+
+      <!-- Publicidad / promociones mientras compra -->
+      @if (activePromos().length || promos().length) {
+        <div class="cart-promo">
+          @for (pr of activePromos(); track pr.id) {
+            <a class="cart-promo-tile promo-real" (click)="goPromoPage(pr.id)">
+              @if (pr.imageData || pr.imageUrl) { <img [src]="pr.imageData || pr.imageUrl" [alt]="pr.name" loading="lazy"> }
+              <span class="cart-promo-cap">{{ pr.name }} · S/ {{ pr.pricePen | number:'1.0-0' }}</span>
+            </a>
+          }
+          @for (pr of promos(); track $index) {
+            <a class="cart-promo-tile" (click)="goPromo(pr)">
+              @if (pr.imageUrl) { <img [src]="pr.imageUrl" [alt]="pr.title || 'Promoción'" loading="lazy"> }
+            </a>
+          }
+        </div>
+      }
+
+      <!-- Cross-sell (barra en movimiento) -->
+      @if (crossSell().length) {
+        <section class="as-section cart-addons">
+          <div class="as-section-head"><h2 class="as-title">Suele pedirse junto</h2></div>
+          <div class="pc-marquee">
+            <div class="pc-track">
+              @for (p of crossSell(); track p.id) { <as-product-card [product]="p" [inStock]="isInStock(p.id)" /> }
+              @for (p of crossSell(); track 'd' + p.id) { <as-product-card [product]="p" [inStock]="isInStock(p.id)" /> }
+            </div>
           </div>
-          <div class="summary-total">
-            <span>Total</span>
-            <span>S/ {{cart.totalPen() | number:'1.2-2'}}</span>
+        </section>
+      }
+
+      <!-- ===================== FASE CHECKOUT ===================== -->
+      } @else {
+      <button class="co-back" (click)="backToBag()">← Volver a la bolsa</button>
+      <h1 class="cart-title">Finaliza tu pedido</h1>
+
+      <div class="co-grid">
+        <!-- Resumen (se desliza y crece) -->
+        <aside class="co-summary">
+          <h3>Tu pedido</h3>
+          <div class="co-items">
+            @for (item of cart.cartItems(); track item.product.id) {
+              <div class="co-item">
+                <div class="co-thumb">@if (item.product.imageUrl) { <img [src]="item.product.imageUrl" [alt]="item.product.name"> }</div>
+                <div class="co-item-info"><b>{{ item.product.brand }}</b><span>{{ item.product.name }} @if (item.product.ml) { · {{ item.product.ml }}ml }</span></div>
+                <div class="co-item-qty">x{{ item.quantity }}</div>
+                <div class="co-item-sub">S/ {{ (item.unitPricePen * item.quantity) | number:'1.0-0' }}</div>
+              </div>
+            }
+            @for (pl of cart.promoItems(); track pl.promo.id) {
+              <div class="co-item">
+                <div class="co-thumb promo">@if (pl.promo.imageData || pl.promo.imageUrl) { <img [src]="pl.promo.imageData || pl.promo.imageUrl" [alt]="pl.promo.name"> }</div>
+                <div class="co-item-info"><b class="promo-tag">PROMO</b><span>{{ pl.promo.name }}</span></div>
+                <div class="co-item-qty">x{{ pl.quantity }}</div>
+                <div class="co-item-sub">S/ {{ (pl.promo.pricePen * pl.quantity) | number:'1.0-0' }}</div>
+              </div>
+            }
+          </div>
+          <div class="sum-total"><span>Total</span><span>S/ {{ cart.totalPen() | number:'1.0-0' }}</span></div>
+          @if (cart.catalogType() !== 'STOCK') {
+            <div class="sum-row muted"><span>Separación ({{ totalUnits() }} × S/20)</span><span>S/ {{ depositPen() | number:'1.0-0' }}</span></div>
+          }
+        </aside>
+
+        <!-- Formulario -->
+        <div class="co-form">
+          <label class="co-existing">
+            <input type="checkbox" [checked]="isAddingToExisting()" (change)="isAddingToExisting.set($any($event.target).checked)">
+            Ya tengo un pedido y quiero agregarle esto
+          </label>
+          @if (isAddingToExisting()) {
+            <div class="co-field"><label>Código de tu pedido</label>
+              <input class="co-input" [value]="existingOrderCode()" (input)="existingOrderCode.set($any($event.target).value)" placeholder="AS-0012">
+            </div>
+          }
+
+          <div class="co-field"><label>Nombre completo</label>
+            <input class="co-input" [value]="clientName()" (input)="clientName.set($any($event.target).value)" placeholder="Tu nombre">
+          </div>
+          <div class="co-field"><label>WhatsApp</label>
+            <input class="co-input" [value]="clientPhone()" (input)="clientPhone.set($any($event.target).value)" placeholder="9XX XXX XXX">
           </div>
 
-          @if (cart.catalogType() === 'CONSOLIDADO') {
-            <button class="action-btn" (click)="goToCheckout()">
-              Procesar Pedido
-              <span class="btn-hint">S/ 20 de adelanto por unidad</span>
-            </button>
-          } @else if (cart.catalogType() === 'WHOLESALE' && cart.itemCount() < 3) {
-            <div class="min-order-warning">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-              <div>
-                <p class="warning-title">Mínimo 3 perfumes para compras al por mayor</p>
-                <p class="warning-sub">Agrega {{3 - cart.itemCount()}} perfume{{3 - cart.itemCount() > 1 ? 's' : ''}} más para continuar</p>
+          <label class="co-lbl">Entrega</label>
+          <div class="co-delivery">
+            <button [class.on]="deliveryMethod() === 'LIMA'" (click)="deliveryMethod.set('LIMA')">Lima (coordinar)</button>
+            <button [class.on]="deliveryMethod() === 'SHALOM'" (click)="deliveryMethod.set('SHALOM')">Provincia (Shalom)</button>
+          </div>
+
+          @if (deliveryMethod() === 'SHALOM') {
+            <div class="co-shalom">
+              <div class="co-field"><label>Nombre de quien recibe</label>
+                <input class="co-input" [value]="shippingName()" (input)="shippingName.set($any($event.target).value)">
+              </div>
+              <div class="co-field"><label>DNI</label>
+                <input class="co-input" [value]="shippingDni()" (input)="shippingDni.set($any($event.target).value)">
+              </div>
+              <div class="co-field"><label>Teléfono de quien recibe</label>
+                <input class="co-input" [value]="shippingPhone()" (input)="shippingPhone.set($any($event.target).value)">
+              </div>
+              <div class="co-field"><label>Departamento</label>
+                <select class="co-input" (change)="onDepartmentChange($any($event.target).value)">
+                  <option value="">Selecciona…</option>
+                  @for (d of departments; track d) { <option [value]="d" [selected]="d === selectedDepartment()">{{ d }}</option> }
+                </select>
+              </div>
+              <div class="co-field"><label>Agencia Shalom</label>
+                <select class="co-input" (change)="onAgencyChange($any($event.target).value)" [disabled]="!selectedDepartment()">
+                  <option value="">Selecciona…</option>
+                  @for (a of agenciesForDepartment(); track a.nombre) { <option [value]="a.nombre">{{ a.nombre }}</option> }
+                </select>
               </div>
             </div>
-            <button class="action-btn disabled-btn" disabled>
-              Pedir por WhatsApp
-              <span class="btn-hint">Faltan {{3 - cart.itemCount()}} perfume{{3 - cart.itemCount() > 1 ? 's' : ''}}</span>
-            </button>
-          } @else {
-            <button class="action-btn wa-action" (click)="orderViaWhatsApp()">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
-              Pedir por WhatsApp
-            </button>
           }
+
+          @if (submitError()) { <p class="co-error">{{ submitError() }}</p> }
+
+          <button class="as-btn as-btn-primary as-btn-block" (click)="submitOrder()" [disabled]="submitting()">
+            {{ submitting() ? 'Enviando…' : 'Confirmar pedido' }}
+          </button>
+          <p class="sum-secure">Coordinamos el pago y el envío por WhatsApp. Productos 100% originales.</p>
         </div>
       </div>
-    }
-  </div>
+
+      <!-- Promociones (mosaico, como el home pero un poco más chico) -->
+      @if (combinedPubs().length) {
+        <section class="co-promos">
+          <h2 class="as-title">Aprovecha estas promociones</h2>
+          <div class="co-mosaic-wrap">
+            <div [class]="'promo-mosaic mosaic-' + mosaicItems().length" [class.fade]="mosaicFade()">
+              @for (it of mosaicItems(); track $index) {
+                <a class="m-item" (click)="goPub(it)">
+                  @if (it.kind === 'promo') {
+                    @if (it.promo.imageData || it.promo.imageUrl) { <img [src]="it.promo.imageData || it.promo.imageUrl" [alt]="it.promo.name" loading="lazy"> }
+                    <span class="m-badge">PROMO</span>
+                    <span class="m-cap">{{ it.promo.name }} · S/ {{ it.promo.pricePen | number:'1.0-0' }}</span>
+                  } @else {
+                    @if (it.banner.imageUrl) { <img [src]="it.banner.imageUrl" [alt]="it.banner.title || 'Promoción'" loading="lazy"> }
+                    @if (it.banner.title) { <span class="m-cap">{{ it.banner.title }}</span> }
+                  }
+                </a>
+              }
+            </div>
+          </div>
+        </section>
+      }
+
+      <!-- Sugerencias de perfumes (barra en movimiento) -->
+      @if (crossSell().length) {
+        <section class="as-section cart-addons">
+          <div class="as-section-head"><h2 class="as-title">Suele pedirse junto</h2></div>
+          <div class="pc-marquee">
+            <div class="pc-track">
+              @for (p of crossSell(); track p.id) { <as-product-card [product]="p" [inStock]="isInStock(p.id)" /> }
+              @for (p of crossSell(); track 'd' + p.id) { <as-product-card [product]="p" [inStock]="isInStock(p.id)" /> }
+            </div>
+          </div>
+        </section>
+      }
+      }
+
+    </div>
+  }
 </div>

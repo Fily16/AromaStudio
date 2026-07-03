@@ -5,7 +5,9 @@ import { environment } from '../../environments/environment';
 import {
   Product, Order, Consolidado, RetailInventory, RetailSale,
   DashboardStats, AppConfig, PublicConfig, OrderRequest, LoginResponse,
-  StockPurchaseRequest, BreakdownSection, FullBreakdownResponse
+  StockPurchaseRequest, BreakdownSection, FullBreakdownResponse,
+  Supplier, ImportSummary, AllocationResponse, SuggestResult, OperationsSummary, MissingItem,
+  Promotion, ProfitReport
 } from '../models/api.models';
 
 @Injectable({ providedIn: 'root' })
@@ -34,6 +36,28 @@ export class ApiService {
 
   getProductPricing(id: number): Observable<any> {
     return this.http.get(`${this.url}/products/${id}/pricing`);
+  }
+
+  // Buscador: sugerencias (nombre/marca/SKU/UPC)
+  suggest(q: string, limit = 8): Observable<SuggestResult[]> {
+    return this.http.get<SuggestResult[]>(`${this.url}/products/suggest`, {
+      params: { q, limit: String(limit) }
+    });
+  }
+
+  // Recomendaciones híbridas para la ficha (similares + pedidos juntos)
+  getRelated(productId: number, limit = 8): Observable<Product[]> {
+    return this.http.get<Product[]>(`${this.url}/products/${productId}/related`, {
+      params: { limit: String(limit) }
+    });
+  }
+
+  // Cross-sell del carrito a partir de varios productos
+  getCartCrossSell(ids: number[], limit = 8): Observable<Product[]> {
+    if (ids.length === 0) return this.http.get<Product[]>(`${this.url}/products/related`, { params: { ids: '0', limit: String(limit) } });
+    return this.http.get<Product[]>(`${this.url}/products/related`, {
+      params: { ids: ids.join(','), limit: String(limit) }
+    });
   }
 
   // --- Products (admin) ---
@@ -67,10 +91,28 @@ export class ApiService {
   }
 
   // --- Orders (admin) ---
-  getOrders(status?: string): Observable<Order[]> {
+  getOrders(filters?: { status?: string; deliveryMethod?: string; seller?: string; consolidadoId?: number }): Observable<Order[]> {
     const p: any = {};
-    if (status) p.status = status;
+    if (filters?.status) p.status = filters.status;
+    if (filters?.deliveryMethod) p.deliveryMethod = filters.deliveryMethod;
+    if (filters?.seller) p.seller = filters.seller;
+    if (filters?.consolidadoId != null) p.consolidadoId = String(filters.consolidadoId);
     return this.http.get<Order[]>(`${this.url}/orders`, { params: p, headers: this.authHeaders() });
+  }
+
+  // ERP: vendedores (para el filtro)
+  getSellers(): Observable<string[]> {
+    return this.http.get<string[]>(`${this.url}/admin/sellers`, { headers: this.authHeaders() });
+  }
+
+  // ERP: resumen de operación (KPIs + ganancia líquida) del consolidado activo
+  getOperations(): Observable<OperationsSummary> {
+    return this.http.get<OperationsSummary>(`${this.url}/admin/operations`, { headers: this.authHeaders() });
+  }
+
+  // ERP: lanzar perfumes a stock de tienda (precio = costo landed + S/35)
+  launchToStock(items: { productId: number; quantity: number }[]): Observable<{ received: number; launched: number }> {
+    return this.http.post<{ received: number; launched: number }>(`${this.url}/admin/retail/launch`, items, { headers: this.authHeaders() });
   }
 
   verifyDeposit(orderId: number, yapeReference: string): Observable<Order> {
@@ -200,5 +242,83 @@ export class ApiService {
   // --- Factory Reset ---
   factoryResetOperations(): Observable<any> {
     return this.http.delete(`${this.url}/admin/factory-reset-operations`, { headers: this.authHeaders() });
+  }
+
+  // --- Multi-proveedor: suppliers, import de Excel, cutover, asignacion ---
+  getSuppliers(): Observable<Supplier[]> {
+    return this.http.get<Supplier[]>(`${this.url}/admin/suppliers`, { headers: this.authHeaders() });
+  }
+
+  importSupplierExcel(supplierId: number, file: File): Observable<ImportSummary> {
+    const fd = new FormData();
+    fd.append('file', file);
+    // No seteamos Content-Type: el navegador agrega el boundary del multipart.
+    return this.http.post<ImportSummary>(`${this.url}/admin/suppliers/${supplierId}/import`, fd, {
+      headers: this.authHeaders()
+    });
+  }
+
+  archiveLegacyCatalog(): Observable<{ archived: number; message: string }> {
+    return this.http.post<{ archived: number; message: string }>(
+      `${this.url}/admin/catalog/archive-legacy`, {}, { headers: this.authHeaders() });
+  }
+
+  getAllocation(consolidadoId: number): Observable<AllocationResponse> {
+    return this.http.get<AllocationResponse>(
+      `${this.url}/admin/consolidados/${consolidadoId}/allocation`, { headers: this.authHeaders() });
+  }
+
+  // ERP: faltantes (perfumes pedidos sin proveedor) con el cliente que los pidió
+  getMissing(consolidadoId: number): Observable<MissingItem[]> {
+    return this.http.get<MissingItem[]>(
+      `${this.url}/admin/consolidados/${consolidadoId}/missing`, { headers: this.authHeaders() });
+  }
+
+  // ERP: desglose de precios por producto (costo puesto en Perú + consolidado + stock)
+  getProductsPricing(): Observable<{ id: number; landedPen: number; consolidadoPen: number; stockPen: number }[]> {
+    return this.http.get<{ id: number; landedPen: number; consolidadoPen: number; stockPen: number }[]>(
+      `${this.url}/admin/products/pricing`, { headers: this.authHeaders() });
+  }
+
+  // --- Promociones (público) ---
+  getActivePromotions(): Observable<Promotion[]> {
+    return this.http.get<Promotion[]>(`${this.url}/promotions/active`);
+  }
+  getPromotion(id: number): Observable<Promotion> {
+    return this.http.get<Promotion>(`${this.url}/promotions/${id}`);
+  }
+
+  // --- Promociones (admin) ---
+  getPromotions(): Observable<Promotion[]> {
+    return this.http.get<Promotion[]>(`${this.url}/admin/promotions`, { headers: this.authHeaders() });
+  }
+  createPromotion(req: any): Observable<Promotion> {
+    return this.http.post<Promotion>(`${this.url}/admin/promotions`, req, { headers: this.authHeaders() });
+  }
+  updatePromotion(id: number, req: any): Observable<Promotion> {
+    return this.http.put<Promotion>(`${this.url}/admin/promotions/${id}`, req, { headers: this.authHeaders() });
+  }
+  deletePromotion(id: number): Observable<any> {
+    return this.http.delete(`${this.url}/admin/promotions/${id}`, { headers: this.authHeaders() });
+  }
+  suggestPromoProfit(pricePen: number, productIds: number[]): Observable<{ suggestedProfitPen: number | string }> {
+    return this.http.post<{ suggestedProfitPen: number | string }>(
+      `${this.url}/admin/promotions/suggest-profit`, { pricePen, productIds }, { headers: this.authHeaders() });
+  }
+
+  // --- Picking (admin) ---
+  setItemPicked(itemId: number, picked: boolean): Observable<any> {
+    return this.http.put(`${this.url}/orders/item/${itemId}/picked`, { picked }, { headers: this.authHeaders() });
+  }
+  pickProductInConsolidado(consolidadoId: number, productId: number, picked: boolean): Observable<any> {
+    return this.http.put(`${this.url}/orders/consolidado/${consolidadoId}/pick-product/${productId}`,
+      { picked }, { headers: this.authHeaders() });
+  }
+
+  // --- Ganancia por periodo (admin) ---
+  getProfitReport(granularity: 'month' | 'week' | 'year'): Observable<ProfitReport> {
+    return this.http.get<ProfitReport>(`${this.url}/admin/profit-report`, {
+      params: { granularity }, headers: this.authHeaders()
+    });
   }
 }

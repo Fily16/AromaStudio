@@ -45,6 +45,25 @@
 
   --ease-out: cubic-bezier(0.25, 0.46, 0.45, 0.94);
   --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  /* ===== Rediseño tienda 2026 — claro/editorial (FragranceNet/Sephora) ===== */
+  --accent: #5b1a6b;        /* morado FragranceNet */
+  --accent-700: #46124f;
+  --accent-600: #6b2480;
+  --accent-050: #f5eef7;
+  --ink: #1a1a1a;
+  --muted: #6b6b6b;
+  --line: #ececec;
+  --line-strong: #d9d9d9;
+  --sale: #b3122b;
+  --ok: #1a7f37;
+  --bg: #ffffff;
+  --bg-soft: #faf8fb;
+  --maxw: 1320px;
+  --r: 12px;
+  --r-sm: 8px;
+  --fz-display: clamp(1.9rem, 1rem + 3vw, 3.1rem);
+  --fz-h2: clamp(1.25rem, 0.9rem + 1.5vw, 1.9rem);
 }
 
 html {
@@ -145,3 +164,296 @@ input, select, textarea { font-family: inherit; }
     transition-duration: 0.01ms !important;
   }
 }
+
+/* ========================================
+   Rediseño tienda 2026 — utilidades compartidas
+   Layout intrínseco (grid auto-fill + clamp + container queries):
+   las columnas se reacomodan solas por ancho disponible, sin breakpoints fijos.
+   ======================================== */
+.as-container {
+  width: 100%;
+  max-width: var(--maxw);
+  margin-inline: auto;
+  padding-inline: clamp(14px, 4vw, 36px);
+}
+
+.as-grid {
+  display: grid;
+  gap: clamp(14px, 1.8vw, 26px);
+  grid-template-columns: repeat(auto-fill, minmax(clamp(185px, 31vw, 255px), 1fr));
+}
+
+/* Carrusel horizontal con scroll-snap (carruseles de home / cross-sell) */
+.as-scroller {
+  display: flex;
+  gap: clamp(12px, 1.6vw, 20px);
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scroll-padding-inline: clamp(14px, 4vw, 36px);
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  padding-bottom: 4px;
+}
+.as-scroller::-webkit-scrollbar { display: none; }
+.as-scroller > * {
+  scroll-snap-align: start;
+  flex: 0 0 clamp(190px, 46vw, 260px);
+}
+
+.as-section { padding-block: clamp(28px, 5vw, 60px); }
+.as-section-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: clamp(14px, 2vw, 26px);
+}
+.as-title {
+  font-family: var(--font-display);
+  font-size: var(--fz-h2);
+  font-weight: 600;
+  color: var(--ink);
+  letter-spacing: -0.01em;
+}
+.as-link {
+  color: var(--accent);
+  font-weight: 600;
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+.as-link:hover { text-decoration: underline; }
+
+/* Botones */
+.as-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1px solid var(--line-strong);
+  background: #fff;
+  color: var(--ink);
+  font-weight: 600;
+  font-size: 0.9rem;
+  padding: 12px 20px;
+  border-radius: var(--r-sm);
+  transition: background .15s var(--ease-out), border-color .15s var(--ease-out), transform .12s var(--ease-out);
+}
+.as-btn:hover { border-color: var(--ink); }
+.as-btn:active { transform: scale(0.98); }
+.as-btn-primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+.as-btn-primary:hover { background: var(--accent-700); border-color: var(--accent-700); }
+.as-btn-wa { background: #25d366; border-color: #25d366; color: #0a3d20; }
+.as-btn-wa:hover { background: #1eb858; border-color: #1eb858; }
+.as-btn-block { width: 100%; }
+
+/* Badges */
+.as-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 4px 8px;
+  border-radius: 4px;
+  background: var(--accent-050);
+  color: var(--accent-700);
+  line-height: 1;
+}
+.as-badge--new { background: #e7f6ec; color: var(--ok); }
+.as-badge--sale { background: #fdeaed; color: var(--sale); }
+.as-badge--stock { background: #e7f6ec; color: var(--ok); }
+.as-badge--order { background: #f1f1f1; color: var(--muted); }
+.as-badge--top { background: #fff3e0; color: #a55a00; }
+
+/* Skeleton de carga */
+.as-skeleton {
+  background: linear-gradient(90deg, #f0f0f0 25%, #f7f7f7 37%, #f0f0f0 63%);
+  background-size: 400% 100%;
+  animation: shimmer 1.4s ease infinite;
+  border-radius: var(--r-sm);
+}
+
+/* ========================================================================
+   ERP Admin — sistema visual neutro (scoping en .adm)
+   Paleta sobria, tablas, KPIs, botones simples. Sin dorado.
+   ======================================================================== */
+.adm {
+  --a-bg: #f4f5f7;
+  --a-surface: #ffffff;
+  --a-surface-2: #fafbfc;
+  --a-ink: #1f2430;
+  --a-muted: #6b7280;
+  --a-faint: #9aa1ad;
+  --a-line: #e5e7eb;
+  --a-line-strong: #d3d7de;
+  --a-accent: #2f6fed;
+  --a-accent-700: #1f53c4;
+  --a-accent-050: #eaf1fe;
+  --a-ok: #16794a; --a-ok-bg: #e6f5ee;
+  --a-warn: #9a6207; --a-warn-bg: #fdf2dc;
+  --a-danger: #b3261e; --a-danger-bg: #fdeceb;
+  --a-r: 10px; --a-r-sm: 8px;
+  --a-shadow: 0 1px 2px rgba(16,24,40,.05), 0 1px 3px rgba(16,24,40,.06);
+  --a-font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+
+  font-family: var(--a-font);
+  color: var(--a-ink);
+  background: var(--a-bg);
+}
+
+/* Layout shell */
+.adm-shell { display: grid; grid-template-columns: 234px 1fr; min-height: 100dvh; }
+.adm-sidebar {
+  background: #131722; color: #c7ccd6;
+  display: flex; flex-direction: column; gap: 4px;
+  padding: 18px 12px; position: sticky; top: 0; height: 100dvh;
+}
+.adm-brand {
+  display: flex; align-items: center; gap: 9px;
+  font-weight: 800; font-size: 1.05rem; color: #fff;
+  padding: 6px 10px 16px; letter-spacing: -.01em;
+}
+.adm-brand small { font-weight: 600; font-size: .62rem; letter-spacing: .12em; text-transform: uppercase; color: #6b7280; }
+.adm-nav { display: flex; flex-direction: column; gap: 2px; }
+.adm-nav a {
+  display: flex; align-items: center; gap: 11px;
+  padding: 10px 12px; border-radius: var(--a-r-sm);
+  color: #c7ccd6; font-size: .9rem; font-weight: 500;
+  transition: background .15s, color .15s;
+}
+.adm-nav a:hover { background: #1d2330; color: #fff; }
+.adm-nav a.active { background: var(--a-accent); color: #fff; font-weight: 600; }
+.adm-nav a svg { width: 18px; height: 18px; flex: 0 0 auto; opacity: .9; }
+.adm-nav-spacer { flex: 1; }
+
+.adm-main { display: flex; flex-direction: column; min-width: 0; }
+.adm-topbar {
+  position: sticky; top: 0; z-index: 20;
+  display: flex; align-items: center; gap: 16px;
+  background: var(--a-surface); border-bottom: 1px solid var(--a-line);
+  padding: 0 clamp(16px, 3vw, 28px); height: 60px;
+}
+.adm-topbar h1 { font-size: 1.15rem; font-weight: 700; letter-spacing: -.01em; }
+.adm-topbar .spacer { flex: 1; }
+.adm-chip {
+  display: inline-flex; align-items: center; gap: 7px;
+  background: var(--a-accent-050); color: var(--a-accent-700);
+  border: 1px solid #d4e2fd; border-radius: 999px;
+  padding: 5px 12px; font-size: .8rem; font-weight: 600;
+}
+.adm-user { display: flex; align-items: center; gap: 10px; font-size: .85rem; }
+.adm-user b { font-weight: 600; }
+.adm-content { padding: clamp(16px, 3vw, 28px); flex: 1; }
+
+/* Cards / sections */
+.adm-card {
+  background: var(--a-surface); border: 1px solid var(--a-line);
+  border-radius: var(--a-r); box-shadow: var(--a-shadow);
+}
+.adm-card-pad { padding: clamp(14px, 2vw, 22px); }
+.adm-section-title { font-size: 1.05rem; font-weight: 700; margin-bottom: 14px; }
+
+/* KPIs */
+.adm-kpis {
+  display: grid; gap: 14px;
+  grid-template-columns: repeat(auto-fit, minmax(165px, 1fr));
+  margin-bottom: 20px;
+}
+.adm-kpi {
+  background: var(--a-surface); border: 1px solid var(--a-line);
+  border-radius: var(--a-r); padding: 15px 17px; box-shadow: var(--a-shadow);
+}
+.adm-kpi .k-label { font-size: .76rem; font-weight: 600; color: var(--a-muted); text-transform: uppercase; letter-spacing: .03em; }
+.adm-kpi .k-value { font-size: 1.7rem; font-weight: 800; letter-spacing: -.02em; margin-top: 5px; }
+.adm-kpi .k-sub { font-size: .76rem; color: var(--a-faint); margin-top: 2px; }
+.adm-kpi.accent .k-value { color: var(--a-accent-700); }
+.adm-kpi.profit { background: linear-gradient(180deg, rgba(14,122,77,.04), #fff); border-color: #bfe6d2; }
+.adm-kpi.profit .k-value { color: var(--a-ok); }
+
+/* Buttons */
+.adm-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+  border: 1px solid var(--a-line-strong); background: var(--a-surface);
+  color: var(--a-ink); font-weight: 600; font-size: .86rem; font-family: inherit;
+  padding: 9px 15px; border-radius: var(--a-r-sm); cursor: pointer;
+  transition: background .15s, border-color .15s, box-shadow .15s;
+}
+.adm-btn:hover { background: var(--a-surface-2); border-color: var(--a-line-strong); }
+.adm-btn:disabled { opacity: .5; cursor: not-allowed; }
+.adm-btn.primary { background: var(--a-accent); border-color: var(--a-accent); color: #fff; }
+.adm-btn.primary:hover { background: var(--a-accent-700); border-color: var(--a-accent-700); }
+.adm-btn.ok { background: var(--a-ok); border-color: var(--a-ok); color: #fff; }
+.adm-btn.danger { background: #fff; border-color: #e6b4b0; color: var(--a-danger); }
+.adm-btn.danger:hover { background: var(--a-danger-bg); }
+.adm-btn.sm { padding: 6px 11px; font-size: .8rem; }
+.adm-btn.ghost { border-color: transparent; background: transparent; }
+.adm-btn.ghost:hover { background: var(--a-surface-2); }
+
+/* Inputs */
+.adm-input, .adm-select {
+  width: 100%; font-family: inherit; font-size: .88rem; color: var(--a-ink);
+  background: var(--a-surface); border: 1px solid var(--a-line-strong);
+  border-radius: var(--a-r-sm); padding: 9px 11px; outline: none;
+  transition: border-color .15s, box-shadow .15s;
+}
+.adm-input:focus, .adm-select:focus { border-color: var(--a-accent); box-shadow: 0 0 0 3px var(--a-accent-050); }
+.adm-field { display: flex; flex-direction: column; gap: 6px; }
+.adm-field label { font-size: .78rem; font-weight: 600; color: var(--a-muted); }
+
+/* Filter bar */
+.adm-filters { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 16px; }
+.adm-filters .grow { flex: 1; min-width: 180px; }
+
+/* Tables */
+.adm-table-wrap { overflow-x: auto; border: 1px solid var(--a-line); border-radius: var(--a-r); background: var(--a-surface); }
+.adm-table { width: 100%; border-collapse: collapse; font-size: .87rem; }
+.adm-table thead th {
+  text-align: left; font-size: .72rem; font-weight: 700; letter-spacing: .04em;
+  text-transform: uppercase; color: var(--a-muted);
+  padding: 11px 14px; border-bottom: 1px solid var(--a-line); background: var(--a-surface-2);
+  white-space: nowrap;
+}
+.adm-table tbody td { padding: 12px 14px; border-bottom: 1px solid var(--a-line); vertical-align: middle; }
+.adm-table tbody tr:last-child td { border-bottom: none; }
+.adm-table tbody tr:hover { background: var(--a-surface-2); }
+.adm-table .num { text-align: right; font-variant-numeric: tabular-nums; }
+
+/* Status chips */
+.adm-st { display: inline-flex; align-items: center; gap: 5px; font-size: .74rem; font-weight: 700; padding: 3px 9px; border-radius: 999px; white-space: nowrap; }
+.adm-st::before { content: ''; width: 6px; height: 6px; border-radius: 999px; background: currentColor; }
+.adm-st.gray { background: #eef0f3; color: #5b6472; }
+.adm-st.blue { background: var(--a-accent-050); color: var(--a-accent-700); }
+.adm-st.amber { background: var(--a-warn-bg); color: var(--a-warn); }
+.adm-st.green { background: var(--a-ok-bg); color: var(--a-ok); }
+.adm-st.red { background: var(--a-danger-bg); color: var(--a-danger); }
+
+/* Pills (Lima/Provincia, vendedor) */
+.adm-pill { display: inline-flex; align-items: center; gap: 5px; font-size: .76rem; font-weight: 600; color: var(--a-muted); background: #eef0f3; border-radius: 6px; padding: 3px 8px; }
+
+.adm-empty { text-align: center; color: var(--a-muted); padding: 50px 20px; }
+.adm-empty h3 { color: var(--a-ink); font-size: 1.1rem; margin-bottom: 6px; }
+
+/* Móvil: sidebar colapsa */
+@media (max-width: 860px) {
+  .adm-shell { grid-template-columns: 1fr; }
+  .adm-sidebar {
+    position: fixed; inset: 0 auto 0 0; width: 234px; z-index: 60;
+    transform: translateX(-100%); transition: transform .25s ease;
+  }
+  .adm-sidebar.open { transform: translateX(0); }
+  .adm-scrim { position: fixed; inset: 0; background: rgba(0,0,0,.4); z-index: 55; }
+  .adm-burger { display: inline-flex !important; }
+}
+.adm-burger { display: none; }
+
+/* Neutraliza el look antiguo de las páginas admin embebidas en el shell
+   (oculta sus navbars internas y su fondo/padding propio) */
+.adm .admin-page { background: transparent; min-height: 0; color: inherit; }
+.adm .admin-nav { display: none !important; }
+.adm .admin-content { padding: 0 !important; max-width: none !important; margin: 0 !important; }

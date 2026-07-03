@@ -15,12 +15,18 @@ export const routes: Routes = [
     loadComponent: () => import('./components/product-detail/product-detail.component').then(m => m.ProductDetailComponent)
   },
   {
+    path: 'promocion/:id',
+    loadComponent: () => import('./components/promo-page/promo-page.component').then(m => m.PromoPageComponent)
+  },
+  {
     path: 'cart',
     loadComponent: () => import('./components/cart/cart.component').then(m => m.CartComponent)
   },
   {
+    // El checkout ahora es una fase dentro del carrito (una sola vista animada).
     path: 'checkout',
-    loadComponent: () => import('./components/checkout/checkout.component').then(m => m.CheckoutComponent)
+    redirectTo: 'cart',
+    pathMatch: 'full'
   },
   {
     path: 'admin/login',
@@ -29,37 +35,14 @@ export const routes: Routes = [
   {
     path: 'admin',
     canActivate: [authGuard],
-    loadComponent: () => import('./components/admin/dashboard/dashboard.component').then(m => m.DashboardComponent)
-  },
-  {
-    path: 'admin/orders',
-    canActivate: [authGuard],
-    loadComponent: () => import('./components/admin/orders/orders.component').then(m => m.OrdersComponent)
-  },
-  {
-    path: 'admin/products',
-    canActivate: [authGuard],
-    loadComponent: () => import('./components/admin/products/products.component').then(m => m.ProductsComponent)
-  },
-  {
-    path: 'admin/stock-purchase',
-    canActivate: [authGuard],
-    loadComponent: () => import('./components/admin/stock-purchase/stock-purchase.component').then(m => m.StockPurchaseComponent)
-  },
-  {
-    path: 'admin/inventory',
-    canActivate: [authGuard],
-    loadComponent: () => import('./components/admin/inventory/inventory.component').then(m => m.InventoryComponent)
-  },
-  {
-    path: 'admin/ventas',
-    canActivate: [authGuard],
-    loadComponent: () => import('./components/admin/ventas/ventas.component').then(m => m.VentasComponent)
-  },
-  {
-    path: 'admin/config',
-    canActivate: [authGuard],
-    loadComponent: () => import('./components/admin/config/config.component').then(m => m.ConfigComponent)
+    loadComponent: () => import('./components/admin/shell/admin-shell.component').then(m => m.AdminShellComponent),
+    children: [
+      { path: '', loadComponent: () => import('./components/admin/orders/orders.component').then(m => m.OrdersComponent) },
+      { path: 'productos', loadComponent: () => import('./components/admin/products/products.component').then(m => m.ProductsComponent) },
+      { path: 'stock', loadComponent: () => import('./components/admin/stock-launch/stock-launch.component').then(m => m.StockLaunchComponent) },
+      { path: 'importar', loadComponent: () => import('./components/admin/import/import.component').then(m => m.ImportComponent) },
+      { path: 'ajustes', loadComponent: () => import('./components/admin/settings/settings.component').then(m => m.SettingsComponent) },
+    ]
   },
   { path: '**', redirectTo: '' }
 ];

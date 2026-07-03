@@ -140,12 +140,16 @@ export class CheckoutComponent implements OnInit {
     const payload: any = {
       clientName: this.clientName(),
       clientPhone: this.clientPhone(),
+      channel: this.cart.catalogType() || 'CONSOLIDADO',
       deliveryMethod: this.deliveryMethod(),
       shippingName: this.shippingName(),
       shippingDni: this.shippingDni(),
       shippingPhone: this.shippingPhone(),
       shippingAddress: this.shippingAddress(),
-      items: this.cart.getOrderItems()
+      shippingDepartment: this.selectedDepartment(),
+      shippingAgency: this.selectedAgency()?.nombre || '',
+      items: this.cart.getOrderItems(),
+      promotions: this.cart.getPromoLines()
     };
 
     if (this.isAddingToExisting() && this.existingOrderCode().trim()) {

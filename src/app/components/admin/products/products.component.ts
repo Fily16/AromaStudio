@@ -1,14 +1,16 @@
 import { Component, inject, signal, computed, OnInit } from '@angular/core';
-import { RouterLink } from '@angular/router';
-import { FormsModule } from '@angular/forms';
 import { DecimalPipe } from '@angular/common';
 import { ApiService } from '../../../services/api.service';
-import { Product, AppConfig } from '../../../models/api.models';
+import { Product } from '../../../models/api.models';
 
+/**
+ * Productos (ERP): tabla clara con costo USD, puesto en Perú (con envío + caja),
+ * precio Consolidado (+20) y Stock (+35), stock actual y edición inline.
+ */
 @Component({
   selector: 'app-products',
   standalone: true,
-  imports: [RouterLink, FormsModule, DecimalPipe],
+  imports: [DecimalPipe],
   templateUrl: './products.component.html',
   styleUrl: './products.component.css'
 })
@@ -16,259 +18,141 @@ export class ProductsComponent implements OnInit {
   private api = inject(ApiService);
 
   products = signal<Product[]>([]);
+  pricing = signal<Record<number, { landedPen: number; consolidadoPen: number; stockPen: number }>>({});
+  stockMap = signal<Record<number, number>>({});
   search = signal('');
   sortOption = signal('default');
-  visibleCount = signal(50);
+  visibleCount = signal(40);
+  message = signal('');
+
+  // Config para recálculo en el editor
+  cfg = signal({ courier: 9, tc: 3.4, repackPerBox: 3.5, perBox: 4 });
+
+  // Edición
   editingId = signal<number | null>(null);
-  editPrices = signal<{ retailPricePen: number; wholesalePricePen: number; mayorPricePen: number; priceUsd: number; weightG: number }>({
-    retailPricePen: 0, wholesalePricePen: 0, mayorPricePen: 0, priceUsd: 0, weightG: 0
-  });
-  editName = signal('');
-  editBrand = signal('');
-  editSku = signal('');
-  editCategory = signal<string>('unisex');
+  edit = signal({ name: '', brand: '', category: 'unisex', imageUrl: '', priceUsd: 0, weightG: 0, consolidado: 0, stock: 0, priceLocked: false });
 
-  // Config values
-  exchangeRate = signal(3.75);
-  courierCostPerKg = signal(7);
-  editingConfig = signal<string | null>(null);
-  editConfigValue = signal('');
-  configMessage = signal('');
-
-  // Image edit
-  editImageUrl = signal('');
-
-  // Create product
+  // Crear
   showCreate = signal(false);
-  newProduct = signal<Partial<Product>>({
-    sku: '', brand: '', name: '', type: 'EDP', ml: 100,
-    priceUsd: 0, weightG: 350, category: 'unisex' as any, available: true
-  });
-  createMessage = signal('');
+  nuevo = signal<Partial<Product>>({ sku: '', brand: '', name: '', type: 'EDP', ml: 100, priceUsd: 0, weightG: 350, category: 'unisex' as any, available: true });
 
   ngOnInit() {
-    this.loadProducts();
-    this.loadConfig();
-  }
-
-  loadProducts() {
-    this.api.getProducts().subscribe(p => this.products.set(p));
-  }
-
-  loadConfig() {
+    this.load();
     this.api.getConfig().subscribe({
-      next: (configs) => {
-        for (const c of configs) {
-          if (c.configKey === 'exchange_rate') this.exchangeRate.set(+c.configValue);
-          if (c.configKey === 'courier_cost_per_kg') this.courierCostPerKg.set(+c.configValue);
-        }
+      next: (c) => {
+        const g = (k: string, d: number) => { const x = c.find(i => i.configKey === k); return x ? +x.configValue : d; };
+        this.cfg.set({ courier: g('courier_cost_per_kg', 9), tc: g('exchange_rate', 3.4), repackPerBox: g('repack_cost_per_box', 3.5), perBox: g('perfumes_per_box', 4) });
       },
-      error: (err) => {
-        console.error('Error loading config:', err);
-        this.configMessage.set('⚠ No se pudo cargar configuración del servidor');
-        setTimeout(() => this.configMessage.set(''), 5000);
-      }
+      error: () => {}
     });
   }
 
-  // NUEVO: Método para manejar el cambio en el select de ordenamiento
-  onSortChange(event: Event) {
-    this.sortOption.set((event.target as HTMLSelectElement).value);
+  load() {
+    this.api.getProducts().subscribe(p => this.products.set(p));
+    this.api.getProductsPricing().subscribe({
+      next: (list) => {
+        const map: Record<number, any> = {};
+        for (const r of list) map[r.id] = { landedPen: r.landedPen, consolidadoPen: r.consolidadoPen, stockPen: r.stockPen };
+        this.pricing.set(map);
+      },
+      error: () => {}
+    });
+    this.api.getRetailStock().subscribe({ next: (s) => this.stockMap.set(s || {}), error: () => {} });
   }
 
-  // MODIFICADO: Ahora filtra por texto y luego ordena según la opción elegida
-  filteredProducts() {
-    const q = this.search().toLowerCase();
-    let result = this.products();
+  landedPen(id: number): number { return this.pricing()[id]?.landedPen ?? 0; }
+  stockQty(id: number): number { return this.stockMap()[id] || 0; }
 
-    // 1. Filtrar por texto (búsqueda)
-    if (q) {
-      result = result.filter(p =>
-        p.name.toLowerCase().includes(q) || p.brand.toLowerCase().includes(q) || p.sku.toLowerCase().includes(q)
-      );
-    }
+  // Recálculo local (mismo modelo del backend) para el editor
+  private calcLandedPen(priceUsd: number, weightG: number): number {
+    const c = this.cfg();
+    return (priceUsd + (weightG / 1000) * c.courier + c.repackPerBox / c.perBox) * c.tc;
+  }
 
-    // 2. Ordenar los resultados
-    const sort = this.sortOption();
-    if (sort !== 'default') {
-      result = [...result].sort((a, b) => {
-        if (sort === 'name_asc') {
-          return (a.brand + ' ' + a.name).localeCompare(b.brand + ' ' + b.name);
-        } else if (sort === 'name_desc') {
-          return (b.brand + ' ' + b.name).localeCompare(a.brand + ' ' + a.name);
-        } else if (sort === 'price_desc') {
-          return (b.priceUsd || 0) - (a.priceUsd || 0);
-        } else if (sort === 'price_asc') {
-          return (a.priceUsd || 0) - (b.priceUsd || 0);
-        } else if (sort === 'sku_asc') {
-          return a.sku.localeCompare(b.sku);
-        }
+  filtered = computed(() => {
+    const q = this.search().toLowerCase().trim();
+    let r = this.products();
+    if (q) r = r.filter(p => (p.name + ' ' + p.brand + ' ' + p.sku).toLowerCase().includes(q));
+    const s = this.sortOption();
+    if (s !== 'default') {
+      r = [...r].sort((a, b) => {
+        if (s === 'name_asc') return (a.brand + a.name).localeCompare(b.brand + b.name);
+        if (s === 'price_desc') return (b.priceUsd || 0) - (a.priceUsd || 0);
+        if (s === 'price_asc') return (a.priceUsd || 0) - (b.priceUsd || 0);
+        if (s === 'stock') return this.stockQty(b.id) - this.stockQty(a.id);
         return 0;
       });
     }
+    return r;
+  });
+  visible = computed(() => this.filtered().slice(0, this.visibleCount()));
+  hasMore = computed(() => this.visibleCount() < this.filtered().length);
+  loadMore() { this.visibleCount.update(v => v + 40); }
 
-    return result;
-  }
+  onSearch(e: Event) { this.search.set((e.target as HTMLInputElement).value); this.visibleCount.set(40); }
+  onSort(e: Event) { this.sortOption.set((e.target as HTMLSelectElement).value); }
 
-  visibleProducts() {
-    return this.filteredProducts().slice(0, this.visibleCount());
-  }
-
-  hasMore() {
-    return this.visibleCount() < this.filteredProducts().length;
-  }
-
-  loadMore() {
-    this.visibleCount.update(v => v + 50);
-  }
-
-  // Costo Puesto calculations (same as Excel / PricingService)
-  landedCostUsd(p: Product): number {
-    const shippingUsd = ((p.weightG || 0) / 1000) * this.courierCostPerKg();
-    return p.priceUsd + shippingUsd;
-  }
-
-  landedCostPen(p: Product): number {
-    return this.landedCostUsd(p) * this.exchangeRate();
-  }
-
-  // Config quick-edit
-  startConfigEdit(key: string, currentValue: number) {
-    this.editingConfig.set(key);
-    this.editConfigValue.set(String(currentValue));
-  }
-
-  cancelConfigEdit() { this.editingConfig.set(null); }
-
-  saveConfigEdit(key: string) {
-    const newValue = this.editConfigValue();
-    if (!newValue || isNaN(Number(newValue))) {
-      this.configMessage.set('⚠ Valor inválido');
-      setTimeout(() => this.configMessage.set(''), 3000);
-      return;
-    }
-    this.api.updateConfig(key, newValue).subscribe({
-      next: () => {
-        if (key === 'exchange_rate') this.exchangeRate.set(Number(newValue));
-        if (key === 'courier_cost_per_kg') this.courierCostPerKg.set(Number(newValue));
-        this.editingConfig.set(null);
-        this.configMessage.set('✓ Configuración guardada');
-        this.loadConfig(); // Also reload from server to confirm
-        setTimeout(() => this.configMessage.set(''), 3000);
-      },
-      error: (err) => {
-        console.error('Error saving config:', err);
-        this.configMessage.set('✗ Error al guardar: ' + (err.status === 401 || err.status === 403 ? 'Sesión expirada, vuelve a iniciar sesión' : err.error?.message || 'Error de red'));
-        setTimeout(() => this.configMessage.set(''), 5000);
-      }
+  // --- Edición ---
+  startEdit(p: Product) {
+    this.editingId.set(p.id);
+    this.edit.set({
+      name: p.name, brand: p.brand, category: p.category || 'unisex', imageUrl: p.imageUrl || '',
+      priceUsd: p.priceUsd || 0, weightG: p.weightG || 0,
+      consolidado: p.wholesalePricePen || 0, stock: p.stockPricePen || 0,
+      priceLocked: !!(p as any).priceLocked
     });
   }
-
-  onConfigInput(event: Event) {
-    this.editConfigValue.set((event.target as HTMLInputElement).value);
-  }
-
-  // Product edit
-  startEdit(product: Product) {
-    this.editingId.set(product.id);
-    this.editPrices.set({
-      retailPricePen: product.retailPricePen ?? 0,
-      wholesalePricePen: product.wholesalePricePen ?? 0,
-      mayorPricePen: product.mayorPricePen ?? 0,
-      priceUsd: product.priceUsd,
-      weightG: product.weightG ?? 0
-    });
-    this.editName.set(product.name);
-    this.editBrand.set(product.brand);
-    this.editSku.set(product.sku);
-    this.editCategory.set(product.category || 'unisex');
-    this.editImageUrl.set(product.imageUrl || '');
-  }
-
   cancelEdit() { this.editingId.set(null); }
-
-  onImageUrlInput(event: Event) {
-    this.editImageUrl.set((event.target as HTMLInputElement).value);
+  toggleLock(e: Event) { this.edit.set({ ...this.edit(), priceLocked: (e.target as HTMLInputElement).checked }); }
+  editField(field: string, e: Event) {
+    const t = e.target as HTMLInputElement;
+    const val: any = t.type === 'number' ? +t.value : t.value;
+    this.edit.set({ ...this.edit(), [field]: val });
   }
-
-  onImageError(event: Event) {
-    (event.target as HTMLImageElement).style.display = 'none';
+  /** Rellena consolidado/stock con la fórmula a partir del costo y peso editados. */
+  recalc() {
+    const e = this.edit();
+    const landed = this.calcLandedPen(e.priceUsd, e.weightG);
+    this.edit.set({ ...e, consolidado: Math.ceil(landed + 20), stock: Math.ceil(landed + 35) });
   }
-
-  savePrices(productId: number) {
-    this.api.updateProductPrices(productId, this.editPrices()).subscribe(() => {
-      const imageUrl = this.editImageUrl();
-      this.api.updateProduct(productId, {
-        name: this.editName(),
-        brand: this.editBrand(),
-        sku: this.editSku(),
-        category: this.editCategory(),
-        imageUrl: imageUrl || null
-      } as any).subscribe(() => {
-        this.editingId.set(null);
-        this.loadProducts();
-      });
+  save() {
+    const id = this.editingId();
+    if (id == null) return;
+    const e = this.edit();
+    this.api.updateProduct(id, {
+      name: e.name, brand: e.brand, category: e.category as any, imageUrl: e.imageUrl || null,
+      priceUsd: e.priceUsd, weightG: e.weightG,
+      wholesalePricePen: e.consolidado || null, stockPricePen: e.stock || null,
+      priceLocked: e.priceLocked
+    } as any).subscribe({
+      next: () => { this.editingId.set(null); this.load(); this.toast('Producto actualizado'); },
+      error: () => this.toast('Error al guardar')
     });
   }
 
-  toggleAvailable(product: Product) {
-    this.api.updateProduct(product.id, { available: !product.available }).subscribe(() => this.loadProducts());
+  toggleAvailable(p: Product) {
+    this.api.updateProduct(p.id, { available: !p.available }).subscribe(() => this.load());
   }
-
-  onSearchInput(event: Event) {
-    this.search.set((event.target as HTMLInputElement).value);
-    this.visibleCount.set(50);
-  }
-
-  updateEditField(field: string, event: Event) {
-    const val = +(event.target as HTMLInputElement).value;
-    this.editPrices.set({ ...this.editPrices(), [field]: val });
-  }
-
-  // Create product
-  toggleCreate() { this.showCreate.set(!this.showCreate()); }
-
-
-
-// NUEVO: Método para eliminar producto
   deleteProduct(id: number) {
-    // Agregamos una confirmación para evitar borrados accidentales
-    if (confirm('¿Estás seguro de que deseas eliminar este producto? Esta acción no se puede deshacer.')) {
-      this.api.deleteProduct(id).subscribe({
-        next: () => {
-          this.loadProducts(); // Recarga la lista de productos tras eliminar
-        },
-        error: (err) => {
-          console.error('Error al eliminar producto:', err);
-          alert('No se pudo eliminar el producto. Revisa la consola para más detalles.');
-        }
-      });
-    }
-  }
-  updateNewProduct(field: string, event: Event) {
-    const target = event.target as HTMLInputElement | HTMLSelectElement;
-    const val = target.type === 'number' ? +target.value : target.value;
-    this.newProduct.set({ ...this.newProduct(), [field]: val });
+    if (!confirm('¿Eliminar este producto? No se puede deshacer.')) return;
+    this.api.deleteProduct(id).subscribe({ next: () => this.load(), error: () => this.toast('No se pudo eliminar') });
   }
 
-  createProduct() {
-    const p = this.newProduct();
-    if (!p.sku || !p.brand || !p.name) {
-      this.createMessage.set('SKU, marca y nombre son obligatorios');
-      return;
-    }
+  // --- Crear ---
+  toggleCreate() { this.showCreate.update(v => !v); }
+  newField(field: string, e: Event) {
+    const t = e.target as HTMLInputElement | HTMLSelectElement;
+    const val: any = (t as HTMLInputElement).type === 'number' ? +t.value : t.value;
+    this.nuevo.set({ ...this.nuevo(), [field]: val });
+  }
+  create() {
+    const p = this.nuevo();
+    if (!p.sku || !p.brand || !p.name) { this.toast('SKU, marca y nombre son obligatorios'); return; }
     this.api.createProduct(p).subscribe({
-      next: () => {
-        this.createMessage.set('Producto creado');
-        this.showCreate.set(false);
-        this.newProduct.set({
-          sku: '', brand: '', name: '', type: 'EDP', ml: 100,
-          priceUsd: 0, weightG: 350, category: 'unisex' as any, available: true
-        });
-        this.loadProducts();
-        setTimeout(() => this.createMessage.set(''), 3000);
-      },
-      error: (e) => this.createMessage.set('Error: ' + (e.error?.message || 'No se pudo crear'))
+      next: () => { this.showCreate.set(false); this.nuevo.set({ sku: '', brand: '', name: '', type: 'EDP', ml: 100, priceUsd: 0, weightG: 350, category: 'unisex' as any, available: true }); this.load(); this.toast('Producto creado'); },
+      error: (e) => this.toast('Error: ' + (e.error?.message || 'no se pudo crear'))
     });
   }
+
+  private toast(m: string) { this.message.set(m); setTimeout(() => this.message.set(''), 3000); }
 }

@@ -1,0 +1,60 @@
+<div class="import-wrap">
+  <a routerLink="/admin" class="back">← Volver al panel</a>
+  <h1>Importar lista de precios</h1>
+  <p class="sub">Sube el Excel del proveedor. Se cruza por código de barras (UPC); cada importación actualiza precios y stock.</p>
+
+  <label class="field">
+    <span>Proveedor</span>
+    <select (change)="onSupplierChange($event)">
+      @for (s of suppliers(); track s.id) {
+        <option [value]="s.id" [selected]="s.id === selectedSupplierId()">
+          {{ s.name }} @if (s.minOrderUsd > 0) { (mín. ${{ s.minOrderUsd }}) }
+        </option>
+      }
+    </select>
+  </label>
+
+  <div class="dropzone" [class.drag]="dragging()"
+       (dragover)="onDragOver($event)" (dragleave)="onDragLeave($event)" (drop)="onDrop($event)">
+    @if (loading()) {
+      <p class="big">⏳ Procesando…</p>
+    } @else {
+      <p class="big">Arrastra el Excel aquí</p>
+      <p class="or">o</p>
+      <label class="btn">
+        Elegir archivo
+        <input type="file" accept=".xlsx,.xls" (change)="onFileSelected($event)" hidden />
+      </label>
+    }
+  </div>
+
+  @if (message()) { <p class="ok">{{ message() }}</p> }
+  @if (error()) { <p class="err">{{ error() }}</p> }
+
+  @if (summary(); as s) {
+    <div class="summary">
+      <h2>Resultado — {{ s.supplierName }}</h2>
+      <div class="grid">
+        <div><b>{{ s.rowsRead }}</b><span>filas leídas</span></div>
+        <div><b>{{ s.productsCreated }}</b><span>productos nuevos</span></div>
+        <div><b>{{ s.offersCreated }}</b><span>ofertas creadas</span></div>
+        <div><b>{{ s.offersUpdated }}</b><span>ofertas actualizadas</span></div>
+        <div [class.warn]="s.collisions > 0"><b>{{ s.collisions }}</b><span>colisiones UPC (separadas)</span></div>
+        <div [class.warn]="s.noUpcRows > 0"><b>{{ s.noUpcRows }}</b><span>sin código</span></div>
+        <div><b>{{ s.markedOutOfStock }}</b><span>fuera de stock</span></div>
+      </div>
+      @if (s.notes.length) {
+        <ul class="notes">@for (n of s.notes; track n) { <li>{{ n }}</li> }</ul>
+      }
+    </div>
+  }
+
+  <div class="cutover">
+    <h2>Cutover (una sola vez)</h2>
+    <p class="sub">Archiva el catálogo viejo de Crisfragance (productos sin ofertas). No borra nada: el historial queda intacto.</p>
+    <button class="btn danger" (click)="archive()" [disabled]="archiving()">
+      {{ archiving() ? 'Archivando…' : 'Archivar catálogo viejo' }}
+    </button>
+    @if (archiveMessage()) { <p class="ok">{{ archiveMessage() }}</p> }
+  </div>
+</div>

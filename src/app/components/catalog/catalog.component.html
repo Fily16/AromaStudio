@@ -1,194 +1,237 @@
-<div class="catalog">
-
-  <!-- Toast -->
-  @if (cartToast()) {
-    <div class="toast">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
-      {{cartToast()}}
+<div class="cat">
+  <div class="as-container cat-top">
+    <div class="cat-heading">
+      <h1 class="cat-title">Catálogo</h1>
+      <p class="cat-sub">{{ resultsCount() }} perfumes · precios al por mayor</p>
     </div>
-  }
-
-  <!-- Header -->
-  <header class="header">
-    <div class="header-inner">
-      <a class="logo" routerLink="/">
-        <span class="logo-mark">A</span>
-        <span class="logo-text">AromaStudio</span>
-      </a>
-      <nav class="nav">
-        <a routerLink="/" class="nav-link">Inicio</a>
-        <a routerLink="/catalogo" class="nav-link active">Catálogo</a>
-      </nav>
-      <div class="header-actions">
-        <button class="edit-order-btn" (click)="openEditModal()" title="Editar mi pedido">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-          <span class="edit-label">Editar Pedido</span>
-        </button>
-        <button class="cart-btn" (click)="goToCart()">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 01-8 0"/>
-          </svg>
-          @if (cart.itemCount() > 0) {
-            <span class="cart-count">{{cart.itemCount()}}</span>
-          }
-        </button>
-      </div>
-    </div>
-  </header>
-
-  <!-- Banner -->
-  <section class="banner">
-    <div class="banner-inner">
-      <h1>Catálogo Completo</h1>
-      <p>Precios de importación directa · Mínimo 6 unidades</p>
-    </div>
-  </section>
-
-  <!-- VIP Notice -->
-  <div class="vip-notice">
-    <div class="vip-inner">
-      <div class="vip-icon">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2L15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2z"/></svg>
-      </div>
-      <div class="vip-text">
-        <h3>Precios exclusivos de importación</h3>
-        <p>Los productos se importan bajo pedido. Para acceder a estos precios, forma parte de nuestro grupo.</p>
-        <a href="https://wa.me/51981587009?text=%C2%A1Hola!%20Quiero%20saber%20c%C3%B3mo%20participar%20en%20el%20consolidado." target="_blank" class="vip-wa-link">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
-          Consultar cómo participar
-        </a>
-      </div>
+    <div class="cat-tools">
+      <button class="edit-order-link" (click)="openEditModal()">✎ Editar mi pedido</button>
+      <button class="filter-toggle" (click)="toggleFilters()">
+        Filtros @if (activeFilterCount()) { <span class="ft-count">{{ activeFilterCount() }}</span> }
+      </button>
+      <select class="sort-select" (change)="setSort($event)" [value]="sort()">
+        <option value="relevance">Relevancia</option>
+        <option value="price-asc">Precio: menor a mayor</option>
+        <option value="price-desc">Precio: mayor a menor</option>
+        <option value="new">Novedades</option>
+      </select>
     </div>
   </div>
 
-  <!-- Filters -->
-  <section class="filters">
-    <div class="filters-inner">
-      <div class="search-box">
-        <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-        <input type="text" placeholder="Buscar perfume o marca..." [value]="searchQuery()" (input)="onSearchChange($event)" />
-        @if (searchQuery()) {
-          <button class="search-clear" (click)="searchQuery.set('')">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
-          </button>
-        }
+  <div class="as-container cat-layout">
+    <!-- ===== Sidebar de filtros ===== -->
+    <aside class="filters-side" [class.open]="showFilters()">
+      <div class="fs-head">
+        <span>Filtros</span>
+        <button class="fs-close" (click)="toggleFilters()" aria-label="Cerrar">✕</button>
       </div>
-      <div class="brand-scroll">
-        @for (brand of brands(); track brand) {
-          <button class="pill" [class.active]="brandFilter() === brand" (click)="onBrandChange(brand)">
-            {{ brand }}
-          </button>
-        }
-      </div>
-      <div class="filter-meta">
-        <span class="count">{{ resultsCount() }} perfumes</span>
-        @if (totalPages() > 1) {
-          <span class="count">Página {{ currentPage() }} de {{ totalPages() }}</span>
-        }
-      </div>
-    </div>
-  </section>
 
-  <!-- Product Grid -->
-  @if (loading()) {
-    <div class="loading-state">
-      <div class="loader"></div>
-      <p>Cargando catálogo...</p>
-    </div>
-  } @else {
-    <main class="grid-section">
-      <div class="product-grid">
-        @for (product of paginatedProducts(); track product.id; let i = $index) {
-          <article class="product-card" [style.animation-delay]="(i % 15) * 35 + 'ms'">
-            <div class="card-media" (click)="goToProduct(product.id)">
-              @if (product.imageUrl) {
-                <img [src]="product.imageUrl" [alt]="product.name" loading="lazy" />
-              } @else {
-                <div class="card-media-empty">
-                  <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" opacity="0.2"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/></svg>
-                </div>
-              }
-            </div>
-            <div class="card-info">
-              <div class="card-meta" (click)="goToProduct(product.id)">
-                <span class="card-brand">{{product.brand}}</span>
-                <span class="card-ml">{{product.ml}} ml</span>
-              </div>
-              <h3 class="card-name" (click)="goToProduct(product.id)">{{product.name}}</h3>
-              <div class="card-pricing">
-                <span class="card-price">S/ {{product.wholesalePricePen | number:'1.0-0'}}</span>
-              </div>
-              <div class="card-actions">
-                <div class="qty-control">
-                  <button (click)="changeQty(product.id, -1)" class="qty-btn">−</button>
-                  <span class="qty-val">{{getQty(product.id)}}</span>
-                  <button (click)="changeQty(product.id, 1)" class="qty-btn">+</button>
-                </div>
-                <button class="add-btn" (click)="addToCart(product)">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
-                  Agregar
-                </button>
-              </div>
-            </div>
-          </article>
-        } @empty {
-          <div class="empty">
-            <h3>No se encontraron perfumes</h3>
-            <p>Intenta con otros términos</p>
-            <button class="pill active" (click)="searchQuery.set(''); brandFilter.set('Todos')">Ver todos</button>
+      <div class="fs-block">
+        <button class="fs-toggle" type="button" [class.open]="isOpen('buscar')" (click)="toggleSection('buscar')">
+          Buscar
+          <svg class="fs-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+        @if (isOpen('buscar')) {
+          <input class="fs-search" type="search" placeholder="Nombre, marca o UPC…"
+                 [value]="query()" (input)="onSearchInput($event)">
+        }
+      </div>
+
+      <div class="fs-block">
+        <button class="fs-toggle" type="button" [class.open]="isOpen('genero')" (click)="toggleSection('genero')">
+          Género
+          <svg class="fs-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+        @if (isOpen('genero')) {
+          <div class="fs-pills">
+            <button [class.on]="gender()==='all'" (click)="setGender('all')">Todos</button>
+            <button [class.on]="gender()==='women'" (click)="setGender('women')">Para Ella</button>
+            <button [class.on]="gender()==='men'" (click)="setGender('men')">Para Él</button>
+            <button [class.on]="gender()==='unisex'" (click)="setGender('unisex')">Unisex</button>
           </div>
         }
       </div>
-    </main>
-  }
 
-  <!-- Pagination -->
-  @if (totalPages() > 1) {
-    <nav class="pagination">
-      <button class="page-btn" [disabled]="currentPage() === 1" (click)="goToPage(currentPage() - 1)">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 18-6-6 6-6"/></svg>
-      </button>
-      @for (page of getPageNumbers(); track $index) {
-        @if (page === -1) {
-          <span class="page-dots">...</span>
+      @if (familyFacets().length) {
+        <div class="fs-block">
+          <button class="fs-toggle" type="button" [class.open]="isOpen('familia')" (click)="toggleSection('familia')">
+            Familia olfativa
+            <svg class="fs-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+          </button>
+          @if (isOpen('familia')) {
+            <div class="fs-fams">
+              @for (f of familyFacets(); track f.code) {
+                <label class="fs-fam" [class.on]="selectedFamilies().has(f.code)">
+                  <input type="checkbox" [checked]="selectedFamilies().has(f.code)" (change)="toggleFamily(f.code)">
+                  <as-note-icon [family]="f.code" [size]="18" />
+                  <span class="fs-fam-name">{{ f.label }}</span>
+                  <span class="fs-count">{{ f.count }}</span>
+                </label>
+              }
+            </div>
+          }
+        </div>
+
+        <div class="fs-block">
+          <button class="fs-toggle" type="button" [class.open]="isOpen('ocasion')" (click)="toggleSection('ocasion')">
+            Ocasión <small>(sugerido)</small>
+            <svg class="fs-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+          </button>
+          @if (isOpen('ocasion')) {
+            <div class="fs-pills">
+              <button [class.on]="occasionFilter()==='dia'" (click)="setOccasion('dia')">Día</button>
+              <button [class.on]="occasionFilter()==='noche'" (click)="setOccasion('noche')">Noche</button>
+              <button [class.on]="occasionFilter()==='versatil'" (click)="setOccasion('versatil')">Versátil</button>
+            </div>
+          }
+        </div>
+
+        <div class="fs-block">
+          <button class="fs-toggle" type="button" [class.open]="isOpen('estacion')" (click)="toggleSection('estacion')">
+            Estación <small>(sugerido)</small>
+            <svg class="fs-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+          </button>
+          @if (isOpen('estacion')) {
+            <div class="fs-pills">
+              @for (s of seasonOrder; track s) {
+                <button [class.on]="selectedSeasons().has(s)" (click)="toggleSeason(s)">{{ seasonLabel(s) }}</button>
+              }
+            </div>
+          }
+        </div>
+
+        <div class="fs-block">
+          <button class="fs-toggle" type="button" [class.open]="isOpen('nota')" (click)="toggleSection('nota')">
+            Nota
+            <svg class="fs-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+          </button>
+          @if (isOpen('nota')) {
+            <input class="fs-search" type="search" placeholder="vainilla, oud, rosa…"
+                   [value]="noteQuery()" (input)="onNoteInput($event)">
+          }
+        </div>
+      }
+
+      <div class="fs-block">
+        <button class="fs-toggle" type="button" [class.open]="isOpen('stock')" (click)="toggleSection('stock')">
+          Disponibilidad
+          <svg class="fs-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+        @if (isOpen('stock')) {
+          <div class="fs-pills">
+            <button [class.on]="stockFilter()==='all'" (click)="setStock('all')">Todo</button>
+            <button [class.on]="stockFilter()==='in'" (click)="setStock('in')">En stock</button>
+            <button [class.on]="stockFilter()==='order'" (click)="setStock('order')">Por encargo</button>
+            <button [class.on]="stockFilter()==='promos'" (click)="setStock('promos')">Promociones</button>
+          </div>
+        }
+      </div>
+
+      <div class="fs-block">
+        <button class="fs-toggle" type="button" [class.open]="isOpen('precio')" (click)="toggleSection('precio')">
+          Precio (S/)
+          <svg class="fs-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+        @if (isOpen('precio')) {
+          <div class="fs-price">
+            <input type="number" min="0" placeholder="Mín" (input)="setPriceMin($event)">
+            <span>—</span>
+            <input type="number" min="0" placeholder="Máx" (input)="setPriceMax($event)">
+          </div>
+        }
+      </div>
+
+      <div class="fs-block">
+        <button class="fs-toggle" type="button" [class.open]="isOpen('marca')" (click)="toggleSection('marca')">
+          Marca
+          <svg class="fs-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+        @if (isOpen('marca')) {
+          <div class="fs-brands">
+            @for (b of brandFacets(); track b.label) {
+              <label class="fs-check">
+                <input type="checkbox" [checked]="selectedBrands().has(b.label)" (change)="toggleBrand(b.label)">
+                <span class="fs-brand-name">{{ b.label }}</span>
+                <span class="fs-count">{{ b.count }}</span>
+              </label>
+            }
+          </div>
+        }
+      </div>
+
+      @if (currentPromotion(); as pr) {
+        <div class="fs-promo-block">
+          <div class="fs-promo-label">Promociones</div>
+          <a class="fs-promo" [class.fade]="promoFade()" [routerLink]="['/promocion', pr.id]" (click)="toggleFilters()">
+            @if (pr.imageData || pr.imageUrl) { <img [src]="pr.imageData || pr.imageUrl" [alt]="pr.name" loading="lazy"> }
+            <div class="fs-promo-cta">{{ pr.name }} · S/ {{ pr.pricePen | number:'1.0-0' }} →</div>
+          </a>
+        </div>
+      }
+      @if (sidebarPromo(); as sp) {
+        <a class="fs-promo" [routerLink]="['/catalogo']"
+           [queryParams]="sp.linkValue ? { q: sp.linkValue } : {}"
+           (click)="toggleFilters()">
+          @if (sp.imageUrl) { <img [src]="sp.imageUrl" [alt]="sp.title || 'Promoción'" loading="lazy"> }
+          @if (sp.ctaText) { <div class="fs-promo-cta">{{ sp.ctaText }} →</div> }
+        </a>
+      }
+
+      <div class="fs-foot">
+        <button class="fs-clear" (click)="clearFilters()">Limpiar</button>
+        <button class="fs-apply" (click)="toggleFilters()">Ver {{ resultsCount() }}</button>
+      </div>
+    </aside>
+
+    <!-- ===== Resultados ===== -->
+    <main class="cat-results">
+      @if (stockFilter() === 'promos') {
+        @if (promoList().length === 0) {
+          <div class="cat-empty"><h3>No hay promociones activas</h3><p>Vuelve pronto, estamos preparando nuevos packs.</p></div>
         } @else {
-          <button class="page-btn" [class.active]="page === currentPage()" (click)="goToPage(page)">{{ page }}</button>
+          <div class="cat-promo-grid">
+            @for (pr of promoList(); track pr.id) {
+              <a class="cat-promo-card" [routerLink]="['/promocion', pr.id]">
+                <div class="cat-promo-img">
+                  @if (pr.imageData || pr.imageUrl) { <img [src]="pr.imageData || pr.imageUrl" [alt]="pr.name" loading="lazy"> }
+                  <span class="cat-promo-badge">PROMO</span>
+                </div>
+                <div class="cat-promo-info">
+                  <b>{{ pr.name }}</b>
+                  <span>{{ pr.items.length }} perfumes · S/ {{ pr.pricePen | number:'1.0-0' }}@if (pr.stockQty <= 5) { · quedan {{ pr.stockQty }} }</span>
+                </div>
+              </a>
+            }
+          </div>
+        }
+      } @else {
+      @if (loading()) {
+        <div class="as-grid">
+          @for (s of [1,2,3,4,5,6,7,8,9,10,11,12]; track s) { <div class="card-skeleton as-skeleton"></div> }
+        </div>
+      } @else if (resultsCount() === 0) {
+        <div class="cat-empty">
+          <h3>No se encontraron perfumes</h3>
+          <p>Prueba con otros filtros o términos de búsqueda.</p>
+          <button class="as-btn as-btn-primary" (click)="clearFilters()">Ver todo el catálogo</button>
+        </div>
+      } @else {
+        <div class="as-grid">
+          @for (p of displayed(); track p.id) {
+            <as-product-card [product]="p" [mode]="catalogMode()" [inStock]="isInStock(p.id)" [stockQty]="stockQtyFor(p.id)" />
+          }
+        </div>
+        @if (canLoadMore()) {
+          <div class="cat-more">
+            <button class="as-btn" (click)="loadMore()">Ver más perfumes ({{ resultsCount() - displayed().length }})</button>
+          </div>
         }
       }
-      <button class="page-btn" [disabled]="currentPage() === totalPages()" (click)="goToPage(currentPage() + 1)">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>
-      </button>
-    </nav>
-  }
-
-  <!-- Footer -->
-  <footer class="footer">
-    <div class="footer-inner">
-      <div class="footer-brand">
-        <span class="logo-mark sm">A</span>
-        <h2>AromaStudio</h2>
-      </div>
-      <p class="footer-tagline">Perfumes Árabes Originales en Perú</p>
-      <div class="footer-links">
-        <a href="https://wa.me/51981587009" class="footer-wa">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
-          WhatsApp
-        </a>
-        <span class="footer-sep">·</span>
-        <span>Lima, Perú</span>
-      </div>
-      <p class="footer-copy">&copy; 2026 AromaStudio</p>
-    </div>
-  </footer>
-
-  <!-- Social FABs -->
-  <div class="social-fabs">
-    <a class="wa-fab" (click)="trackWhatsAppContact($event)">
-      <svg width="32" height="32" viewBox="0 0 24 24" fill="#fff"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
-    </a>
+      }
+    </main>
   </div>
 
-  <a routerLink="/admin/login" class="admin-link">Admin</a>
+  @if (showFilters()) { <div class="filters-backdrop" (click)="toggleFilters()"></div> }
 
   <!-- ===== EDIT ORDER MODAL ===== -->
   @if (showEditModal()) {

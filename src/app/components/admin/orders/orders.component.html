@@ -1,352 +1,466 @@
-<div class="admin-page">
-  <nav class="admin-nav">
-    <div class="nav-brand"><span class="brand-name">AromaStudio</span><span class="brand-tag">Admin</span></div>
-    <div class="nav-links">
-      <a routerLink="/admin" class="nav-link">Dashboard</a>
-      <a routerLink="/admin/orders" class="nav-link active">Pedidos</a>
-      <a routerLink="/admin/products" class="nav-link">Productos</a>
-      <a routerLink="/admin/stock-purchase" class="nav-link">Compra Tienda</a>
-      <a routerLink="/admin/inventory" class="nav-link">Inventario</a>
-      <a routerLink="/admin/ventas" class="nav-link">Ventas</a>
-      <a routerLink="/admin/config" class="nav-link">Config</a>
-    </div>
-  </nav>
+@if (message()) { <div class="ord-toast">{{ message() }}</div> }
 
-  <div class="admin-content">
-    <div class="page-header">
-      <h1>Gestión de Pedidos</h1>
-      <div class="header-actions">
-        <div class="search-by-code">
-          <input type="text" placeholder="Buscar por código (AS-0001)" [value]="searchCode()" (input)="onSearchInput($event)" (keyup.enter)="searchByCode()" class="code-input">
-          <button class="search-btn" (click)="searchByCode()">Buscar</button>
-          @if (searchResult() || searchError()) {
-            <button class="clear-btn" (click)="clearSearch()">X</button>
-          }
-        </div>
-        <select (change)="onFilterChange($event)">
-          <option value="">Todos los estados</option>
-          <option value="PENDIENTE_SEPARACION">Pend. Separación</option>
-          <option value="SEPARADO">Separados</option>
-          <option value="PENDIENTE_RESTO">Pend. Pago Final</option>
-          <option value="PAGADO">Pagados</option>
-          <option value="VERIFICADO">Verificados (Tienda)</option>
-          <option value="RECHAZADO">Rechazados</option>
-        </select>
-      </div>
-    </div>
-
-    @if (message()) {
-      <div class="message">{{ message() }}</div>
+<div class="ord-head">
+  <h2 class="adm-section-title" style="margin:0">Pedidos</h2>
+  <div class="ord-head-actions">
+    @if (!isStockTab()) {
+      <button class="adm-btn" [class.primary]="showBreakdown()" (click)="toggleBreakdown()">
+        {{ showBreakdown() ? 'Ocultar desglose' : 'Pedido final' }}
+      </button>
+      @if (shalomOrders().length) {
+        <button class="adm-btn" (click)="printShalom()" title="Imprimir etiquetas Shalom (4 por hoja)">
+          🖨 Shalom ({{ shalomOrders().length }})
+        </button>
+        <button class="adm-btn ghost" (click)="downloadShalomWord()" title="Descargar etiquetas en Word">Word</button>
+      }
     }
-
-    <!-- Search result -->
-    @if (searchError()) {
-      <div class="search-error">{{ searchError() }}</div>
-    }
-    @if (searchResult(); as order) {
-      <div class="search-result">
-        <h3>Resultado de Búsqueda</h3>
-        <div class="order-card" [class]="order.paymentStatus.toLowerCase().replace('_', '-')">
-          <div class="order-header">
-            <span class="order-code">{{ order.orderCode }}</span>
-            <span class="status-badge" [class]="order.paymentStatus.toLowerCase().replace('_', '-')">{{ getStatusLabel(order.paymentStatus) }}</span>
-            <span class="order-date">{{ order.createdAt | date:'dd/MM/yyyy HH:mm' }}</span>
-          </div>
-          <div class="order-client">
-            <strong>{{ order.clientName }}</strong>
-            <span>{{ order.clientPhone }}</span>
-          </div>
-          @if (order.deliveryMethod) {
-            <div class="order-shipping">
-              <div class="shipping-label">Envío: {{ order.deliveryMethod }}</div>
-              @if (order.deliveryMethod === 'PROVINCIA') {
-                <div class="shipping-grid">
-                  <span><strong>Recibe:</strong> {{ order.shippingName }}</span>
-                  <span><strong>DNI:</strong> {{ order.shippingDni }}</span>
-                  <span><strong>Celular:</strong> {{ order.shippingPhone }}</span>
-                  <span><strong>Agencia:</strong> {{ order.shippingAddress }}</span>
-                </div>
-              } @else {
-                <span><strong>Lugar/Dirección:</strong> {{ order.shippingAddress || 'Coordinar por WhatsApp' }}</span>
-              }
-            </div>
-          }
-          <div class="order-items">
-            @for (item of order.items; track item.id) {
-              <div class="order-item-row">
-                <span>{{ item.product.brand }} - {{ item.product.name }} x{{ item.quantity }}</span>
-                <span>S/ {{ item.subtotalPen | number:'1.2-2' }}</span>
-              </div>
-            }
-          </div>
-          <div class="order-payment-info">
-            <div class="payment-row"><span>Total:</span><span class="total-value">S/ {{ order.totalPen | number:'1.2-2' }}</span></div>
-            <div class="payment-row"><span>Separación (S/20 x unidad):</span><span>S/ {{ order.depositAmountPen | number:'1.2-2' }}</span></div>
-            <div class="payment-row"><span>Resta por pagar:</span><span class="remaining-value">S/ {{ order.remainingPen | number:'1.2-2' }}</span></div>
-          </div>
-          @if (order.yapeReference) {
-            <div class="yape-ref">Ref Yape: {{ order.yapeReference }}</div>
-          }
-        </div>
-      </div>
-    }
-
-    <!-- Consolidados list -->
-    @if (loading()) {
-      <p class="loading">Cargando consolidados...</p>
-    } @else if (consolidados().length === 0) {
-      <p class="empty">No hay consolidados</p>
-    } @else {
+    <button class="adm-btn" [class.primary]="showProfit()" (click)="toggleProfit()">Ganancia</button>
+    <select class="adm-select" style="width:auto" (change)="onSelectConsolidado($event)">
       @for (c of consolidados(); track c.id) {
-        <div class="consolidado-card" [class.open]="c.status === 'ABIERTO'" [class.entregado]="c.status === 'ENTREGADO'">
-          <div class="consolidado-header">
-            <span class="status-badge" [class]="c.status.toLowerCase()">{{ c.status }}</span>
-            <span class="consolidado-title">Consolidado #{{ c.id }}</span>
-            <span class="date">{{ c.openDate | date:'dd/MM/yyyy' }}</span>
-          </div>
-          <div class="consolidado-stats">
-            <span>Inversión: S/ {{ c.totalInvestmentPen | number:'1.2-2' }}</span>
-            <span>Courier: ${{ c.courierCostUsd | number:'1.2-2' }} USD</span>
-            <span>Peso: {{ c.totalWeightG }}g</span>
-          </div>
-          <div class="consolidado-actions">
-            <button class="orders-toggle-btn" (click)="toggleOrders(c.id)">
-              {{ expandedConsolidadoId() === c.id ? 'Ocultar Pedidos' : 'Ver Pedidos' }}
-            </button>
-            <button class="breakdown-btn" (click)="toggleBreakdown(c.id)">
-              {{ breakdownConsolidadoId() === c.id ? 'Ocultar Desglose' : 'Ver Desglose' }}
-            </button>
-            @if (c.status === 'ABIERTO') {
-              <button class="close-btn" (click)="closeConsolidado(c.id)">Cerrar Consolidado</button>
-            }
-            @if (c.status === 'CERRADO') {
-              <button class="enable-btn" (click)="enableMerchandise(c.id)">Habilitar Mercancía</button>
-            }
-            @if (c.status !== 'ABIERTO') {
-              <button class="delete-consolidado-btn" (click)="deleteConsolidado(c.id)">Eliminar Consolidado</button>
-            }
-          </div>
-
-          <!-- Breakdown -->
-          @if (breakdownConsolidadoId() === c.id && breakdown()) {
-            <div class="breakdown-grid">
-              <div class="breakdown-card">
-                <h4>Consolidado <span class="card-subtitle">(Clientes)</span></h4>
-                <div class="bd-row"><span>Pedidos</span><span>{{ breakdown()!.consolidado.orderCount }}</span></div>
-                <div class="bd-row"><span>Unidades</span><span>{{ breakdown()!.consolidado.totalUnits }}</span></div>
-                @if (breakdown()!.consolidado.productCounts?.length) {
-                  <div class="product-counts">
-                    @for (pc of breakdown()!.consolidado.productCounts; track pc.productId) {
-                      <div class="bd-row product-row"><span>{{ pc.brand }} - {{ pc.name }} {{ pc.ml }}ml</span><span>x{{ pc.quantity }}</span></div>
-                    }
-                  </div>
-                }
-                <div class="bd-row"><span>Peso perfumes</span><span>{{ (breakdown()!.consolidado.weightPerfumesG / 1000) | number:'1.1-1' }} kg</span></div>
-                <div class="bd-row"><span>Cajas</span><span>{{ breakdown()!.consolidado.boxesNeeded }}</span></div>
-                <div class="bd-row"><span>Peso cajas</span><span>{{ (breakdown()!.consolidado.weightBoxesG / 1000) | number:'1.1-1' }} kg</span></div>
-                <div class="bd-row hl"><span>Peso total</span><span>{{ (breakdown()!.consolidado.totalWeightG / 1000) | number:'1.1-1' }} kg</span></div>
-                <div class="bd-divider"></div>
-                <div class="bd-row"><span>Productos</span><span>${{ breakdown()!.consolidado.subtotalProductsUsd | number:'1.2-2' }}</span></div>
-                <div class="bd-row"><span>Courier</span><span>${{ breakdown()!.consolidado.courierCostUsd | number:'1.2-2' }}</span></div>
-                @if (breakdown()!.consolidado.extraMiamiUsd > 0) {
-                  <div class="bd-row"><span>Extra Miami</span><span>${{ breakdown()!.consolidado.extraMiamiUsd | number:'1.2-2' }}</span></div>
-                }
-                <div class="bd-row hl"><span>Total USD</span><span>${{ breakdown()!.consolidado.totalCostUsd | number:'1.2-2' }}</span></div>
-                <div class="bd-divider"></div>
-                <div class="bd-row"><span>T/C</span><span>{{ breakdown()!.consolidado.exchangeRate | number:'1.2-2' }}</span></div>
-                <div class="bd-row hl"><span>Inversión</span><span>S/ {{ breakdown()!.consolidado.totalInvestmentPen | number:'1.2-2' }}</span></div>
-                <div class="bd-divider"></div>
-                <div class="bd-row"><span>Ingresos</span><span>S/ {{ breakdown()!.consolidado.totalRevenuePen | number:'1.2-2' }}</span></div>
-                <div class="bd-row profit"><span>Ganancia</span><span>S/ {{ breakdown()!.consolidado.profitPen | number:'1.2-2' }}</span></div>
-                @if (breakdown()!.consolidado.marginPercent !== null) {
-                  <div class="bd-row"><span>Margen</span><span>{{ breakdown()!.consolidado.marginPercent | number:'1.1-1' }}%</span></div>
-                }
-              </div>
-
-              <div class="breakdown-card">
-                <h4>Mi Compra <span class="card-subtitle">(Para tienda)</span></h4>
-                <div class="bd-row"><span>Pedidos</span><span>{{ breakdown()!.miCompra.orderCount }}</span></div>
-                <div class="bd-row"><span>Unidades</span><span>{{ breakdown()!.miCompra.totalUnits }}</span></div>
-                @if (breakdown()!.miCompra.productCounts?.length) {
-                  <div class="product-counts">
-                    @for (pc of breakdown()!.miCompra.productCounts; track pc.productId) {
-                      <div class="bd-row product-row"><span>{{ pc.brand }} - {{ pc.name }} {{ pc.ml }}ml</span><span>x{{ pc.quantity }}</span></div>
-                    }
-                  </div>
-                }
-                <div class="bd-row"><span>Peso perfumes</span><span>{{ (breakdown()!.miCompra.weightPerfumesG / 1000) | number:'1.1-1' }} kg</span></div>
-                <div class="bd-row"><span>Cajas</span><span>{{ breakdown()!.miCompra.boxesNeeded }}</span></div>
-                <div class="bd-row"><span>Peso cajas</span><span>{{ (breakdown()!.miCompra.weightBoxesG / 1000) | number:'1.1-1' }} kg</span></div>
-                <div class="bd-row hl"><span>Peso total</span><span>{{ (breakdown()!.miCompra.totalWeightG / 1000) | number:'1.1-1' }} kg</span></div>
-                <div class="bd-divider"></div>
-                <div class="bd-row"><span>Productos</span><span>${{ breakdown()!.miCompra.subtotalProductsUsd | number:'1.2-2' }}</span></div>
-                <div class="bd-row"><span>Courier</span><span>${{ breakdown()!.miCompra.courierCostUsd | number:'1.2-2' }}</span></div>
-                @if (breakdown()!.miCompra.extraMiamiUsd > 0) {
-                  <div class="bd-row"><span>Extra Miami</span><span>${{ breakdown()!.miCompra.extraMiamiUsd | number:'1.2-2' }}</span></div>
-                }
-                <div class="bd-row hl"><span>Total USD</span><span>${{ breakdown()!.miCompra.totalCostUsd | number:'1.2-2' }}</span></div>
-                <div class="bd-divider"></div>
-                <div class="bd-row"><span>T/C</span><span>{{ breakdown()!.miCompra.exchangeRate | number:'1.2-2' }}</span></div>
-                <div class="bd-row hl"><span>Inversión</span><span>S/ {{ breakdown()!.miCompra.totalInvestmentPen | number:'1.2-2' }}</span></div>
-                <div class="bd-no-profit">(sin ganancia)</div>
-              </div>
-
-              <div class="breakdown-card total-card">
-                <h4>Total <span class="card-subtitle">(Todo junto)</span></h4>
-                <div class="bd-row"><span>Pedidos</span><span>{{ breakdown()!.total.orderCount }}</span></div>
-                <div class="bd-row"><span>Unidades</span><span>{{ breakdown()!.total.totalUnits }}</span></div>
-                @if (breakdown()!.total.productCounts?.length) {
-                  <div class="product-counts">
-                    @for (pc of breakdown()!.total.productCounts; track pc.productId) {
-                      <div class="bd-row product-row"><span>{{ pc.brand }} - {{ pc.name }} {{ pc.ml }}ml</span><span>x{{ pc.quantity }}</span></div>
-                    }
-                  </div>
-                }
-                <div class="bd-row"><span>Peso perfumes</span><span>{{ (breakdown()!.total.weightPerfumesG / 1000) | number:'1.1-1' }} kg</span></div>
-                <div class="bd-row"><span>Cajas</span><span>{{ breakdown()!.total.boxesNeeded }}</span></div>
-                <div class="bd-row"><span>Peso cajas</span><span>{{ (breakdown()!.total.weightBoxesG / 1000) | number:'1.1-1' }} kg</span></div>
-                <div class="bd-row hl"><span>Peso total</span><span>{{ (breakdown()!.total.totalWeightG / 1000) | number:'1.1-1' }} kg</span></div>
-                <div class="bd-divider"></div>
-                <div class="bd-row"><span>Productos</span><span>${{ breakdown()!.total.subtotalProductsUsd | number:'1.2-2' }}</span></div>
-                <div class="bd-row"><span>Courier</span><span>${{ breakdown()!.total.courierCostUsd | number:'1.2-2' }}</span></div>
-                @if (breakdown()!.total.extraMiamiUsd > 0) {
-                  <div class="bd-row"><span>Extra Miami</span><span>${{ breakdown()!.total.extraMiamiUsd | number:'1.2-2' }}</span></div>
-                }
-                <div class="bd-row hl"><span>Total USD</span><span>${{ breakdown()!.total.totalCostUsd | number:'1.2-2' }}</span></div>
-                <div class="bd-divider"></div>
-                <div class="bd-row"><span>T/C</span><span>{{ breakdown()!.total.exchangeRate | number:'1.2-2' }}</span></div>
-                <div class="bd-row hl"><span>Inversión</span><span>S/ {{ breakdown()!.total.totalInvestmentPen | number:'1.2-2' }}</span></div>
-              </div>
-            </div>
-          }
-
-          <!-- Orders inside this consolidado -->
-          @if (expandedConsolidadoId() === c.id) {
-            <div class="consolidado-orders">
-              @if (loadingOrders()) {
-                <p class="loading-small">Cargando pedidos...</p>
-              } @else if (getOrdersForConsolidado(c.id).length === 0) {
-                <p class="empty-small">No hay pedidos{{ filter() ? ' con ese filtro' : '' }}</p>
-              } @else {
-                <div class="orders-list">
-                  @for (order of getOrdersForConsolidado(c.id); track order.id) {
-                    <div class="order-card" [class]="order.paymentStatus.toLowerCase().replace('_', '-')">
-                      <div class="order-header">
-                        <span class="order-code">{{ order.orderCode || '#' + order.id }}</span>
-                        <span class="status-badge" [class]="order.paymentStatus.toLowerCase().replace('_', '-')">{{ getStatusLabel(order.paymentStatus) }}</span>
-                        <span class="order-date">{{ order.createdAt | date:'dd/MM HH:mm' }}</span>
-                      </div>
-
-                      <!-- Client info (view or edit mode) -->
-                      @if (editingOrderId() === order.id) {
-                        <div class="edit-client-form">
-                          <input type="text" [value]="editName()" (input)="onEditName($event)" placeholder="Nombre" class="edit-input">
-                          <input type="text" [value]="editPhone()" (input)="onEditPhone($event)" placeholder="Celular" class="edit-input">
-                          <button class="save-edit-btn" (click)="saveEdit()">Guardar</button>
-                          <button class="cancel-edit-btn" (click)="cancelEdit()">Cancelar</button>
-                        </div>
-                      } @else {
-                        <div class="order-client">
-                          <strong>{{ order.clientName }}</strong>
-                          <span>{{ order.clientPhone }}</span>
-                          @if (order.clientName !== 'COMPRA TIENDA') {
-                            <button class="edit-client-btn" (click)="startEdit(order)">Editar</button>
-                          }
-                        </div>
-                      }
-
-                      @if (order.deliveryMethod) {
-                        <div class="order-shipping">
-                          <div class="shipping-label">Envío: {{ order.deliveryMethod }}</div>
-                          @if (order.deliveryMethod === 'PROVINCIA') {
-                            <div class="shipping-grid">
-                              <span><strong>Recibe:</strong> {{ order.shippingName }}</span>
-                              <span><strong>DNI:</strong> {{ order.shippingDni }}</span>
-                              <span><strong>Celular:</strong> {{ order.shippingPhone }}</span>
-                              <span><strong>Agencia:</strong> {{ order.shippingAddress }}</span>
-                            </div>
-                          } @else {
-                            <span><strong>Lugar/Dirección:</strong> {{ order.shippingAddress || 'Coordinar por WhatsApp' }}</span>
-                          }
-                        </div>
-                      }
-
-                      <div class="order-items">
-                        @for (item of order.items; track item.id) {
-                          <div class="order-item-row">
-                            <span>{{ item.product.brand }} - {{ item.product.name }} x{{ item.quantity }}</span>
-                            <span>S/ {{ item.subtotalPen | number:'1.2-2' }}</span>
-                          </div>
-                        }
-                      </div>
-                      <div class="order-footer">
-                        <div class="order-totals">
-                          <span class="order-total">Total: S/ {{ order.totalPen | number:'1.2-2' }}</span>
-                          @if (order.depositAmountPen > 0 && order.clientName !== 'COMPRA TIENDA') {
-                            <span class="order-deposit">Separación: S/ {{ order.depositAmountPen | number:'1.2-2' }}</span>
-                            <span class="order-remaining">Resta: S/ {{ order.remainingPen | number:'1.2-2' }}</span>
-                          }
-                        </div>
-
-                        @if (order.paymentStatus === 'PENDIENTE_SEPARACION') {
-                          @if (activeActionOrderId() === order.id && activeActionType() === 'deposit') {
-                            <div class="inline-action">
-                              <input type="text" placeholder="Ref. Yape (opcional)" [value]="yapeRefInput()" (input)="onYapeRefInput($event)" class="yape-input">
-                              <button class="verify-btn" (click)="confirmAction()">Confirmar</button>
-                              <button class="cancel-action-btn" (click)="cancelAction()">X</button>
-                            </div>
-                          } @else {
-                            <div class="order-actions">
-                              <button class="verify-btn" (click)="startAction(order.id, 'deposit')">Verificar Separación</button>
-                              <button class="reject-btn" (click)="reject(order.id)">Rechazar</button>
-                            </div>
-                          }
-                        }
-
-                        @if (order.paymentStatus === 'SEPARADO') {
-                          <div class="status-info">Esperando llegada de mercancía</div>
-                          <div class="order-actions">
-                            <button class="delete-order-btn" (click)="deleteOrder(order.id)">Eliminar Pedido</button>
-                          </div>
-                        }
-
-                        @if (order.paymentStatus === 'PENDIENTE_RESTO') {
-                          @if (activeActionOrderId() === order.id && activeActionType() === 'rest') {
-                            <div class="inline-action">
-                              <input type="text" placeholder="Ref. Yape (opcional)" [value]="yapeRefInput()" (input)="onYapeRefInput($event)" class="yape-input">
-                              <button class="verify-btn" (click)="confirmAction()">Confirmar</button>
-                              <button class="cancel-action-btn" (click)="cancelAction()">X</button>
-                            </div>
-                          } @else {
-                            <div class="order-actions">
-                              <button class="verify-btn" (click)="startAction(order.id, 'rest')">Verificar Pago Final</button>
-                              <button class="reject-btn" (click)="reject(order.id)">Rechazar</button>
-                            </div>
-                          }
-                        }
-
-                        @if (order.paymentStatus === 'PAGADO') {
-                          <div class="status-info completed">Pago completo</div>
-                        }
-
-                        @if (order.paymentStatus === 'RECHAZADO') {
-                          <div class="order-actions">
-                            <button class="delete-order-btn" (click)="deleteOrder(order.id)">Eliminar Pedido</button>
-                          </div>
-                        }
-
-                        @if (order.yapeReference) {
-                          <span class="yape-ref">Ref: {{ order.yapeReference }}</span>
-                        }
-                      </div>
-                    </div>
-                  }
-                </div>
-              }
-            </div>
-          }
-        </div>
+        <option [value]="c.id" [selected]="c.id === selectedId()">Consolidado #{{ c.id }} · {{ c.status }}</option>
+      }
+    </select>
+    @if (selectedConsolidado(); as c) {
+      @if (c.status === 'ABIERTO') {
+        <button class="adm-btn primary" (click)="openClose()">Cerrar consolidado</button>
+      } @else if (c.status === 'CERRADO') {
+        <button class="adm-btn" (click)="viewAllocation()">Ver qué comprar</button>
+        <button class="adm-btn ok" (click)="enableMerchandise()">Habilitar mercancía</button>
       }
     }
   </div>
 </div>
+
+<!-- Pestañas: consolidado vs en stock -->
+<div class="ord-tabs">
+  <button [class.on]="!isStockTab()" (click)="channelTab.set('CONSOLIDADO')">Consolidado</button>
+  <button [class.on]="isStockTab()" (click)="channelTab.set('STOCK')">
+    En stock @if (stockOrdersCount()) { ({{ stockOrdersCount() }}) }
+  </button>
+</div>
+
+<!-- KPIs (reciclados: cambian según la pestaña) -->
+<div class="adm-kpis">
+  <div class="adm-kpi">
+    <div class="k-label">{{ isStockTab() ? 'Ventas en stock' : 'Pedidos aceptados' }}</div>
+    <div class="k-value">{{ kpiTotal() }}</div>
+    @if (kpiPending()) { <div class="k-sub" style="color:var(--a-warn);font-weight:600">{{ kpiPending() }} por aceptar</div> }
+  </div>
+  <div class="adm-kpi"><div class="k-label">Lima</div><div class="k-value">{{ kpiLima() }}</div><div class="k-sub">entrega en Lima</div></div>
+  <div class="adm-kpi"><div class="k-label">Provincia</div><div class="k-value">{{ kpiProvincia() }}</div><div class="k-sub">envío Shalom</div></div>
+  <div class="adm-kpi"><div class="k-label">Unidades</div><div class="k-value">{{ kpiUnits() }}</div></div>
+  <div class="adm-kpi profit">
+    <div class="k-label">{{ isStockTab() ? 'Ganancia de stock' : 'Ganancia líquida' }}</div>
+    <div class="k-value">@if (kpiProfit() != null) { S/ {{ kpiProfit()! | number:'1.0-0' }} } @else { — }</div>
+    <div class="k-sub">{{ isStockTab() ? 'precio − costo' : 'tras courier y cajas' }}</div>
+  </div>
+</div>
+
+@if (kpiBySeller().length) {
+  <div class="ord-sellers">
+    <span class="ord-sellers-label">Por vendedor:</span>
+    @for (s of kpiBySeller(); track s.seller) {
+      <span class="adm-pill">{{ s.seller }} · {{ s.count }}</span>
+    }
+  </div>
+}
+@if (isStockTab()) {
+  <p style="color:var(--a-muted);margin-bottom:16px;font-size:.86rem">
+    Pedidos de entrega inmediata. Al <b>Aceptar</b> uno se descuenta del stock y se registra la ganancia de tienda.
+  </p>
+}
+
+<!-- Ganancia total por periodo (mes/semana/año) -->
+@if (showProfit()) {
+  <div class="adm-card adm-card-pad ord-profit">
+    <div class="ord-alloc-head">
+      <h3>Ganancia total por periodo</h3>
+      <div class="ord-gran">
+        <button [class.on]="profitGran() === 'week'" (click)="setGran('week')">Semana</button>
+        <button [class.on]="profitGran() === 'month'" (click)="setGran('month')">Mes</button>
+        <button [class.on]="profitGran() === 'year'" (click)="setGran('year')">Año</button>
+      </div>
+    </div>
+    @if (profitReport(); as pr) {
+      @if (pr.periods.length === 0) {
+        <p style="color:var(--a-muted)">Aún no hay ganancias registradas.</p>
+      } @else {
+        <div class="ord-profit-totals">
+          <span class="pt stock">Stock: <b>S/ {{ pr.totals.stock | number:'1.0-0' }}</b></span>
+          <span class="pt promo">Promos: <b>S/ {{ pr.totals.promo | number:'1.0-0' }}</b></span>
+          <span class="pt cons">Consolidado: <b>S/ {{ pr.totals.consolidado | number:'1.0-0' }}</b></span>
+          <span class="pt total">Total: <b>S/ {{ pr.totals.total | number:'1.0-0' }}</b></span>
+        </div>
+        <div class="ord-profit-rows">
+          @for (p of pr.periods; track p.period) {
+            <div class="ord-profit-row">
+              <span class="pr-label">{{ p.period }}</span>
+              <div class="pr-bar">
+                <div class="seg stock" [style.width.%]="p.stock / profitMax() * 100" title="Stock"></div>
+                <div class="seg promo" [style.width.%]="p.promo / profitMax() * 100" title="Promos"></div>
+                <div class="seg cons" [style.width.%]="p.consolidado / profitMax() * 100" title="Consolidado"></div>
+              </div>
+              <span class="pr-total">S/ {{ p.total | number:'1.0-0' }}</span>
+            </div>
+          }
+        </div>
+        <p class="ord-profit-legend">
+          <span class="dot stock"></span> Stock &nbsp; <span class="dot promo"></span> Promociones &nbsp;
+          <span class="dot cons"></span> Consolidado (entregado y pagado)
+        </p>
+      }
+    } @else {
+      <p style="color:var(--a-muted)">Cargando…</p>
+    }
+  </div>
+}
+
+<!-- Pedido final / desglose (inline, expandible por perfume) -->
+@if (showBreakdown()) {
+  <div class="adm-card adm-card-pad ord-breakdown">
+    <div class="ord-alloc-head">
+      <h3>Pedido final · {{ breakdownUnits() }} unidades · {{ breakdownRows().length }} perfumes</h3>
+      <button class="adm-btn ghost sm" (click)="expandAllBreakdown()">
+        {{ expandedBreakdown().size === breakdownRows().length ? 'Colapsar todo' : 'Expandir todo' }}
+      </button>
+    </div>
+    @if (breakdownRows().length === 0) {
+      <p style="color:var(--a-muted)">Este consolidado aún no tiene pedidos.</p>
+    } @else {
+      <div class="ord-bd-list">
+        @for (r of breakdownRows(); track r.product.id) {
+          <div class="ord-bd-item">
+            <button class="ord-bd-row" [class.open]="expandedBreakdown().has(r.product.id)" [class.picked]="r.itemsPicked === r.itemsTotal" (click)="toggleBreakdownItem(r.product.id)">
+              <div class="sl-thumb">@if (r.product.imageUrl) { <img [src]="r.product.imageUrl" [alt]="r.product.name"> } @else { <span>{{ r.product.brand }}</span> }</div>
+              <div class="ord-detail-info">
+                <b>{{ r.product.brand }}</b>
+                <span>{{ r.product.name }} @if (r.product.ml) { · {{ r.product.ml }}ml }</span>
+              </div>
+              <span class="ord-bd-count">{{ r.clients.length }} cliente(s)</span>
+              <span class="ord-bd-qty">{{ r.qty }}</span>
+              <span class="ord-bd-monto num">S/ {{ r.montoPen | number:'1.0-0' }}</span>
+              <span class="ord-bd-check" [class.done]="r.itemsPicked === r.itemsTotal"
+                    (click)="$event.stopPropagation(); bulkPick(r)"
+                    [title]="r.itemsPicked === r.itemsTotal ? 'Desmarcar' : 'Marcar como comprado/verificado'">
+                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+                {{ r.itemsPicked }}/{{ r.itemsTotal }}
+              </span>
+              <svg class="ord-bd-chev" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+            </button>
+            @if (expandedBreakdown().has(r.product.id)) {
+              <div class="ord-bd-clients">
+                @for (c of r.clients; track $index) {
+                  <div class="ord-bd-client">
+                    <span>@if (c.picked) { <span class="ord-bd-dot" title="Verificado">✓</span> } {{ c.name }} <small>{{ c.code }}</small></span>
+                    <b>x{{ c.qty }}</b>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        }
+      </div>
+    }
+  </div>
+}
+
+<!-- Allocation (qué comprar) -->
+@if (allocation(); as a) {
+  <div class="adm-card adm-card-pad ord-alloc">
+    <div class="ord-alloc-head">
+      <h3>Qué comprar por proveedor</h3>
+      <button class="adm-btn ghost sm" (click)="closeAllocation()">✕ Cerrar</button>
+    </div>
+    @for (s of a.suppliers; track s.supplierId) {
+      <div class="ord-alloc-sup">
+        <div class="ord-alloc-sup-head">
+          <b>{{ s.name }}</b>
+          <span class="adm-st" [class.green]="s.reachedMin" [class.amber]="!s.reachedMin">
+            US$ {{ s.subtotalUsd | number:'1.0-0' }}@if (s.minOrderUsd > 0) { / mín {{ s.minOrderUsd | number:'1.0-0' }} }
+          </span>
+        </div>
+        <div class="ord-alloc-lines">
+          @for (l of s.lines; track l.productId) {
+            <div class="ord-alloc-line">
+              <span>{{ l.brand }} — {{ l.name }}</span>
+              <span>x{{ l.quantity }}</span>
+              <span class="num">US$ {{ l.subtotalUsd | number:'1.2-2' }}</span>
+            </div>
+          }
+        </div>
+      </div>
+    }
+    @for (n of a.notes; track $index) { <p class="ord-alloc-note">• {{ n }}</p> }
+  </div>
+}
+
+<!-- Filtros -->
+<div class="adm-filters">
+  <input class="adm-input grow" type="search" placeholder="Buscar por código o cliente…" (input)="onSearch($event)">
+  <select class="adm-select" style="width:auto" (change)="onStatus($event)">
+    <option value="">Todos los estados</option>
+    <option value="PENDIENTE_SEPARACION">Pend. separación</option>
+    <option value="SEPARADO">Separado</option>
+    <option value="PENDIENTE_RESTO">Pend. pago final</option>
+    <option value="PAGADO">Pagado</option>
+    <option value="VERIFICADO">Verificado</option>
+    <option value="RECHAZADO">Rechazado</option>
+  </select>
+  <select class="adm-select" style="width:auto" (change)="onLocation($event)">
+    <option value="">Lima y provincia</option>
+    <option value="LIMA">Solo Lima</option>
+    <option value="PROVINCIA">Solo provincia (Shalom)</option>
+  </select>
+  <select class="adm-select" style="width:auto" (change)="onSeller($event)">
+    <option value="">Todos los vendedores</option>
+    @for (s of sellers(); track s) { <option [value]="s">{{ s }}</option> }
+    <option value="Sin asignar">Sin asignar</option>
+  </select>
+</div>
+
+<!-- Tabla -->
+@if (loading()) {
+  <div class="adm-card adm-card-pad" style="color:var(--a-muted)">Cargando pedidos…</div>
+} @else if (filteredOrders().length === 0) {
+  <div class="adm-card adm-empty"><h3>Sin pedidos</h3><p>No hay pedidos que coincidan con los filtros.</p></div>
+} @else {
+  <div class="adm-table-wrap">
+    <table class="adm-table">
+      <thead>
+        <tr>
+          <th>Código</th><th>Cliente</th><th>Ubicación</th><th>Vendedor</th>
+          <th>Estado</th><th class="num">Uds</th><th class="num">Total</th><th>Fecha</th><th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (o of filteredOrders(); track o.id) {
+          <tr>
+            <td><b>{{ o.orderCode }}</b></td>
+            <td>
+              <div>{{ o.clientName }}</div>
+              <div style="color:var(--a-faint);font-size:.8rem">{{ o.clientPhone }}</div>
+            </td>
+            <td>
+              @if (o.deliveryMethod === 'LIMA') { <span class="adm-pill">Lima</span> }
+              @else if (isShalom(o)) { <span class="adm-pill">Provincia</span> }
+              @else { <span style="color:var(--a-faint)">—</span> }
+            </td>
+            <td>@if (o.attendedBy) { {{ o.attendedBy }} } @else { <span style="color:var(--a-faint)">Sin asignar</span> }</td>
+            <td><span [class]="'adm-st ' + statusClass(o.paymentStatus)">{{ statusLabel(o.paymentStatus) }}</span></td>
+            <td class="num">{{ orderUnits(o) }}</td>
+            <td class="num">S/ {{ (o.totalPen || 0) | number:'1.2-2' }}</td>
+            <td style="white-space:nowrap;color:var(--a-muted);font-size:.82rem">{{ o.createdAt | date:'dd/MM/yy' }}</td>
+            <td>
+              <div class="ord-actions">
+                <button class="adm-btn sm" [class.primary]="expandedOrders().has(o.id)" (click)="toggleOrderDetail(o.id)">
+                  {{ expandedOrders().has(o.id) ? 'Ocultar' : 'Detalle' }}
+                </button>
+                @if (o.paymentStatus === 'PENDIENTE_SEPARACION') {
+                  <button class="adm-btn ok sm" (click)="accept(o.id)">Aceptar</button>
+                }
+                @if (o.paymentStatus === 'PENDIENTE_RESTO') {
+                  <button class="adm-btn ok sm" (click)="startAction(o.id, 'rest')">Verificar pago final</button>
+                }
+                <button class="adm-btn sm" (click)="startEdit(o)">Editar</button>
+                @if (o.paymentStatus !== 'RECHAZADO') {
+                  <button class="adm-btn ghost sm" (click)="reject(o.id)">Rechazar</button>
+                }
+                @if (o.paymentStatus === 'RECHAZADO' || o.paymentStatus === 'SEPARADO') {
+                  <button class="adm-btn danger sm" (click)="deleteOrder(o.id)">Eliminar</button>
+                }
+              </div>
+            </td>
+          </tr>
+          @if (expandedOrders().has(o.id)) {
+            <tr class="ord-detail-tr">
+              <td [attr.colspan]="9">
+                <div class="ord-detail-items">
+                  @for (it of o.items; track it.product.id) {
+                    <div class="ord-detail-item" [class.picked]="it.picked">
+                      <label class="ord-pick" [class.on]="it.picked" title="Verificar / marcar como comprado">
+                        <input type="checkbox" [checked]="it.picked" (change)="togglePicked(it)">
+                        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+                      </label>
+                      <div class="sl-thumb">@if (it.product.imageUrl) { <img [src]="it.product.imageUrl" [alt]="it.product.name"> } @else { <span>{{ it.product.brand }}</span> }</div>
+                      <div class="ord-detail-info">
+                        <b>{{ it.product.brand }}</b>
+                        <span>{{ it.product.name }} @if (it.product.ml) { · {{ it.product.ml }}ml }</span>
+                      </div>
+                      <div class="ord-detail-qty">x{{ it.quantity }}</div>
+                      <div class="num">S/ {{ (it.unitPricePen || 0) | number:'1.2-2' }}</div>
+                      <div class="num"><b>S/ {{ (it.subtotalPen || 0) | number:'1.2-2' }}</b></div>
+                      <div class="num ord-gain-cell" title="Ganancia de este perfume">+S/ {{ itemProfit(it) | number:'1.0-0' }}</div>
+                    </div>
+                  }
+
+                  @for (op of (o.promos || []); track op.id) {
+                    <div class="ord-detail-item ord-promo-line">
+                      <div class="ord-promo-tag">PROMO</div>
+                      <div class="ord-detail-info">
+                        <b>{{ op.promoName }}</b>
+                        <span class="ord-promo-perfumes">
+                          @for (pi of promoItemsFor(op); track $index) {
+                            <span class="ord-promo-chip">
+                              @if (pi.imageUrl) { <img [src]="pi.imageUrl" [alt]="pi.name"> }
+                              {{ pi.name }}
+                            </span>
+                          }
+                        </span>
+                      </div>
+                      <div class="ord-detail-qty">x{{ op.quantity }}</div>
+                      <div class="num">S/ {{ (op.unitPricePen || 0) | number:'1.2-2' }}</div>
+                      <div class="num"><b>S/ {{ (op.subtotalPen || 0) | number:'1.2-2' }}</b></div>
+                    </div>
+                  }
+                </div>
+                <div class="ord-detail-total">
+                  <span>Total ({{ orderUnits(o) }} uds@if (o.promos?.length) { · {{ o.promos!.length }} promo(s) })</span>
+                  <b>S/ {{ (o.totalPen || 0) | number:'1.2-2' }}</b>
+                </div>
+                <div class="ord-detail-gain">
+                  <span>Ganancia de este pedido</span>
+                  <b>+ S/ {{ orderProfit(o) | number:'1.0-0' }}</b>
+                </div>
+
+                @if (isShalom(o)) {
+                  <div class="ord-shalom">
+                    <div class="ord-shalom-title">📦 Envío Shalom (provincia)</div>
+                    <div class="ord-shalom-grid">
+                      <div><span>DNI</span><b>{{ o.shippingDni || '—' }}</b></div>
+                      <div><span>Nombre</span><b>{{ o.shippingName || o.clientName }}</b></div>
+                      <div><span>Destino</span><b>{{ shalomDestino(o) || '—' }}</b></div>
+                      <div><span>Teléfono</span><b>{{ o.shippingPhone || o.clientPhone }}</b></div>
+                    </div>
+                  </div>
+                }
+              </td>
+            </tr>
+          }
+        }
+      </tbody>
+    </table>
+  </div>
+}
+
+<!-- Modal: verificar pago (referencia Yape) -->
+@if (activeActionOrderId() !== null) {
+  <div class="ord-modal-bg" (click)="cancelAction()">
+    <div class="ord-modal" (click)="$event.stopPropagation()">
+      <h3>{{ activeActionType() === 'deposit' ? 'Verificar separación' : 'Verificar pago final' }}</h3>
+      <div class="adm-field" style="margin:14px 0">
+        <label>Referencia Yape / Plin (opcional)</label>
+        <input class="adm-input" [value]="yapeRefInput()" (input)="yapeRefInput.set($any($event.target).value)" placeholder="Código de operación">
+      </div>
+      <div class="ord-modal-actions">
+        <button class="adm-btn" (click)="cancelAction()">Cancelar</button>
+        <button class="adm-btn ok" (click)="confirmAction()">Confirmar</button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Modal: cerrar consolidado (subir Excel + faltantes + WhatsApp) -->
+@if (showCloseModal()) {
+  <div class="ord-modal-bg" (click)="closeCloseModal()">
+    <div class="ord-modal ord-modal-lg" (click)="$event.stopPropagation()">
+      <div class="ord-detail-head">
+        <h3>Cerrar consolidado #{{ selectedId() }}</h3>
+        <button class="adm-btn ghost sm" (click)="closeCloseModal()">✕</button>
+      </div>
+
+      @if (closeStep() === 'upload') {
+        <p style="color:var(--a-muted);font-size:.88rem;margin-bottom:14px">
+          Sube los Excel de los 2 proveedores. Se aplicará la regla Zimaxx (mín. US$2000) y se detectará qué perfumes faltan.
+        </p>
+        <div class="adm-field" style="margin-bottom:12px">
+          <label>Excel Zimaxx (.xlsx)</label>
+          <input class="adm-input" type="file" accept=".xlsx,.xls" (change)="onZimaxxFile($event)">
+        </div>
+        <div class="adm-field" style="margin-bottom:16px">
+          <label>Excel Magnet (.xlsx)</label>
+          <input class="adm-input" type="file" accept=".xlsx,.xls" (change)="onMagnetFile($event)">
+        </div>
+        @if (closeError()) { <p style="color:var(--a-danger);font-size:.85rem;margin-bottom:10px">{{ closeError() }}</p> }
+        <div class="ord-modal-actions">
+          <button class="adm-btn" (click)="closeCloseModal()">Cancelar</button>
+          <button class="adm-btn primary" (click)="processClose()" [disabled]="!zimaxxFile() || !magnetFile() || closing()">
+            {{ closing() ? 'Procesando…' : 'Procesar y cerrar' }}
+          </button>
+        </div>
+      }
+
+      @if (closeStep() === 'result') {
+        @if (missing().length === 0) {
+          <div class="adm-st green" style="margin-bottom:12px">✓ Todos los perfumes pedidos están disponibles en los proveedores.</div>
+        } @else {
+          <h4 style="font-weight:700;margin:6px 0 4px">Perfumes que faltan ({{ missing().length }})</h4>
+          <p style="color:var(--a-muted);font-size:.82rem;margin-bottom:12px">
+            Marca los que comprarás en otro proveedor (con su costo US$). El resto se avisa al cliente por WhatsApp.
+          </p>
+          <div class="ord-detail-items" style="max-height:34vh">
+            @for (mi of missing(); track mi.productId) {
+              <div class="ord-miss">
+                <label class="ord-miss-pick">
+                  <input type="checkbox" [checked]="buyElsewhere().has(mi.productId)" (change)="toggleBuyElsewhere(mi.productId)">
+                  <div>
+                    <b>{{ mi.brand }} {{ mi.name }}</b>
+                    <div style="font-size:.78rem;color:var(--a-muted)">
+                      x{{ missingQty(mi) }} ·
+                      @for (o of mi.orders; track o.orderCode) { {{ o.clientName }} ({{ o.quantity }}) }
+                    </div>
+                  </div>
+                </label>
+                @if (buyElsewhere().has(mi.productId)) {
+                  <div class="ord-miss-cost">
+                    US$ <input class="adm-input" type="number" min="0" step="0.5" placeholder="0" style="width:80px;padding:6px 8px"
+                               (input)="setBuyCost(mi.productId, $any($event.target).value)"> /u
+                  </div>
+                }
+              </div>
+            }
+          </div>
+          <div class="ord-miss-total">Comprar en otro proveedor: <b>US$ {{ buyElsewhereTotalUsd() | number:'1.2-2' }}</b></div>
+
+          @if (clientsToNotify().length) {
+            <h4 style="font-weight:700;margin:16px 0 8px">Avisar a clientes ({{ clientsToNotify().length }})</h4>
+            <div class="ord-detail-items" style="max-height:26vh">
+              @for (c of clientsToNotify(); track c.code) {
+                <div class="ord-client">
+                  <div>
+                    <b>{{ c.name }}</b> <span style="color:var(--a-muted)">· {{ c.phone }}</span>
+                    <div style="font-size:.8rem;color:var(--a-muted)">Falta: {{ c.items.length }} perfume(s)</div>
+                  </div>
+                  <button class="adm-btn ok sm" (click)="whatsappClient(c)">Enviar WhatsApp</button>
+                </div>
+              }
+            </div>
+          }
+        }
+        <div class="ord-modal-actions" style="margin-top:14px">
+          <button class="adm-btn primary" (click)="closeCloseModal()">Listo</button>
+        </div>
+      }
+    </div>
+  </div>
+}
+
+<!-- Modal: editar cliente -->
+@if (editingOrderId() !== null) {
+  <div class="ord-modal-bg" (click)="cancelEdit()">
+    <div class="ord-modal" (click)="$event.stopPropagation()">
+      <h3>Editar cliente</h3>
+      <div class="adm-field" style="margin:14px 0 10px">
+        <label>Nombre</label>
+        <input class="adm-input" [value]="editName()" (input)="onEditName($event)">
+      </div>
+      <div class="adm-field" style="margin-bottom:14px">
+        <label>Celular</label>
+        <input class="adm-input" [value]="editPhone()" (input)="onEditPhone($event)">
+      </div>
+      <div class="ord-modal-actions">
+        <button class="adm-btn" (click)="cancelEdit()">Cancelar</button>
+        <button class="adm-btn primary" (click)="saveEdit()">Guardar</button>
+      </div>
+    </div>
+  </div>
+}

@@ -1,237 +1,133 @@
-<div class="admin-page">
-  <nav class="admin-nav">
-    <div class="nav-brand"><span class="brand-name">AromaStudio</span><span class="brand-tag">Admin</span></div>
-    <div class="nav-links">
-      <a routerLink="/admin" class="nav-link">Dashboard</a>
-      <a routerLink="/admin/orders" class="nav-link">Pedidos</a>
-      <a routerLink="/admin/products" class="nav-link active">Productos</a>
-      <a routerLink="/admin/stock-purchase" class="nav-link">Compra Tienda</a>
-      <a routerLink="/admin/inventory" class="nav-link">Inventario</a>
-      <a routerLink="/admin/ventas" class="nav-link">Ventas</a>
-      <a routerLink="/admin/config" class="nav-link">Config</a>
-    </div>
-  </nav>
+@if (message()) { <div class="ord-toast">{{ message() }}</div> }
 
-  <div class="admin-content">
-    <div class="config-bar">
-      <div class="config-chip">
-        <span class="chip-label">T/C Dólar:</span>
-        @if (editingConfig() === 'exchange_rate') {
-          <input type="text" inputmode="decimal" [value]="editConfigValue()" (input)="onConfigInput($event)" (keyup.enter)="saveConfigEdit('exchange_rate')" class="chip-input" autofocus>
-          <button class="chip-save" (click)="saveConfigEdit('exchange_rate')">OK</button>
-          <button class="chip-cancel" (click)="cancelConfigEdit()">X</button>
-        } @else {
-          <span class="chip-value" (click)="startConfigEdit('exchange_rate', exchangeRate())">S/ {{exchangeRate() | number:'1.2-2'}}</span>
-        }
-      </div>
-      <div class="config-chip">
-        <span class="chip-label">Courier/kg:</span>
-        @if (editingConfig() === 'courier_cost_per_kg') {
-          <input type="text" inputmode="decimal" [value]="editConfigValue()" (input)="onConfigInput($event)" (keyup.enter)="saveConfigEdit('courier_cost_per_kg')" class="chip-input" autofocus>
-          <button class="chip-save" (click)="saveConfigEdit('courier_cost_per_kg')">OK</button>
-          <button class="chip-cancel" (click)="cancelConfigEdit()">X</button>
-        } @else {
-          <span class="chip-value" (click)="startConfigEdit('courier_cost_per_kg', courierCostPerKg())">${{courierCostPerKg() | number:'1.0-2'}}</span>
-        }
-      </div>
-      @if (configMessage()) {
-        <span class="config-msg" [class.error]="configMessage().startsWith('✗')">{{configMessage()}}</span>
-      }
-    </div>
-
-    <div class="page-header">
-      <h1>Productos y Precios</h1>
-      <div class="header-actions">
-        <button class="create-btn" (click)="toggleCreate()">{{ showCreate() ? 'Cancelar' : '+ Nuevo Producto' }}</button>
-
-        <select class="search-input" style="cursor: pointer; max-width: 200px; padding-right: 10px;" (change)="onSortChange($event)">
-          <option value="default">Ordenar por...</option>
-          <option value="name_asc">Alfabético (A-Z)</option>
-          <option value="name_desc">Alfabético (Z-A)</option>
-          <option value="price_desc">Precio USD: Mayor a Menor</option>
-          <option value="price_asc">Precio USD: Menor a Mayor</option>
-          <option value="sku_asc">SKU (A-Z)</option>
-        </select>
-
-        <input type="text" placeholder="Buscar producto..." (input)="onSearchInput($event)" class="search-input">
-      </div>
-    </div>
-
-    @if (createMessage()) {
-      <div class="message">{{ createMessage() }}</div>
-    }
-
-    @if (showCreate()) {
-      <div class="create-form">
-        <h3>Nuevo Producto</h3>
-        <div class="form-grid">
-          <div class="form-field">
-            <label>SKU *</label>
-            <input type="text" [value]="newProduct().sku" (input)="updateNewProduct('sku', $event)" placeholder="LAT-001">
-          </div>
-          <div class="form-field">
-            <label>Marca *</label>
-            <input type="text" [value]="newProduct().brand" (input)="updateNewProduct('brand', $event)" placeholder="Lattafa">
-          </div>
-          <div class="form-field">
-            <label>Nombre *</label>
-            <input type="text" [value]="newProduct().name" (input)="updateNewProduct('name', $event)" placeholder="Raghba">
-          </div>
-          <div class="form-field">
-            <label>Tipo</label>
-            <select (change)="updateNewProduct('type', $event)">
-              <option value="EDP">EDP</option>
-              <option value="EDT">EDT</option>
-              <option value="Parfum">Parfum</option>
-              <option value="Body Spray">Body Spray</option>
-            </select>
-          </div>
-          <div class="form-field">
-            <label>ML</label>
-            <input type="number" [value]="newProduct().ml" (input)="updateNewProduct('ml', $event)">
-          </div>
-          <div class="form-field">
-            <label>Categoría</label>
-            <select (change)="updateNewProduct('category', $event)">
-              <option value="unisex">Unisex</option>
-              <option value="men">Hombre</option>
-              <option value="women">Mujer</option>
-            </select>
-          </div>
-          <div class="form-field">
-            <label>Precio USD</label>
-            <input type="number" step="0.01" [value]="newProduct().priceUsd" (input)="updateNewProduct('priceUsd', $event)">
-          </div>
-          <div class="form-field">
-            <label>Peso (g)</label>
-            <input type="number" [value]="newProduct().weightG" (input)="updateNewProduct('weightG', $event)">
-          </div>
-          <div class="form-field form-field-wide">
-            <label>URL de Imagen</label>
-            <input type="text" [value]="newProduct().imageUrl || ''" (input)="updateNewProduct('imageUrl', $event)" placeholder="https://ejemplo.com/imagen.jpg">
-            @if (newProduct().imageUrl) {
-              <img [src]="newProduct().imageUrl" class="image-preview-small" alt="Preview" />
-            }
-          </div>
-        </div>
-        <button class="submit-btn" (click)="createProduct()">Crear Producto</button>
-      </div>
-    }
-
-    <div class="products-table-wrapper">
-      <table class="products-table">
-        <thead>
-        <tr>
-          <th>SKU</th>
-          <th>Producto</th>
-          <th>Tipo</th>
-          <th>Peso (g)</th>
-          <th>Precio USD</th>
-          <th>Puesto USD</th>
-          <th>Puesto PEN</th>
-          <th>Retail (S/)</th>
-          <th>Consolidado (S/)</th>
-          <th>Por Mayor (S/)</th>
-          <th>Disp.</th>
-          <th>Acciones</th>
-        </tr>
-        </thead>
-        <tbody>
-          @for (p of visibleProducts(); track p.id) {
-            <tr>
-              @if (editingId() === p.id) {
-                <td class="sku"><input type="text" [value]="editSku()" (input)="editSku.set($any($event.target).value)" class="edit-input" placeholder="SKU" style="width:80px;"></td>
-              } @else {
-                <td class="sku">{{p.sku}}</td>
-              }
-              <td class="product-cell">
-                @if (editingId() === p.id) {
-                  <div class="product-info-row" style="flex-direction:column;align-items:flex-start;gap:4px;">
-                    <input type="text" [value]="editBrand()" (input)="editBrand.set($any($event.target).value)" class="edit-input" placeholder="Marca" style="width:100%;font-weight:bold;">
-                    <input type="text" [value]="editName()" (input)="editName.set($any($event.target).value)" class="edit-input" placeholder="Nombre" style="width:100%;">
-                  </div>
-                } @else {
-                  <div class="product-info-row">
-                    @if (p.imageUrl) {
-                      <img [src]="p.imageUrl" [alt]="p.name" class="product-thumb" />
-                    } @else {
-                      <div class="product-thumb-placeholder">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>
-                      </div>
-                    }
-                    <span><strong>{{p.brand}}</strong> - {{p.name}} {{p.ml}}ml</span>
-                  </div>
-                }
-              </td>
-              @if (editingId() === p.id) {
-                <td>
-                  <select [value]="editCategory()" (change)="editCategory.set($any($event.target).value)" class="edit-input" style="width:90px;">
-                    <option value="unisex">Unisex</option>
-                    <option value="men">Hombre</option>
-                    <option value="women">Mujer</option>
-                  </select>
-                </td>
-              } @else {
-                <td><span class="type-badge" [class]="p.category">{{p.category}}</span></td>
-              }
-
-              @if (editingId() === p.id) {
-                <td><input type="number" step="1" [value]="editPrices().weightG" (input)="updateEditField('weightG', $event)" class="edit-input edit-sm"></td>
-                <td><input type="number" step="0.01" [value]="editPrices().priceUsd" (input)="updateEditField('priceUsd', $event)" class="edit-input"></td>
-                <td class="calc-cell">${{landedCostUsd(p) | number:'1.2-2'}}</td>
-                <td class="calc-cell">S/ {{landedCostPen(p) | number:'1.2-2'}}</td>
-                <td><input type="number" step="0.01" [value]="editPrices().retailPricePen" (input)="updateEditField('retailPricePen', $event)" class="edit-input"></td>
-                <td><input type="number" step="0.01" [value]="editPrices().wholesalePricePen" (input)="updateEditField('wholesalePricePen', $event)" class="edit-input"></td>
-                <td><input type="number" step="0.01" [value]="editPrices().mayorPricePen" (input)="updateEditField('mayorPricePen', $event)" class="edit-input"></td>
-              } @else {
-                <td>{{p.weightG || '—'}}</td>
-                <td>${{p.priceUsd | number:'1.2-2'}}</td>
-                <td class="calc-cell">${{landedCostUsd(p) | number:'1.2-2'}}</td>
-                <td class="calc-cell">S/ {{landedCostPen(p) | number:'1.2-2'}}</td>
-                <td>{{p.retailPricePen ? 'S/ ' + (p.retailPricePen | number:'1.2-2') : '—'}}</td>
-                <td>{{p.wholesalePricePen ? 'S/ ' + (p.wholesalePricePen | number:'1.2-2') : '—'}}</td>
-                <td>{{p.mayorPricePen ? 'S/ ' + (p.mayorPricePen | number:'1.2-2') : '—'}}</td>
-              }
-
-              <td>
-                <button class="toggle-btn" [class.active]="p.available" (click)="toggleAvailable(p)">
-                  {{p.available ? 'Sí' : 'No'}}
-                </button>
-              </td>
-              <td>
-                @if (editingId() === p.id) {
-                  <button class="save-btn" (click)="savePrices(p.id)">Guardar</button>
-                  <button class="cancel-btn" (click)="cancelEdit()">X</button>
-                } @else {
-                  <button class="edit-btn" (click)="startEdit(p)">Editar</button>
-
-                  <button class="delete-btn" (click)="deleteProduct(p.id)" style="background-color: #dc3545; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; margin-left: 5px; font-size: 0.85rem;">Eliminar</button>
-                }
-              </td>
-            </tr>
-            @if (editingId() === p.id) {
-              <tr class="image-edit-row">
-                <td colspan="13">
-                  <div class="image-edit-section">
-                    <label>URL de imagen:</label>
-                    <input type="text" [value]="editImageUrl()" (input)="onImageUrlInput($event)" placeholder="https://ejemplo.com/imagen.jpg" class="image-url-input" />
-                    @if (editImageUrl()) {
-                      <img [src]="editImageUrl()" class="image-preview" alt="Preview" (error)="onImageError($event)" />
-                    }
-                  </div>
-                </td>
-              </tr>
-            }
-          }
-        </tbody>
-      </table>
-      @if (hasMore()) {
-        <div style="text-align:center;padding:16px;">
-          <button class="create-btn" (click)="loadMore()">
-            Cargar más ({{visibleCount()}} de {{filteredProducts().length}})
-          </button>
-        </div>
-      }
-    </div>
+<div class="ord-head">
+  <h2 class="adm-section-title" style="margin:0">Productos <span style="color:var(--a-faint);font-weight:500">({{ filtered().length }})</span></h2>
+  <div class="ord-head-actions">
+    <input class="adm-input" type="search" placeholder="Buscar por nombre, marca o SKU…" style="min-width:240px" (input)="onSearch($event)">
+    <select class="adm-select" style="width:auto" (change)="onSort($event)">
+      <option value="default">Orden por defecto</option>
+      <option value="name_asc">Nombre A-Z</option>
+      <option value="price_desc">Costo USD ↓</option>
+      <option value="price_asc">Costo USD ↑</option>
+      <option value="stock">Más stock</option>
+    </select>
+    <button class="adm-btn primary" (click)="toggleCreate()">+ Nuevo</button>
   </div>
 </div>
+
+<p style="color:var(--a-muted);font-size:.84rem;margin-bottom:16px">
+  <b>Puesto en Perú</b> = costo + envío (${{ cfg().courier }}/kg) + caja (${{ cfg().repackPerBox }}/{{ cfg().perBox }}) × T/C {{ cfg().tc }}.
+  <b>Consolidado</b> = puesto en Perú + S/20. <b>Stock</b> = + S/35. Redondeado hacia arriba.
+</p>
+
+<!-- Crear -->
+@if (showCreate()) {
+  <div class="adm-card adm-card-pad" style="margin-bottom:18px">
+    <h3 style="font-weight:700;margin-bottom:12px">Nuevo producto</h3>
+    <div class="prod-form">
+      <div class="adm-field"><label>SKU</label><input class="adm-input" (input)="newField('sku',$event)"></div>
+      <div class="adm-field"><label>Marca</label><input class="adm-input" (input)="newField('brand',$event)"></div>
+      <div class="adm-field"><label>Nombre</label><input class="adm-input" (input)="newField('name',$event)"></div>
+      <div class="adm-field"><label>ml</label><input class="adm-input" type="number" value="100" (input)="newField('ml',$event)"></div>
+      <div class="adm-field"><label>Costo USD</label><input class="adm-input" type="number" step="0.01" (input)="newField('priceUsd',$event)"></div>
+      <div class="adm-field"><label>Peso (g)</label><input class="adm-input" type="number" value="350" (input)="newField('weightG',$event)"></div>
+      <div class="adm-field"><label>Categoría</label>
+        <select class="adm-select" (change)="newField('category',$event)">
+          <option value="unisex">Unisex</option><option value="men">Hombre</option><option value="women">Mujer</option>
+        </select>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:14px">
+      <button class="adm-btn" (click)="toggleCreate()">Cancelar</button>
+      <button class="adm-btn primary" (click)="create()">Crear producto</button>
+    </div>
+  </div>
+}
+
+<!-- Tabla -->
+<div class="adm-table-wrap">
+  <table class="adm-table">
+    <thead>
+      <tr>
+        <th>Producto</th>
+        <th class="num">Costo USD</th>
+        <th class="num">Puesto en Perú</th>
+        <th class="num">Consolidado (+20)</th>
+        <th class="num">Stock (+35)</th>
+        <th class="num">En stock</th>
+        <th>Estado</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (p of visible(); track p.id) {
+        <tr>
+          <td>
+            <div class="prod-cell">
+              <div class="prod-thumb">
+                @if (p.imageUrl) { <img [src]="p.imageUrl" [alt]="p.name"> } @else { <span>{{ p.brand }}</span> }
+              </div>
+              <div>
+                <div style="font-size:.72rem;text-transform:uppercase;letter-spacing:.03em;color:var(--a-muted);font-weight:700">{{ p.brand }}</div>
+                <div>{{ p.name }} @if (p.ml) { · {{ p.ml }}ml }</div>
+                <div style="font-size:.74rem;color:var(--a-faint)">{{ p.sku }}</div>
+              </div>
+            </div>
+          </td>
+          <td class="num">${{ (p.priceUsd || 0) | number:'1.2-2' }}</td>
+          <td class="num">S/ {{ landedPen(p.id) | number:'1.2-2' }}</td>
+          <td class="num"><b>S/ {{ (p.wholesalePricePen || 0) | number:'1.0-0' }}</b></td>
+          <td class="num">@if (p.stockPricePen) { S/ {{ p.stockPricePen | number:'1.0-0' }} } @else { <span style="color:var(--a-faint)">—</span> }</td>
+          <td class="num">@if (stockQty(p.id)) { <b>{{ stockQty(p.id) }}</b> } @else { <span style="color:var(--a-faint)">0</span> }</td>
+          <td>
+            <button class="adm-st" [class.green]="p.available" [class.gray]="!p.available" (click)="toggleAvailable(p)" style="border:none;cursor:pointer">
+              {{ p.available ? 'Activo' : 'Oculto' }}
+            </button>
+          </td>
+          <td>
+            <div class="ord-actions">
+              <button class="adm-btn sm" (click)="startEdit(p)">Editar</button>
+              <button class="adm-btn danger sm" (click)="deleteProduct(p.id)">Eliminar</button>
+            </div>
+          </td>
+        </tr>
+        @if (editingId() === p.id) {
+          <tr class="ord-detail-tr">
+            <td [attr.colspan]="8">
+              <div class="prod-edit">
+                <div class="adm-field"><label>Marca</label><input class="adm-input" [value]="edit().brand" (input)="editField('brand',$event)"></div>
+                <div class="adm-field"><label>Nombre</label><input class="adm-input" [value]="edit().name" (input)="editField('name',$event)"></div>
+                <div class="adm-field"><label>Categoría</label>
+                  <select class="adm-select" [value]="edit().category" (change)="editField('category',$event)">
+                    <option value="unisex">Unisex</option><option value="men">Hombre</option><option value="women">Mujer</option>
+                  </select>
+                </div>
+                <div class="adm-field"><label>Costo USD</label><input class="adm-input" type="number" step="0.01" [value]="edit().priceUsd" (input)="editField('priceUsd',$event)"></div>
+                <div class="adm-field"><label>Peso (g)</label><input class="adm-input" type="number" [value]="edit().weightG" (input)="editField('weightG',$event)"></div>
+                <div class="adm-field"><label>Consolidado (S/)</label><input class="adm-input" type="number" [value]="edit().consolidado" (input)="editField('consolidado',$event)"></div>
+                <div class="adm-field"><label>Stock (S/)</label><input class="adm-input" type="number" [value]="edit().stock" (input)="editField('stock',$event)"></div>
+                <div class="adm-field" style="grid-column:1/-1"><label>URL de imagen</label><input class="adm-input" [value]="edit().imageUrl" (input)="editField('imageUrl',$event)"></div>
+              </div>
+              <div style="display:flex;gap:10px;align-items:center;margin-top:12px;flex-wrap:wrap">
+                <button class="adm-btn" (click)="recalc()">↺ Recalcular precios (costo+20 / +35)</button>
+                <label style="display:flex;align-items:center;gap:6px;font-size:.82rem;color:var(--a-muted)">
+                  <input type="checkbox" [checked]="edit().priceLocked" (change)="toggleLock($event)">
+                  Bloquear precio (no recalcular al cambiar T/C)
+                </label>
+                <div style="flex:1"></div>
+                <button class="adm-btn" (click)="cancelEdit()">Cancelar</button>
+                <button class="adm-btn primary" (click)="save()">Guardar</button>
+              </div>
+            </td>
+          </tr>
+        }
+      }
+    </tbody>
+  </table>
+</div>
+
+@if (hasMore()) {
+  <div style="text-align:center;margin-top:16px">
+    <button class="adm-btn" (click)="loadMore()">Ver más ({{ filtered().length - visible().length }})</button>
+  </div>
+}

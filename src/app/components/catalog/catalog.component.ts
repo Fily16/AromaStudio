@@ -1,33 +1,70 @@
-import { Component, computed, inject, signal, OnInit, effect } from '@angular/core';
-import { Router, RouterLink } from '@angular/router';
+import { Component, computed, inject, signal, OnInit, OnDestroy, effect } from '@angular/core';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { DecimalPipe } from '@angular/common';
 import { ApiService } from '../../services/api.service';
 import { CartService } from '../../services/cart.service';
-import { Product, Order } from '../../models/api.models';
+import { Product, Order, Banner, Promotion } from '../../models/api.models';
+import { ProductCardComponent } from '../shared/product-card.component';
+import { NoteIconComponent } from '../shared/note-icon.component';
+import {
+  parseNotes, noteLabel, familyLabel, FamilyCode, FAMILY_ORDER,
+  OCCASION_LABEL, SEASON_LABEL, SEASON_ORDER
+} from '../shared/note-catalog';
+
+type SortKey = 'relevance' | 'price-asc' | 'price-desc' | 'new';
+type StockKey = 'all' | 'in' | 'order' | 'promos';
+type GenderKey = 'all' | 'men' | 'women' | 'unisex';
+type OccasionKey = 'all' | 'dia' | 'noche' | 'versatil';
 
 @Component({
   selector: 'app-catalog',
   standalone: true,
-  imports: [FormsModule, DecimalPipe, RouterLink],
+  imports: [FormsModule, DecimalPipe, ProductCardComponent, RouterLink, NoteIconComponent],
   templateUrl: './catalog.component.html',
   styleUrl: './catalog.component.css'
 })
-export class CatalogComponent implements OnInit {
+export class CatalogComponent implements OnInit, OnDestroy {
   private api = inject(ApiService);
   private router = inject(Router);
+  private route = inject(ActivatedRoute);
   cart = inject(CartService);
 
   allProducts = signal<Product[]>([]);
   loading = signal(true);
+  stockMap = signal<Record<number, number>>({});
+  sidebarPromo = signal<Banner | null>(null);
 
-  searchQuery = signal('');
-  brandFilter = signal('Todos');
-  currentPage = signal(1);
-  itemsPerPage = 15;
+  // Promociones rotativas en los filtros (cambian cada 10s con desvanecido)
+  promoList = signal<Promotion[]>([]);
+  promoIdx = signal(0);
+  promoFade = signal(false);
+  private promoTimer: any = null;
+  currentPromotion = computed(() => {
+    const l = this.promoList();
+    return l.length ? l[this.promoIdx() % l.length] : null;
+  });
 
-  cartToast = signal('');
-  selectedQty = signal<Record<number, number>>({});
+  // ---- Filtros ----
+  query = signal('');
+  gender = signal<GenderKey>('all');
+  selectedBrands = signal<Set<string>>(new Set());
+  priceMin = signal<number | null>(null);
+  priceMax = signal<number | null>(null);
+  stockFilter = signal<StockKey>('all');
+  // --- Filtros olfativos ---
+  selectedFamilies = signal<Set<string>>(new Set());
+  occasionFilter = signal<OccasionKey>('all');
+  selectedSeasons = signal<Set<string>>(new Set());
+  noteQuery = signal('');
+  sort = signal<SortKey>('relevance');
+  visibleCount = signal(24);
+  showFilters = signal(false); // bottom-sheet móvil
+  collapsedSections = signal<Set<string>>(new Set()); // secciones de filtro plegadas
+
+  // Etiquetas para el template
+  seasonOrder = SEASON_ORDER;
+  seasonLabel = (s: string) => SEASON_LABEL[s] || s;
 
   ngOnInit() {
     this.api.getProducts({ onlyAvailable: true }).subscribe({
@@ -37,158 +74,224 @@ export class CatalogComponent implements OnInit {
       },
       error: () => this.loading.set(false)
     });
+    this.api.getRetailStock().subscribe({
+      next: (stock) => this.stockMap.set(stock || {}),
+      error: () => {}
+    });
+    this.api.getPublicConfig().subscribe({
+      next: (cfg) => {
+        const promos = cfg.promos ?? [];
+        if (promos.length) this.sidebarPromo.set(promos[0]);
+      },
+      error: () => {}
+    });
+    this.api.getActivePromotions().subscribe({
+      next: (p) => { this.promoList.set(p); },
+      error: () => {}
+    });
+    // Rotación cada 10s con desvanecido
+    this.promoTimer = setInterval(() => {
+      if (this.promoList().length < 2) return;
+      this.promoFade.set(true);
+      setTimeout(() => { this.promoIdx.update(v => v + 1); this.promoFade.set(false); }, 450);
+    }, 10000);
 
-    try {
-      (window as any).ttq?.track('ViewContent', {
-        content_type: 'product_group',
-        content_name: 'Catálogo',
-        currency: 'PEN'
-      });
-    } catch {}
-    try {
-      (window as any).fbq?.('track', 'ViewContent', {
-        content_type: 'product_group',
-        content_name: 'Catálogo',
-        currency: 'PEN'
-      });
-    } catch {}
+    // Lee q / brand / category de la URL (buscador del header, banners, footer)
+    this.route.queryParams.subscribe((params) => {
+      this.query.set(params['q'] ?? '');
+      const cat = params['category'];
+      this.gender.set(cat === 'men' || cat === 'women' || cat === 'unisex' ? cat : 'all');
+      if (params['brand']) this.selectedBrands.set(new Set([params['brand']]));
+      if (params['family']) this.selectedFamilies.set(new Set([params['family']]));
+    });
+
+    try { (window as any).ttq?.track('ViewContent', { content_type: 'product_group', content_name: 'Catálogo', currency: 'PEN' }); } catch {}
+    try { (window as any).fbq?.('track', 'ViewContent', { content_type: 'product_group', content_name: 'Catálogo', currency: 'PEN' }); } catch {}
   }
 
-  wholesaleProducts = computed(() => {
-    return this.allProducts().filter(p => p.wholesalePricePen && p.wholesalePricePen > 0);
-  });
+  ngOnDestroy() { if (this.promoTimer) clearInterval(this.promoTimer); }
 
-  brands = computed(() => {
-    const brandSet = [...new Set(this.wholesaleProducts().map(p => p.brand))];
-    return ['Todos', ...brandSet.sort()];
-  });
+  goPromoPage(id: number) { this.router.navigate(['/promocion', id]); }
 
-  filteredProducts = computed(() => {
-    let products = [...this.wholesaleProducts()];
-    const query = this.searchQuery().toLowerCase().trim();
-    const brand = this.brandFilter();
-    if (query) {
-      products = products.filter(p =>
-        p.name.toLowerCase().includes(query) || p.brand.toLowerCase().includes(query)
-      );
-    }
-    if (brand !== 'Todos') {
-      products = products.filter(p => p.brand === brand);
-    }
-    return products;
-  });
-
-  totalPages = computed(() =>
-    Math.ceil(this.filteredProducts().length / this.itemsPerPage)
+  wholesaleProducts = computed(() =>
+    this.allProducts().filter(p => p.wholesalePricePen && p.wholesalePricePen > 0)
   );
 
-  paginatedProducts = computed(() => {
-    const start = (this.currentPage() - 1) * this.itemsPerPage;
-    return this.filteredProducts().slice(start, start + this.itemsPerPage);
+  private baseBrand = (b: string | null | undefined) => (b || '').split(' - ')[0].trim();
+
+  brandFacets = computed(() => {
+    const m = new Map<string, number>();
+    for (const p of this.wholesaleProducts()) {
+      const b = this.baseBrand(p.brand);
+      if (!b || /^\d/.test(b)) continue;
+      m.set(b, (m.get(b) || 0) + 1);
+    }
+    return [...m.entries()]
+      .map(([label, count]) => ({ label, count }))
+      .sort((a, b) => b.count - a.count);
   });
 
+  familyFacets = computed(() => {
+    const m = new Map<string, number>();
+    for (const p of this.wholesaleProducts()) {
+      const f = p.olfactiveFamily;
+      if (f) m.set(f, (m.get(f) || 0) + 1);
+    }
+    return FAMILY_ORDER
+      .filter(f => m.has(f))
+      .map(f => ({ code: f as FamilyCode, label: familyLabel(f), count: m.get(f)! }));
+  });
+
+  private productNoteText(p: Product): string {
+    const slugs = [...parseNotes(p.notesTop), ...parseNotes(p.notesMiddle), ...parseNotes(p.notesBase)];
+    return slugs.map(s => s + ' ' + noteLabel(s)).join(' ').toLowerCase();
+  }
+
+  filteredProducts = computed(() => {
+    let list = this.wholesaleProducts();
+
+    const q = this.query().toLowerCase().trim();
+    if (q) {
+      const tokens = q.split(/\s+/);
+      list = list.filter(p => {
+        const hay = `${p.name} ${p.brand} ${p.sku ?? ''} ${p.gtin ?? ''}`.toLowerCase();
+        return tokens.every(t => hay.includes(t));
+      });
+    }
+
+    const g = this.gender();
+    if (g !== 'all') list = list.filter(p => p.category === g);
+
+    const brands = this.selectedBrands();
+    if (brands.size) list = list.filter(p => brands.has(this.baseBrand(p.brand)));
+
+    const min = this.priceMin(), max = this.priceMax();
+    if (min != null) list = list.filter(p => (p.wholesalePricePen || 0) >= min);
+    if (max != null) list = list.filter(p => (p.wholesalePricePen || 0) <= max);
+
+    const sf = this.stockFilter();
+    if (sf === 'in') list = list.filter(p => this.isInStock(p.id));
+    else if (sf === 'order') list = list.filter(p => !this.isInStock(p.id));
+
+    const fams = this.selectedFamilies();
+    if (fams.size) list = list.filter(p => p.olfactiveFamily != null && fams.has(p.olfactiveFamily));
+
+    const occ = this.occasionFilter();
+    if (occ !== 'all') list = list.filter(p => p.occasion === occ);
+
+    const seasons = this.selectedSeasons();
+    if (seasons.size) list = list.filter(p => {
+      const ps = parseNotes(p.seasons);
+      return ps.some(s => seasons.has(s));
+    });
+
+    const nq = this.noteQuery().toLowerCase().trim();
+    if (nq) list = list.filter(p => this.productNoteText(p).includes(nq));
+
+    list = [...list];
+    switch (this.sort()) {
+      case 'price-asc': list.sort((a, b) => (a.wholesalePricePen || 0) - (b.wholesalePricePen || 0)); break;
+      case 'price-desc': list.sort((a, b) => (b.wholesalePricePen || 0) - (a.wholesalePricePen || 0)); break;
+      case 'new': list.sort((a, b) => (b.isNew ? 1 : 0) - (a.isNew ? 1 : 0)); break;
+    }
+    return list;
+  });
+
+  displayed = computed(() => this.filteredProducts().slice(0, this.visibleCount()));
   resultsCount = computed(() => this.filteredProducts().length);
+  canLoadMore = computed(() => this.visibleCount() < this.filteredProducts().length);
+  activeFilterCount = computed(() =>
+    (this.gender() !== 'all' ? 1 : 0) + this.selectedBrands().size +
+    (this.priceMin() != null || this.priceMax() != null ? 1 : 0) +
+    (this.stockFilter() !== 'all' ? 1 : 0) +
+    this.selectedFamilies().size +
+    (this.occasionFilter() !== 'all' ? 1 : 0) +
+    this.selectedSeasons().size +
+    (this.noteQuery().trim() ? 1 : 0)
+  );
 
-  private resetPage = effect(() => {
-    this.searchQuery();
-    this.brandFilter();
-    this.currentPage.set(1);
+  // Reinicia el "ver más" cuando cambian los filtros
+  private resetVisible = effect(() => {
+    this.query(); this.gender(); this.selectedBrands();
+    this.priceMin(); this.priceMax(); this.stockFilter();
+    this.selectedFamilies(); this.occasionFilter(); this.selectedSeasons(); this.noteQuery();
+    this.sort();
+    this.visibleCount.set(24);
   });
 
-  onSearchChange(event: Event) {
-    const query = (event.target as HTMLInputElement).value;
-    this.searchQuery.set(query);
-    if (query.length >= 3) {
-      try { (window as any).ttq?.track('Search', { query, content_type: 'product' }); } catch {}
-      try { (window as any).fbq?.('track', 'Search', { search_string: query, content_type: 'product' }); } catch {}
+  // Modo de compra según el filtro: "En stock" → STOCK (precio inmediato); resto → CONSOLIDADO.
+  catalogMode = computed<'CONSOLIDADO' | 'STOCK'>(() => this.stockFilter() === 'in' ? 'STOCK' : 'CONSOLIDADO');
+
+  isInStock(id: number): boolean {
+    return (this.stockMap()[id] || 0) > 0;
+  }
+  stockQtyFor(id: number): number {
+    return this.stockMap()[id] || 0;
+  }
+
+  onSearchInput(ev: Event) {
+    const q = (ev.target as HTMLInputElement).value;
+    this.query.set(q);
+    if (q.length >= 3) {
+      try { (window as any).ttq?.track('Search', { query: q, content_type: 'product' }); } catch {}
+      try { (window as any).fbq?.('track', 'Search', { search_string: q, content_type: 'product' }); } catch {}
     }
   }
 
-  onBrandChange(brand: string) {
-    this.brandFilter.set(brand);
+  toggleBrand(brand: string) {
+    const next = new Set(this.selectedBrands());
+    next.has(brand) ? next.delete(brand) : next.add(brand);
+    this.selectedBrands.set(next);
   }
 
-  goToPage(page: number) {
-    if (page >= 1 && page <= this.totalPages()) {
-      this.currentPage.set(page);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
+  setGender(g: GenderKey) { this.gender.set(g); }
+  setStock(s: StockKey) { this.stockFilter.set(s); }
+
+  toggleFamily(code: string) {
+    const next = new Set(this.selectedFamilies());
+    next.has(code) ? next.delete(code) : next.add(code);
+    this.selectedFamilies.set(next);
+  }
+  setOccasion(o: OccasionKey) { this.occasionFilter.set(this.occasionFilter() === o ? 'all' : o); }
+  toggleSeason(s: string) {
+    const next = new Set(this.selectedSeasons());
+    next.has(s) ? next.delete(s) : next.add(s);
+    this.selectedSeasons.set(next);
+  }
+  onNoteInput(ev: Event) { this.noteQuery.set((ev.target as HTMLInputElement).value); }
+
+  isOpen(key: string): boolean { return !this.collapsedSections().has(key); }
+  toggleSection(key: string) {
+    const next = new Set(this.collapsedSections());
+    next.has(key) ? next.delete(key) : next.add(key);
+    this.collapsedSections.set(next);
   }
 
-  getPageNumbers(): number[] {
-    const total = this.totalPages();
-    const current = this.currentPage();
-    const pages: number[] = [];
-    if (total <= 7) {
-      for (let i = 1; i <= total; i++) pages.push(i);
-    } else {
-      pages.push(1);
-      if (current > 3) pages.push(-1);
-      for (let i = Math.max(2, current - 1); i <= Math.min(total - 1, current + 1); i++) {
-        pages.push(i);
-      }
-      if (current < total - 2) pages.push(-1);
-      pages.push(total);
-    }
-    return pages;
+  setSort(ev: Event) { this.sort.set((ev.target as HTMLSelectElement).value as SortKey); }
+  setPriceMin(ev: Event) { const v = (ev.target as HTMLInputElement).value; this.priceMin.set(v ? +v : null); }
+  setPriceMax(ev: Event) { const v = (ev.target as HTMLInputElement).value; this.priceMax.set(v ? +v : null); }
+
+  clearFilters() {
+    this.query.set('');
+    this.gender.set('all');
+    this.selectedBrands.set(new Set());
+    this.priceMin.set(null);
+    this.priceMax.set(null);
+    this.stockFilter.set('all');
+    this.selectedFamilies.set(new Set());
+    this.occasionFilter.set('all');
+    this.selectedSeasons.set(new Set());
+    this.noteQuery.set('');
+    this.router.navigate(['/catalogo']);
   }
 
-  goToProduct(id: number) {
-    this.router.navigate(['/producto', id]);
-  }
+  loadMore() { this.visibleCount.update(n => n + 24); }
+  toggleFilters() { this.showFilters.update(v => !v); }
 
-  getQty(productId: number): number {
-    return this.selectedQty()[productId] ?? 1;
-  }
-
-  changeQty(productId: number, delta: number) {
-    const next = Math.max(1, this.getQty(productId) + delta);
-    this.selectedQty.update(q => ({ ...q, [productId]: next }));
-  }
-
-  addToCart(product: Product) {
-    const qty = this.getQty(product.id);
-    if (!product.wholesalePricePen) return;
-    this.cart.addItem(product, qty, 'CONSOLIDADO');
-
-    try {
-      (window as any).ttq?.track('AddToCart', {
-        content_id: product.id.toString(),
-        content_name: `${product.brand} - ${product.name}`,
-        content_type: 'product',
-        quantity: qty,
-        price: product.wholesalePricePen,
-        value: product.wholesalePricePen * qty,
-        currency: 'PEN'
-      });
-    } catch {}
-    try {
-      (window as any).fbq?.('track', 'AddToCart', {
-        content_ids: [product.id.toString()],
-        content_name: `${product.brand} - ${product.name}`,
-        content_type: 'product',
-        value: product.wholesalePricePen * qty,
-        currency: 'PEN'
-      });
-    } catch {}
-
-    this.cartToast.set(`${product.brand} - ${product.name} (x${qty}) agregado`);
-    setTimeout(() => this.cartToast.set(''), 2500);
-    this.selectedQty.update(q => ({ ...q, [product.id]: 1 }));
-  }
-
-  goToCart() {
-    this.router.navigate(['/cart']);
-  }
-
-  trackWhatsAppContact(event: Event) {
-    event.preventDefault();
-    try { (window as any).ttq?.track('Contact', { content_type: 'product', content_name: 'WhatsApp FAB' }); } catch {}
-    try { (window as any).fbq?.('track', 'Contact', { content_name: 'WhatsApp FAB' }); } catch {}
-    setTimeout(() => { window.open('https://wa.me/51981587009', '_blank'); }, 300);
-  }
-
-  // === Edit Order Modal ===
+  // =====================================================================
+  // ===== EDIT ORDER MODAL (cliente edita su pedido por código+teléfono)
+  // ===== Lógica preservada del catálogo original.
+  // =====================================================================
   showEditModal = signal(false);
   editStep = signal<'lookup' | 'edit' | 'done'>('lookup');
   editOrderCode = signal('');
