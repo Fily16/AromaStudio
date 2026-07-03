@@ -3,6 +3,7 @@ import { Router, RouterLink } from '@angular/router';
 import { DecimalPipe } from '@angular/common';
 import { SearchService } from '../../services/search.service';
 import { CartService } from '../../services/cart.service';
+import { CdnImgPipe } from '../../shared/cdn-img.pipe';
 
 /**
  * Header global tipo FragranceNet: marca, mega-buscador con dropdown de
@@ -12,7 +13,7 @@ import { CartService } from '../../services/cart.service';
 @Component({
   selector: 'as-header',
   standalone: true,
-  imports: [RouterLink, DecimalPipe],
+  imports: [RouterLink, DecimalPipe, CdnImgPipe],
   template: `
     <div class="utility">
       Importación directa desde USA · Precios al por mayor · Envíos a todo el Perú
@@ -49,7 +50,7 @@ import { CartService } from '../../services/cart.service';
                 @for (r of search.results(); track r.id) {
                   <a class="dd-item" [routerLink]="['/producto', r.id]" (click)="pick()">
                     <div class="dd-thumb">
-                      @if (r.imageUrl) { <img [src]="r.imageUrl" [alt]="r.name" loading="lazy"> }
+                      @if (r.imageUrl) { <img [src]="r.imageUrl | cdnImg:80" [alt]="r.name" loading="lazy"> }
                     </div>
                     <div class="dd-info">
                       <span class="dd-brand">{{ r.brand }}</span>

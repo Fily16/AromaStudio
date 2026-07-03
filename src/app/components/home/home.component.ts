@@ -6,6 +6,7 @@ import { CartService } from '../../services/cart.service';
 import { Product, Banner, Promotion } from '../../models/api.models';
 import { ProductCardComponent } from '../shared/product-card.component';
 import { ScrollerComponent } from '../shared/scroller.component';
+import { CdnImgPipe } from '../../shared/cdn-img.pipe';
 
 interface CategoryCard {
   key: 'men' | 'women' | 'unisex';
@@ -18,7 +19,7 @@ interface CategoryCard {
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [RouterLink, DecimalPipe, ProductCardComponent, ScrollerComponent],
+  imports: [RouterLink, DecimalPipe, ProductCardComponent, ScrollerComponent, CdnImgPipe],
   templateUrl: './home.component.html',
   styleUrl: './home.component.css'
 })

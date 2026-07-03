@@ -2,6 +2,7 @@ import { Component, inject, signal, computed, OnInit } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
 import { ApiService } from '../../../services/api.service';
 import { Product } from '../../../models/api.models';
+import { CdnImgPipe } from '../../../shared/cdn-img.pipe';
 
 /**
  * Productos (ERP): tabla clara con costo USD, puesto en Perú (con envío + caja),
@@ -10,7 +11,7 @@ import { Product } from '../../../models/api.models';
 @Component({
   selector: 'app-products',
   standalone: true,
-  imports: [DecimalPipe],
+  imports: [DecimalPipe, CdnImgPipe],
   templateUrl: './products.component.html',
   styleUrl: './products.component.css'
 })

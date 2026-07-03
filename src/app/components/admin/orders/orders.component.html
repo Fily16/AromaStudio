@@ -131,7 +131,7 @@
         @for (r of breakdownRows(); track r.product.id) {
           <div class="ord-bd-item">
             <button class="ord-bd-row" [class.open]="expandedBreakdown().has(r.product.id)" [class.picked]="r.itemsPicked === r.itemsTotal" (click)="toggleBreakdownItem(r.product.id)">
-              <div class="sl-thumb">@if (r.product.imageUrl) { <img [src]="r.product.imageUrl" [alt]="r.product.name"> } @else { <span>{{ r.product.brand }}</span> }</div>
+              <div class="sl-thumb">@if (r.product.imageUrl) { <img [src]="r.product.imageUrl | cdnImg:100" [alt]="r.product.name"> } @else { <span>{{ r.product.brand }}</span> }</div>
               <div class="ord-detail-info">
                 <b>{{ r.product.brand }}</b>
                 <span>{{ r.product.name }} @if (r.product.ml) { · {{ r.product.ml }}ml }</span>
@@ -281,7 +281,7 @@
                         <input type="checkbox" [checked]="it.picked" (change)="togglePicked(it)">
                         <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
                       </label>
-                      <div class="sl-thumb">@if (it.product.imageUrl) { <img [src]="it.product.imageUrl" [alt]="it.product.name"> } @else { <span>{{ it.product.brand }}</span> }</div>
+                      <div class="sl-thumb">@if (it.product.imageUrl) { <img [src]="it.product.imageUrl | cdnImg:100" [alt]="it.product.name"> } @else { <span>{{ it.product.brand }}</span> }</div>
                       <div class="ord-detail-info">
                         <b>{{ it.product.brand }}</b>
                         <span>{{ it.product.name }} @if (it.product.ml) { · {{ it.product.ml }}ml }</span>
@@ -301,7 +301,7 @@
                         <span class="ord-promo-perfumes">
                           @for (pi of promoItemsFor(op); track $index) {
                             <span class="ord-promo-chip">
-                              @if (pi.imageUrl) { <img [src]="pi.imageUrl" [alt]="pi.name"> }
+                              @if (pi.imageUrl) { <img [src]="pi.imageUrl | cdnImg:80" [alt]="pi.name"> }
                               {{ pi.name }}
                             </span>
                           }

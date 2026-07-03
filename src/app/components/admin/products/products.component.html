@@ -65,7 +65,7 @@
           <td>
             <div class="prod-cell">
               <div class="prod-thumb">
-                @if (p.imageUrl) { <img [src]="p.imageUrl" [alt]="p.name"> } @else { <span>{{ p.brand }}</span> }
+                @if (p.imageUrl) { <img [src]="p.imageUrl | cdnImg:100" [alt]="p.name"> } @else { <span>{{ p.brand }}</span> }
               </div>
               <div>
                 <div style="font-size:.72rem;text-transform:uppercase;letter-spacing:.03em;color:var(--a-muted);font-weight:700">{{ p.brand }}</div>

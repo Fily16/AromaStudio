@@ -2,6 +2,7 @@ import { Component, computed, inject, signal, OnInit } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
 import { ApiService } from '../../../services/api.service';
 import { Product, Promotion } from '../../../models/api.models';
+import { CdnImgPipe } from '../../../shared/cdn-img.pipe';
 
 interface DraftItem { productId: number | null; name: string; imageUrl: string | null; }
 
@@ -12,7 +13,7 @@ interface DraftItem { productId: number | null; name: string; imageUrl: string |
 @Component({
   selector: 'app-promotions-admin',
   standalone: true,
-  imports: [DecimalPipe],
+  imports: [DecimalPipe, CdnImgPipe],
   templateUrl: './promotions-admin.component.html',
   styleUrl: './promotions-admin.component.css'
 })

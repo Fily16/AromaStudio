@@ -57,7 +57,7 @@
           @for (item of cart.cartItems(); track item.product.id) {
             <div class="line">
               <a class="line-thumb" [routerLink]="['/producto', item.product.id]">
-                @if (item.product.imageUrl) { <img [src]="item.product.imageUrl" [alt]="item.product.name"> }
+                @if (item.product.imageUrl) { <img [src]="item.product.imageUrl | cdnImg:200" [alt]="item.product.name"> }
               </a>
               <div class="line-info">
                 <a class="line-name" [routerLink]="['/producto', item.product.id]">
@@ -85,7 +85,7 @@
           @for (pl of cart.promoItems(); track pl.promo.id) {
             <div class="line line-promo">
               <a class="line-thumb" [routerLink]="['/promocion', pl.promo.id]">
-                @if (pl.promo.imageData || pl.promo.imageUrl) { <img [src]="pl.promo.imageData || pl.promo.imageUrl" [alt]="pl.promo.name"> }
+                @if (pl.promo.imageData || pl.promo.imageUrl) { <img [src]="(pl.promo.imageData || pl.promo.imageUrl) | cdnImg:200" [alt]="pl.promo.name"> }
               </a>
               <div class="line-info">
                 <a class="line-name" [routerLink]="['/promocion', pl.promo.id]">
@@ -138,13 +138,13 @@
         <div class="cart-promo">
           @for (pr of activePromos(); track pr.id) {
             <a class="cart-promo-tile promo-real" (click)="goPromoPage(pr.id)">
-              @if (pr.imageData || pr.imageUrl) { <img [src]="pr.imageData || pr.imageUrl" [alt]="pr.name" loading="lazy"> }
+              @if (pr.imageData || pr.imageUrl) { <img [src]="(pr.imageData || pr.imageUrl) | cdnImg:400" [alt]="pr.name" loading="lazy"> }
               <span class="cart-promo-cap">{{ pr.name }} · S/ {{ pr.pricePen | number:'1.0-0' }}</span>
             </a>
           }
           @for (pr of promos(); track $index) {
             <a class="cart-promo-tile" (click)="goPromo(pr)">
-              @if (pr.imageUrl) { <img [src]="pr.imageUrl" [alt]="pr.title || 'Promoción'" loading="lazy"> }
+              @if (pr.imageUrl) { <img [src]="pr.imageUrl | cdnImg:400" [alt]="pr.title || 'Promoción'" loading="lazy"> }
             </a>
           }
         </div>
@@ -175,7 +175,7 @@
           <div class="co-items">
             @for (item of cart.cartItems(); track item.product.id) {
               <div class="co-item">
-                <div class="co-thumb">@if (item.product.imageUrl) { <img [src]="item.product.imageUrl" [alt]="item.product.name"> }</div>
+                <div class="co-thumb">@if (item.product.imageUrl) { <img [src]="item.product.imageUrl | cdnImg:200" [alt]="item.product.name"> }</div>
                 <div class="co-item-info"><b>{{ item.product.brand }}</b><span>{{ item.product.name }} @if (item.product.ml) { · {{ item.product.ml }}ml }</span></div>
                 <div class="co-item-qty">x{{ item.quantity }}</div>
                 <div class="co-item-sub">S/ {{ (item.unitPricePen * item.quantity) | number:'1.0-0' }}</div>
@@ -183,7 +183,7 @@
             }
             @for (pl of cart.promoItems(); track pl.promo.id) {
               <div class="co-item">
-                <div class="co-thumb promo">@if (pl.promo.imageData || pl.promo.imageUrl) { <img [src]="pl.promo.imageData || pl.promo.imageUrl" [alt]="pl.promo.name"> }</div>
+                <div class="co-thumb promo">@if (pl.promo.imageData || pl.promo.imageUrl) { <img [src]="(pl.promo.imageData || pl.promo.imageUrl) | cdnImg:200" [alt]="pl.promo.name"> }</div>
                 <div class="co-item-info"><b class="promo-tag">PROMO</b><span>{{ pl.promo.name }}</span></div>
                 <div class="co-item-qty">x{{ pl.quantity }}</div>
                 <div class="co-item-sub">S/ {{ (pl.promo.pricePen * pl.quantity) | number:'1.0-0' }}</div>
@@ -265,11 +265,11 @@
               @for (it of mosaicItems(); track $index) {
                 <a class="m-item" (click)="goPub(it)">
                   @if (it.kind === 'promo') {
-                    @if (it.promo.imageData || it.promo.imageUrl) { <img [src]="it.promo.imageData || it.promo.imageUrl" [alt]="it.promo.name" loading="lazy"> }
+                    @if (it.promo.imageData || it.promo.imageUrl) { <img [src]="(it.promo.imageData || it.promo.imageUrl) | cdnImg:500" [alt]="it.promo.name" loading="lazy"> }
                     <span class="m-badge">PROMO</span>
                     <span class="m-cap">{{ it.promo.name }} · S/ {{ it.promo.pricePen | number:'1.0-0' }}</span>
                   } @else {
-                    @if (it.banner.imageUrl) { <img [src]="it.banner.imageUrl" [alt]="it.banner.title || 'Promoción'" loading="lazy"> }
+                    @if (it.banner.imageUrl) { <img [src]="it.banner.imageUrl | cdnImg:500" [alt]="it.banner.title || 'Promoción'" loading="lazy"> }
                     @if (it.banner.title) { <span class="m-cap">{{ it.banner.title }}</span> }
                   }
                 </a>

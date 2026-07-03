@@ -3,6 +3,7 @@ import { DecimalPipe, DatePipe } from '@angular/common';
 import { ApiService } from '../../../services/api.service';
 import { Order, Consolidado, AllocationResponse, MissingItem, Supplier,
          Promotion, ProfitReport, OrderPromo, OrderItem } from '../../../models/api.models';
+import { CdnImgPipe } from '../../../shared/cdn-img.pipe';
 
 /**
  * Pedidos = núcleo del ERP. KPIs del consolidado (total, Lima, provincia, por vendedor,
@@ -12,7 +13,7 @@ import { Order, Consolidado, AllocationResponse, MissingItem, Supplier,
 @Component({
   selector: 'app-orders',
   standalone: true,
-  imports: [DecimalPipe, DatePipe],
+  imports: [DecimalPipe, DatePipe, CdnImgPipe],
   templateUrl: './orders.component.html',
   styleUrl: './orders.component.css'
 })

@@ -3,6 +3,7 @@ import { DecimalPipe } from '@angular/common';
 import { ApiService } from '../../../services/api.service';
 import { Product, RetailInventory, RetailSale } from '../../../models/api.models';
 import { PromotionsAdminComponent } from '../promotions/promotions-admin.component';
+import { CdnImgPipe } from '../../../shared/cdn-img.pipe';
 
 /**
  * Lanzar a stock: el admin selecciona perfumes que tiene físicamente y los "lanza"
@@ -11,7 +12,7 @@ import { PromotionsAdminComponent } from '../promotions/promotions-admin.compone
 @Component({
   selector: 'app-admin-stock-launch',
   standalone: true,
-  imports: [DecimalPipe, PromotionsAdminComponent],
+  imports: [DecimalPipe, PromotionsAdminComponent, CdnImgPipe],
   template: `
     <div class="ord-head" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:14px">
       <h2 class="adm-section-title" style="margin:0">Stock de tienda</h2>
@@ -48,7 +49,7 @@ import { PromotionsAdminComponent } from '../promotions/promotions-admin.compone
               <label class="sl-item" [class.on]="selected().has(p.id)">
                 <input type="checkbox" [checked]="selected().has(p.id)" (change)="toggle(p)">
                 <div class="sl-thumb">
-                  @if (p.imageUrl) { <img [src]="p.imageUrl" [alt]="p.name"> } @else { <span>{{ p.brand }}</span> }
+                  @if (p.imageUrl) { <img [src]="p.imageUrl | cdnImg:100" [alt]="p.name"> } @else { <span>{{ p.brand }}</span> }
                 </div>
                 <div class="sl-info">
                   <span class="sl-brand">{{ p.brand }}</span>
@@ -103,7 +104,7 @@ import { PromotionsAdminComponent } from '../promotions/promotions-admin.compone
               <tr>
                 <td>
                   <div style="display:flex;align-items:center;gap:10px">
-                    <div class="sl-thumb">@if (r.product.imageUrl) { <img [src]="r.product.imageUrl" [alt]="r.product.name"> } @else { <span>{{ r.product.brand }}</span> }</div>
+                    <div class="sl-thumb">@if (r.product.imageUrl) { <img [src]="r.product.imageUrl | cdnImg:100" [alt]="r.product.name"> } @else { <span>{{ r.product.brand }}</span> }</div>
                     <div><b>{{ r.product.brand }}</b><div style="font-size:.82rem;color:var(--a-muted)">{{ r.product.name }} @if (r.product.ml) { · {{ r.product.ml }}ml }</div></div>
                   </div>
                 </td>

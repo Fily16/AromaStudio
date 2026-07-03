@@ -78,7 +78,7 @@
       <div class="cat-grid">
         @for (c of categoryCards(); track c.key) {
           <a class="cat-tile" routerLink="/catalogo" [queryParams]="{ category: c.key }">
-            @if (c.img) { <img [src]="c.img" [alt]="c.label" loading="lazy"> }
+            @if (c.img) { <img [src]="c.img | cdnImg:600" [alt]="c.label" loading="lazy"> }
             <div class="cat-ov">
               <h3>{{ c.label }}</h3>
               <p>{{ c.tagline }}</p>
@@ -102,11 +102,11 @@
         @for (it of mosaicItems(); track $index) {
           <a class="m-item" (click)="goPub(it)">
             @if (it.kind === 'promo') {
-              @if (it.promo.imageData || it.promo.imageUrl) { <img [src]="it.promo.imageData || it.promo.imageUrl" [alt]="it.promo.name" loading="lazy"> }
+              @if (it.promo.imageData || it.promo.imageUrl) { <img [src]="(it.promo.imageData || it.promo.imageUrl) | cdnImg:800" [alt]="it.promo.name" loading="lazy"> }
               <span class="m-badge">PROMO</span>
               <span class="m-cap">{{ it.promo.name }} · S/ {{ it.promo.pricePen | number:'1.0-0' }}</span>
             } @else {
-              @if (it.banner.imageUrl) { <img [src]="it.banner.imageUrl" [alt]="it.banner.title || 'Promoción'" loading="lazy"> }
+              @if (it.banner.imageUrl) { <img [src]="it.banner.imageUrl | cdnImg:800" [alt]="it.banner.title || 'Promoción'" loading="lazy"> }
               @else { <span class="promo-fallback">{{ it.banner.title || 'Promoción' }}</span> }
               @if (it.banner.title) { <span class="m-cap">{{ it.banner.title }}</span> }
             }
@@ -161,7 +161,7 @@
     <div class="promo-pop" (click)="$event.stopPropagation()">
       <button class="promo-pop-close" (click)="closePromoPopup()" aria-label="Cerrar">✕</button>
       <a class="promo-pop-img" (click)="clickPromoPopup()">
-        @if (pp.imageUrl) { <img [src]="pp.imageUrl" [alt]="pp.title || 'Promoción'"> }
+        @if (pp.imageUrl) { <img [src]="pp.imageUrl | cdnImg:600" [alt]="pp.title || 'Promoción'"> }
       </a>
       @if (pp.title) { <div class="promo-pop-cap">{{ pp.title }}</div> }
     </div>
@@ -172,7 +172,7 @@
     <div class="promo-pop" (click)="$event.stopPropagation()">
       <button class="promo-pop-close" (click)="closePromoPopup()" aria-label="Cerrar">✕</button>
       <a class="promo-pop-img" (click)="clickPromoPopupPromo()">
-        @if (pp.imageData || pp.imageUrl) { <img [src]="pp.imageData || pp.imageUrl" [alt]="pp.name"> }
+        @if (pp.imageData || pp.imageUrl) { <img [src]="(pp.imageData || pp.imageUrl) | cdnImg:600" [alt]="pp.name"> }
       </a>
       <div class="promo-pop-cap">{{ pp.name }} · S/ {{ pp.pricePen | number:'1.0-0' }}</div>
     </div>

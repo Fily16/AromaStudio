@@ -7,6 +7,7 @@ import { CartService } from '../../services/cart.service';
 import { Product, Order, Banner, Promotion } from '../../models/api.models';
 import { ProductCardComponent } from '../shared/product-card.component';
 import { NoteIconComponent } from '../shared/note-icon.component';
+import { CdnImgPipe } from '../../shared/cdn-img.pipe';
 import {
   parseNotes, noteLabel, familyLabel, FamilyCode, FAMILY_ORDER,
   OCCASION_LABEL, SEASON_LABEL, SEASON_ORDER
@@ -20,7 +21,7 @@ type OccasionKey = 'all' | 'dia' | 'noche' | 'versatil';
 @Component({
   selector: 'app-catalog',
   standalone: true,
-  imports: [FormsModule, DecimalPipe, ProductCardComponent, RouterLink, NoteIconComponent],
+  imports: [FormsModule, DecimalPipe, ProductCardComponent, RouterLink, NoteIconComponent, CdnImgPipe],
   templateUrl: './catalog.component.html',
   styleUrl: './catalog.component.css'
 })

@@ -1,6 +1,7 @@
 import { Component, inject, signal, OnInit } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { CdnImgPipe } from '../../shared/cdn-img.pipe';
 import { ApiService } from '../../services/api.service';
 import { CartService } from '../../services/cart.service';
 import { Promotion } from '../../models/api.models';
@@ -9,7 +10,7 @@ import { Promotion } from '../../models/api.models';
 @Component({
   selector: 'app-promo-page',
   standalone: true,
-  imports: [DecimalPipe, RouterLink],
+  imports: [DecimalPipe, RouterLink, CdnImgPipe],
   templateUrl: './promo-page.component.html',
   styleUrl: './promo-page.component.css'
 })

@@ -7,12 +7,13 @@ import { Product } from '../../models/api.models';
 import { ProductCardComponent } from '../shared/product-card.component';
 import { NoteIconComponent } from '../shared/note-icon.component';
 import { ScrollerComponent } from '../shared/scroller.component';
+import { CdnImgPipe } from '../../shared/cdn-img.pipe';
 import { parseNotes, noteLabel, familyLabel, OCCASION_LABEL, SEASON_LABEL, SEASON_ORDER } from '../shared/note-catalog';
 
 @Component({
   selector: 'app-product-detail',
   standalone: true,
-  imports: [DecimalPipe, RouterLink, ProductCardComponent, NoteIconComponent, ScrollerComponent],
+  imports: [DecimalPipe, RouterLink, ProductCardComponent, NoteIconComponent, ScrollerComponent, CdnImgPipe],
   templateUrl: './product-detail.component.html',
   styleUrl: './product-detail.component.css'
 })

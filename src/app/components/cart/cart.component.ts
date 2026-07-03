@@ -5,12 +5,13 @@ import { ApiService } from '../../services/api.service';
 import { DecimalPipe } from '@angular/common';
 import { Product, Banner, Promotion } from '../../models/api.models';
 import { ProductCardComponent } from '../shared/product-card.component';
+import { CdnImgPipe } from '../../shared/cdn-img.pipe';
 import { SHALOM_AGENCIES, SHALOM_DEPARTMENTS, ShalomAgency } from '../../data/shalom-agencies';
 
 @Component({
   selector: 'app-cart',
   standalone: true,
-  imports: [DecimalPipe, RouterLink, ProductCardComponent],
+  imports: [DecimalPipe, RouterLink, ProductCardComponent, CdnImgPipe],
   templateUrl: './cart.component.html',
   styleUrl: './cart.component.css'
 })

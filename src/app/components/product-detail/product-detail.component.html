@@ -28,7 +28,7 @@
     <div class="pd-gallery">
       <div class="pd-image">
         @if (p.imageUrl) {
-          <img [src]="p.imageUrl" [alt]="p.brand + ' ' + p.name" />
+          <img [src]="p.imageUrl | cdnImg:700" [alt]="p.brand + ' ' + p.name" fetchpriority="high" decoding="async" />
         } @else {
           <div class="pd-noimg">{{ p.brand }}</div>
         }

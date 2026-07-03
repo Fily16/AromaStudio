@@ -163,7 +163,7 @@
         <div class="fs-promo-block">
           <div class="fs-promo-label">Promociones</div>
           <a class="fs-promo" [class.fade]="promoFade()" [routerLink]="['/promocion', pr.id]" (click)="toggleFilters()">
-            @if (pr.imageData || pr.imageUrl) { <img [src]="pr.imageData || pr.imageUrl" [alt]="pr.name" loading="lazy"> }
+            @if (pr.imageData || pr.imageUrl) { <img [src]="(pr.imageData || pr.imageUrl) | cdnImg:400" [alt]="pr.name" loading="lazy"> }
             <div class="fs-promo-cta">{{ pr.name }} · S/ {{ pr.pricePen | number:'1.0-0' }} →</div>
           </a>
         </div>
@@ -172,7 +172,7 @@
         <a class="fs-promo" [routerLink]="['/catalogo']"
            [queryParams]="sp.linkValue ? { q: sp.linkValue } : {}"
            (click)="toggleFilters()">
-          @if (sp.imageUrl) { <img [src]="sp.imageUrl" [alt]="sp.title || 'Promoción'" loading="lazy"> }
+          @if (sp.imageUrl) { <img [src]="sp.imageUrl | cdnImg:400" [alt]="sp.title || 'Promoción'" loading="lazy"> }
           @if (sp.ctaText) { <div class="fs-promo-cta">{{ sp.ctaText }} →</div> }
         </a>
       }
@@ -193,7 +193,7 @@
             @for (pr of promoList(); track pr.id) {
               <a class="cat-promo-card" [routerLink]="['/promocion', pr.id]">
                 <div class="cat-promo-img">
-                  @if (pr.imageData || pr.imageUrl) { <img [src]="pr.imageData || pr.imageUrl" [alt]="pr.name" loading="lazy"> }
+                  @if (pr.imageData || pr.imageUrl) { <img [src]="(pr.imageData || pr.imageUrl) | cdnImg:400" [alt]="pr.name" loading="lazy"> }
                   <span class="cat-promo-badge">PROMO</span>
                 </div>
                 <div class="cat-promo-info">
@@ -278,7 +278,7 @@
                 <div class="edit-item">
                   <div class="edit-item-thumb">
                     @if (item.product.imageUrl) {
-                      <img [src]="item.product.imageUrl" [alt]="item.product.name" />
+                      <img [src]="item.product.imageUrl | cdnImg:200" [alt]="item.product.name" />
                     } @else {
                       <div class="edit-item-no-img">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="1.2"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/></svg>
@@ -322,7 +322,7 @@
                   <button class="edit-product-card" (click)="editAddProduct(p)">
                     <div class="edit-product-img">
                       @if (p.imageUrl) {
-                        <img [src]="p.imageUrl" [alt]="p.name" loading="lazy" />
+                        <img [src]="p.imageUrl | cdnImg:200" [alt]="p.name" loading="lazy" />
                       } @else {
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="1"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/></svg>
                       }
@@ -402,7 +402,7 @@
             <button class="picker-item" (click)="editSwapProduct(p)">
               <div class="picker-item-img">
                 @if (p.imageUrl) {
-                  <img [src]="p.imageUrl" [alt]="p.name" loading="lazy" />
+                  <img [src]="p.imageUrl | cdnImg:200" [alt]="p.name" loading="lazy" />
                 } @else {
                   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="1"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/></svg>
                 }

@@ -70,7 +70,7 @@
           <div class="pr-chips">
             @for (it of fItems(); track $index) {
               <span class="pr-chip" [class.custom]="it.productId == null">
-                @if (it.imageUrl) { <img [src]="it.imageUrl" [alt]="it.name"> }
+                @if (it.imageUrl) { <img [src]="it.imageUrl | cdnImg:80" [alt]="it.name"> }
                 {{ it.name }} @if (it.productId == null) { <em>exclusivo</em> }
                 <button (click)="removeItem($index)" title="Quitar">✕</button>
               </span>
@@ -97,7 +97,7 @@
         <div class="pr-cat-list">
           @for (p of filteredProducts(); track p.id) {
             <button class="pr-cat-item" (click)="addCatalogItem(p)">
-              <div class="sl-thumb">@if (p.imageUrl) { <img [src]="p.imageUrl" [alt]="p.name"> } @else { <span>{{ p.brand }}</span> }</div>
+              <div class="sl-thumb">@if (p.imageUrl) { <img [src]="p.imageUrl | cdnImg:100" [alt]="p.name"> } @else { <span>{{ p.brand }}</span> }</div>
               <div class="pr-cat-info"><b>{{ p.brand }}</b><span>{{ p.name }} @if (p.ml) { · {{ p.ml }}ml }</span></div>
               <span class="pr-cat-add">+</span>
             </button>
@@ -118,7 +118,7 @@
     @for (p of promotions(); track p.id) {
       <div class="adm-card pr-card" [class.off]="!p.active">
         <div class="pr-card-img">
-          @if (p.imageData || p.imageUrl) { <img [src]="p.imageData || p.imageUrl" [alt]="p.name"> } @else { <span>Sin imagen</span> }
+          @if (p.imageData || p.imageUrl) { <img [src]="(p.imageData || p.imageUrl) | cdnImg:200" [alt]="p.name"> } @else { <span>Sin imagen</span> }
         </div>
         <div class="pr-card-body">
           <div class="pr-card-top">
@@ -133,7 +133,7 @@
           </div>
           <div class="pr-card-perfumes">
             @for (it of p.items; track $index) {
-              <span class="pr-mini">@if (it.imageUrl) { <img [src]="it.imageUrl" [alt]="it.name"> } {{ it.name }}</span>
+              <span class="pr-mini">@if (it.imageUrl) { <img [src]="it.imageUrl | cdnImg:80" [alt]="it.name"> } {{ it.name }}</span>
             }
           </div>
         </div>
