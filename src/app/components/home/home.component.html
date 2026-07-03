@@ -24,6 +24,8 @@
         }
       </div>
     }
+  } @else if (!bannersReady()) {
+    <div class="hero-slide active hero-loading"></div>
   } @else {
     <div class="hero-slide active no-img">
       <div class="as-container">
@@ -78,7 +80,7 @@
       <div class="cat-grid">
         @for (c of categoryCards(); track c.key) {
           <a class="cat-tile" routerLink="/catalogo" [queryParams]="{ category: c.key }">
-            @if (c.img) { <img [src]="c.img | cdnImg:600" [alt]="c.label" loading="lazy"> }
+            @if (c.img) { <img class="fade-img" [src]="c.img | cdnImg:600" [alt]="c.label" loading="lazy" (load)="imgLoaded($event)" (error)="imgLoaded($event)"> }
             <div class="cat-ov">
               <h3>{{ c.label }}</h3>
               <p>{{ c.tagline }}</p>
@@ -102,11 +104,11 @@
         @for (it of mosaicItems(); track $index) {
           <a class="m-item" (click)="goPub(it)">
             @if (it.kind === 'promo') {
-              @if (it.promo.imageData || it.promo.imageUrl) { <img [src]="(it.promo.imageData || it.promo.imageUrl) | cdnImg:800" [alt]="it.promo.name" loading="lazy"> }
+              @if (it.promo.imageData || it.promo.imageUrl) { <img class="fade-img" [src]="(it.promo.imageData || it.promo.imageUrl) | cdnImg:800" [alt]="it.promo.name" loading="lazy" (load)="imgLoaded($event)" (error)="imgLoaded($event)"> }
               <span class="m-badge">PROMO</span>
               <span class="m-cap">{{ it.promo.name }} · S/ {{ it.promo.pricePen | number:'1.0-0' }}</span>
             } @else {
-              @if (it.banner.imageUrl) { <img [src]="it.banner.imageUrl | cdnImg:800" [alt]="it.banner.title || 'Promoción'" loading="lazy"> }
+              @if (it.banner.imageUrl) { <img class="fade-img" [src]="it.banner.imageUrl | cdnImg:800" [alt]="it.banner.title || 'Promoción'" loading="lazy" (load)="imgLoaded($event)" (error)="imgLoaded($event)"> }
               @else { <span class="promo-fallback">{{ it.banner.title || 'Promoción' }}</span> }
               @if (it.banner.title) { <span class="m-cap">{{ it.banner.title }}</span> }
             }

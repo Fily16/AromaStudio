@@ -20,7 +20,8 @@ import { cdnImage } from '../../shared/img.util';
       <div class="pc-media">
         @if (product.imageUrl) {
           <img [src]="imgUrl(product.imageUrl, 500)" [alt]="product.brand + ' ' + product.name"
-               [attr.loading]="eager ? 'eager' : 'lazy'" decoding="async">
+               [attr.loading]="eager ? 'eager' : 'lazy'" decoding="async"
+               (load)="imgLoaded($event)" (error)="imgLoaded($event)">
         } @else {
           <div class="pc-noimg">{{ brandLabel }}</div>
         }
@@ -77,7 +78,8 @@ import { cdnImage } from '../../shared/img.util';
       place-items: center;
       padding: 9%;
     }
-    .pc-media img { width: 100%; height: 100%; object-fit: contain; mix-blend-mode: multiply; }
+    .pc-media img { width: 100%; height: 100%; object-fit: contain; mix-blend-mode: multiply; opacity: 0; transition: opacity .4s ease; }
+    .pc-media img.ld { opacity: 1; }
     .pc-noimg { font-family: var(--font-display); color: var(--muted); font-size: 1rem; text-align: center; }
     .pc-badges { position: absolute; top: 9px; left: 9px; display: flex; flex-direction: column; gap: 5px; align-items: flex-start; }
 
@@ -149,6 +151,8 @@ export class ProductCardComponent {
 
   /** Imagen optimizada vía CDN (redimensiona + comprime + WebP + caché). */
   imgUrl(u: string | null, w = 500): string { return cdnImage(u, w); }
+  /** Fade-in al cargar la imagen (sin "pop" brusco). */
+  imgLoaded(e: Event) { (e.target as HTMLElement).classList.add('ld'); }
 
   get brandLabel(): string {
     return (this.product.brand || '').split(' - ')[0].trim();

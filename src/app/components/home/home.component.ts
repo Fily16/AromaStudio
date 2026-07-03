@@ -32,6 +32,7 @@ export class HomeComponent implements OnInit, OnDestroy {
   allProducts = signal<Product[]>([]);
   loading = signal(true);
   banners = signal<Banner[]>([]);
+  bannersReady = signal(false);
   promos = signal<Banner[]>([]);
   activePromos = signal<Promotion[]>([]);
   promoPopup = signal<Banner | null>(null);
@@ -171,10 +172,11 @@ export class HomeComponent implements OnInit, OnDestroy {
       next: (cfg) => {
         this.banners.set(cfg.banners ?? []);
         this.promos.set(cfg.promos ?? []);
+        this.bannersReady.set(true);
         this.startAutoplay();
         this.maybeShowPromoPopup();
       },
-      error: () => {}
+      error: () => this.bannersReady.set(true)
     });
 
     this.api.getRetailStock().subscribe({
@@ -207,6 +209,8 @@ export class HomeComponent implements OnInit, OnDestroy {
     if (this.revealFallbackTimer) clearInterval(this.revealFallbackTimer);
     if (this.promoRotTimer) clearInterval(this.promoRotTimer);
   }
+
+  imgLoaded(e: Event) { (e.target as HTMLElement).classList.add('ld'); }
 
   goPub(item: any) {
     if (item?.kind === 'promo') this.router.navigate(['/promocion', item.promo.id]);

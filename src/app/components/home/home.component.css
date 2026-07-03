@@ -251,3 +251,12 @@
   .promo-mosaic.mosaic-2, .promo-mosaic.mosaic-3 { grid-template-columns: 1fr; }
   .mosaic-2 .m-item, .mosaic-3 .m-item { aspect-ratio: 16 / 9 !important; grid-column: auto !important; }
 }
+
+/* Hero mientras carga la config: neutro (sin flash morado), con shimmer sutil */
+.hero-slide.hero-loading {
+  background: linear-gradient(100deg, #efe9f4 20%, #e4ddee 40%, #efe9f4 60%);
+  background-size: 200% 100%;
+  animation: heroShimmer 1.5s ease-in-out infinite;
+}
+.hero-slide.hero-loading::before { background: none; }
+@keyframes heroShimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }

@@ -457,3 +457,7 @@ input, select, textarea { font-family: inherit; }
 .adm .admin-page { background: transparent; min-height: 0; color: inherit; }
 .adm .admin-nav { display: none !important; }
 .adm .admin-content { padding: 0 !important; max-width: none !important; margin: 0 !important; }
+
+/* Fade-in suave de imágenes al cargar (evita el "pop" brusco) */
+img.fade-img { opacity: 0; transition: opacity .45s ease; }
+img.fade-img.ld { opacity: 1; }
