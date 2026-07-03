@@ -3,6 +3,7 @@ import { RouterLink } from '@angular/router';
 import { DecimalPipe } from '@angular/common';
 import { Product } from '../../models/api.models';
 import { CartService } from '../../services/cart.service';
+import { cdnImage } from '../../shared/img.util';
 
 /**
  * Tarjeta de producto reutilizable (catálogo, carruseles, recomendaciones).
@@ -18,7 +19,7 @@ import { CartService } from '../../services/cart.service';
     <a class="pc" [routerLink]="['/producto', product.id]">
       <div class="pc-media">
         @if (product.imageUrl) {
-          <img [src]="product.imageUrl" [alt]="product.brand + ' ' + product.name"
+          <img [src]="imgUrl(product.imageUrl, 500)" [alt]="product.brand + ' ' + product.name"
                [attr.loading]="eager ? 'eager' : 'lazy'" decoding="async">
         } @else {
           <div class="pc-noimg">{{ brandLabel }}</div>
@@ -145,6 +146,9 @@ export class ProductCardComponent {
 
   private cart = inject(CartService);
   added = signal(false);
+
+  /** Imagen optimizada vía CDN (redimensiona + comprime + WebP + caché). */
+  imgUrl(u: string | null, w = 500): string { return cdnImage(u, w); }
 
   get brandLabel(): string {
     return (this.product.brand || '').split(' - ')[0].trim();
