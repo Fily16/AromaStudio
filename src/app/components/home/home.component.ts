@@ -38,6 +38,8 @@ export class HomeComponent implements OnInit, OnDestroy {
   promoPopup = signal<Banner | null>(null);
   popupPromo = signal<Promotion | null>(null);
   private popupDecided = false;
+  private cfgLoaded = false;
+  private promosLoaded = false;
   stockMap = signal<Record<number, number>>({});
 
   bannerIndex = signal(0);
@@ -173,10 +175,11 @@ export class HomeComponent implements OnInit, OnDestroy {
         this.banners.set(cfg.banners ?? []);
         this.promos.set(cfg.promos ?? []);
         this.bannersReady.set(true);
+        this.cfgLoaded = true;
         this.startAutoplay();
         this.maybeShowPromoPopup();
       },
-      error: () => this.bannersReady.set(true)
+      error: () => { this.bannersReady.set(true); this.cfgLoaded = true; this.maybeShowPromoPopup(); }
     });
 
     this.api.getRetailStock().subscribe({
@@ -185,8 +188,8 @@ export class HomeComponent implements OnInit, OnDestroy {
     });
 
     this.api.getActivePromotions().subscribe({
-      next: (p) => { this.activePromos.set(p); this.maybeShowPromoPopup(); },
-      error: () => {}
+      next: (p) => { this.activePromos.set(p); this.promosLoaded = true; this.maybeShowPromoPopup(); },
+      error: () => { this.promosLoaded = true; this.maybeShowPromoPopup(); }
     });
 
     window.addEventListener('scroll', this.onScroll, { passive: true });
@@ -227,7 +230,9 @@ export class HomeComponent implements OnInit, OnDestroy {
   /** Muestra el popup al abrir (una vez por sesión): elige al azar entre las publicaciones
    *  (banners de promo + promociones reales activas). Conviven ambos. */
   private maybeShowPromoPopup() {
-    if (this.popupDecided) return;
+    // Espera a que carguen AMBOS (banners de config + promociones reales) para que el
+    // sorteo incluya todo. Si no, la config suele llegar primero y siempre sale el banner.
+    if (this.popupDecided || !this.cfgLoaded || !this.promosLoaded) return;
     const banners = this.promos();
     const proms = this.activePromos();
     const pubs: { kind: 'banner' | 'promo'; banner?: Banner; promo?: Promotion }[] = [

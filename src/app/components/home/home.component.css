@@ -201,8 +201,9 @@
   background: #fff;
   border-radius: var(--r);
   overflow: hidden;
-  width: 100%;
-  max-width: 380px;
+  width: auto;
+  max-width: min(94vw, 760px);
+  max-height: 94vh;
   box-shadow: var(--shadow-xl);
   animation: scaleIn .3s var(--ease-spring);
 }
@@ -214,7 +215,8 @@
 }
 .promo-pop-close:hover { background: rgba(0,0,0,.8); }
 .promo-pop-img { display: block; cursor: pointer; }
-.promo-pop-img img { width: 100%; height: auto; display: block; }
+/* Muestra la imagen COMPLETA (sin recorte), sea ancha o alta, y bien grande */
+.promo-pop-img img { display: block; width: auto; height: auto; max-width: min(94vw, 760px); max-height: 82vh; margin: 0 auto; }
 .promo-pop-cap {
   padding: 12px 14px;
   font-family: var(--font-display); font-size: 1rem; color: var(--ink); text-align: center;

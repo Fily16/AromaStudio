@@ -152,6 +152,7 @@ export class CartComponent implements OnDestroy {
   successTotal = signal(0);
   savedTotal = signal(0);
   savedItems = signal<{ label: string; qty: number; sub: number }[]>([]);
+  successChannel = signal('');
 
   goToCheckout() {
     if (this.cart.isEmpty()) return;
@@ -201,6 +202,7 @@ export class CartComponent implements OnDestroy {
     this.savedItems.set([...saved, ...savedPromos]);
     this.savedTotal.set(this.cart.totalPen());
     this.successDeposit.set(this.depositPen());
+    this.successChannel.set(this.cart.catalogType() || 'CONSOLIDADO');
 
     this.submitting.set(true);
     this.submitError.set('');
@@ -237,11 +239,27 @@ export class CartComponent implements OnDestroy {
   }
 
   sendCheckoutWhatsApp() {
-    let msg = `Hola, soy *${this.clientName()}*.\nMi código de pedido es *${this.successCode()}*.\n\nQuiero confirmar mi pedido:\n\n`;
-    for (const it of this.savedItems()) msg += `• ${it.label} x${it.qty} — S/ ${it.sub.toFixed(2)}\n`;
-    msg += `\n*Total: S/ ${this.savedTotal().toFixed(2)}*`;
-    if (this.successDeposit() > 0) msg += `\n*Separación: S/ ${this.successDeposit().toFixed(2)}*`;
-    if (this.deliveryMethod() === 'SHALOM' && this.selectedAgency()) msg += `\n\nEnvío a: Shalom ${this.selectedAgency()!.nombre}`;
+    const nl = '\n';
+    const canal = this.successChannel() === 'STOCK' ? 'Entrega inmediata (stock)' : 'Por encargo (consolidado)';
+    let msg = `Hola, soy *${this.clientName()}* — ${this.clientPhone()}${nl}`;
+    msg += `Mi código de pedido es *${this.successCode()}*${nl}${nl}`;
+    msg += `*Modalidad:* ${canal}${nl}${nl}`;
+    msg += `*Mi pedido:*${nl}`;
+    for (const it of this.savedItems()) msg += `• ${it.label} x${it.qty} — S/ ${it.sub.toFixed(2)}${nl}`;
+    msg += `${nl}*Total:* S/ ${this.savedTotal().toFixed(2)}${nl}`;
+    if (this.successDeposit() > 0) msg += `*Separación (adelanto):* S/ ${this.successDeposit().toFixed(2)}${nl}`;
+    if (this.successRemaining() > 0) msg += `*Resto por pagar:* S/ ${this.successRemaining().toFixed(2)}${nl}`;
+    if (this.deliveryMethod() === 'SHALOM') {
+      const destino = [this.selectedDepartment(), this.selectedAgency()?.nombre].filter(Boolean).join(' - ');
+      msg += `${nl}*Entrega:* Provincia (Shalom)${nl}`;
+      msg += `DNI: ${this.shippingDni()}${nl}`;
+      msg += `Nombre: ${this.shippingName()}${nl}`;
+      msg += `Destino: ${destino}${nl}`;
+      msg += `Teléfono: ${this.shippingPhone()}${nl}`;
+    } else {
+      msg += `${nl}*Entrega:* Lima (coordinar)${nl}`;
+    }
+    msg += `${nl}Quiero coordinar el pago. ¡Gracias! 🌸`;
     window.open(`https://wa.me/51981587009?text=${encodeURIComponent(msg)}`, '_blank');
   }
 
