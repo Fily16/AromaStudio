@@ -159,7 +159,7 @@
 
 <!-- ===== Popup de promoción al abrir ===== -->
 @if (promoPopup(); as pp) {
-  <div class="promo-pop-overlay" (click)="closePromoPopup()">
+  <div class="promo-pop-overlay">
     <div class="promo-pop" (click)="$event.stopPropagation()">
       <button class="promo-pop-close" (click)="closePromoPopup()" aria-label="Cerrar">✕</button>
       <a class="promo-pop-img" (click)="clickPromoPopup()">
@@ -170,7 +170,7 @@
   </div>
 }
 @if (popupPromo(); as pp) {
-  <div class="promo-pop-overlay" (click)="closePromoPopup()">
+  <div class="promo-pop-overlay">
     <div class="promo-pop" (click)="$event.stopPropagation()">
       <button class="promo-pop-close" (click)="closePromoPopup()" aria-label="Cerrar">✕</button>
       <a class="promo-pop-img" (click)="clickPromoPopupPromo()">
