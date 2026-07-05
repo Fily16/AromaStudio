@@ -40,7 +40,7 @@ export class CartComponent implements OnDestroy {
   });
 
   /** Pedido mínimo mayorista (unidades). */
-  readonly minUnits = 6;
+  readonly minUnits = 3;
   crossSell = signal<Product[]>([]);
   promos = signal<Banner[]>([]);
   activePromos = signal<Promotion[]>([]);
