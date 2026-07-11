@@ -302,6 +302,19 @@ export class ApiService {
     return this.http.delete<{ cleared: number; message: string }>(`${this.url}/admin/apify/cache`,
       { headers: this.authHeaders() });
   }
+  getApifySettings(): Observable<{ results: number; hasToken: boolean }> {
+    return this.http.get<{ results: number; hasToken: boolean }>(`${this.url}/admin/apify/settings`,
+      { headers: this.authHeaders() });
+  }
+  saveApifySettings(body: { results?: number; token?: string }): Observable<{ results: number; hasToken: boolean; message: string }> {
+    return this.http.post<{ results: number; hasToken: boolean; message: string }>(`${this.url}/admin/apify/settings`, body,
+      { headers: this.authHeaders() });
+  }
+  // Productos del catálogo (de un proveedor) sin foto
+  getMissingImages(supplierId: number): Observable<{ id: number; brand: string; name: string; ml: number | null; upc: string | null }[]> {
+    return this.http.get<{ id: number; brand: string; name: string; ml: number | null; upc: string | null }[]>(
+      `${this.url}/admin/apify/missing?supplierId=${supplierId}`, { headers: this.authHeaders() });
+  }
 
   archiveLegacyCatalog(): Observable<{ archived: number; message: string }> {
     return this.http.post<{ archived: number; message: string }>(

@@ -274,6 +274,82 @@
     }
   </section>
 
+  <!-- ===== Ajustes de Apify (fotos) ===== -->
+  <section class="panel">
+    <div class="panel-head"><h2>Ajustes de Apify (fotos)</h2></div>
+    <div class="sform-row">
+      <label>Resultados por perfume
+        <input type="number" [(ngModel)]="apifyResults" min="1" max="30" />
+      </label>
+      <label style="flex:1; min-width:240px;">Token de Apify (cambiar de cuenta)
+        <input type="password" [(ngModel)]="apifyTokenInput"
+               [placeholder]="apifyHasToken() ? 'Token configurado — pega uno nuevo para cambiar' : 'Pega tu token de Apify'" />
+      </label>
+    </div>
+    <div class="sform-actions">
+      <button class="btn" (click)="saveApifySettings()">Guardar ajustes</button>
+      @if (settingsMsg()) { <span class="ok">{{ settingsMsg() }}</span> }
+    </div>
+    <p class="sub" style="margin-top:8px;">Más resultados = más acierto pero más costo (~$1.90 / 1000 imágenes). El token cambia la cuenta de Apify cuando se te acabe el saldo (sobrescribe la variable de entorno).</p>
+  </section>
+
+  <!-- ===== Fotos faltantes del catálogo ===== -->
+  <section class="panel">
+    <div class="panel-head"><h2>Fotos faltantes del catálogo</h2></div>
+    <p class="sub">Busca fotos para los perfumes que YA están en tu catálogo pero no tienen imagen. Elige el proveedor y solo se buscan los suyos.</p>
+
+    <label class="field">
+      <span>Proveedor</span>
+      <select (change)="onMissSupplierChange($event)">
+        <option [value]="null" [selected]="missSupplierId() === null">— elige proveedor —</option>
+        @for (s of suppliers(); track s.id) {
+          <option [value]="s.id" [selected]="s.id === missSupplierId()">{{ s.name }} @if (!s.active) { (inactivo) }</option>
+        }
+      </select>
+    </label>
+
+    <div class="sform-actions">
+      <button class="btn ghost" (click)="loadMissing()" [disabled]="missLoading() || missSupplierId() === null">
+        {{ missLoading() ? 'Buscando…' : 'Buscar sin foto' }}
+      </button>
+      @if (missMsg()) { <span class="ok">{{ missMsg() }}</span> }
+    </div>
+
+    @if (missing().length) {
+      <div class="enrich" style="margin-top:12px;">
+        @if (!missEnriching()) {
+          <button class="btn publish sm" (click)="enrichMissing()">🖼️ Rellenar fotos ({{ missing().length }})</button>
+        } @else {
+          <button class="btn danger sm" (click)="pauseMissing()">⏸ Pausar</button>
+          <span class="searching">Buscando {{ missDone() + 1 }}/{{ missTotal() }}…</span>
+        }
+        @if (missEnriching()) {
+          <div class="bar"><div class="bar-fill" [style.width.%]="missTotal() ? (missDone() / missTotal() * 100) : 0"></div></div>
+        }
+      </div>
+
+      <div class="pv-table-wrap" style="margin-top:10px; max-height:360px;">
+        <table class="pv-table">
+          <thead><tr><th>Foto</th><th>Marca</th><th>Nombre</th><th>ml</th><th>UPC</th></tr></thead>
+          <tbody>
+            @for (p of missing(); track p.id) {
+              <tr>
+                <td class="pv-foto">
+                  @if (p.imageUrl) { <img [src]="p.imageUrl | cdnImg:120" loading="lazy" alt="" (error)="p.imageUrl = null" /> }
+                  @else { <span class="nofoto">—</span> }
+                </td>
+                <td>{{ p.brand }}</td>
+                <td>{{ p.name }}</td>
+                <td>{{ p.ml || '' }}</td>
+                <td class="mono">{{ p.upc || '—' }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </section>
+
   <!-- ===== Cutover ===== -->
   <section class="panel cutover">
     <h2>Cutover (una sola vez)</h2>

@@ -42,6 +42,22 @@ export class ImportComponent implements OnInit {
   enrichDone = signal(0);
   enrichTotal = signal(0);
   enrichMsg = signal('');
+
+  // Ajustes de Apify (nº de resultados y token, editables desde la UI)
+  apifyResults = 6;
+  apifyTokenInput = '';
+  apifyHasToken = signal(false);
+  settingsMsg = signal('');
+
+  // Fotos faltantes del catálogo (por proveedor)
+  missSupplierId = signal<number | null>(null);
+  missing = signal<{ id: number; brand: string; name: string; ml: number | null; upc: string | null; imageUrl?: string | null }[]>([]);
+  missLoading = signal(false);
+  missEnriching = signal(false);
+  missPaused = signal(false);
+  missDone = signal(0);
+  missTotal = signal(0);
+  missMsg = signal('');
   summary = signal<ImportSummary | null>(null);
   message = signal('');
   error = signal('');
@@ -50,7 +66,79 @@ export class ImportComponent implements OnInit {
   archiving = signal(false);
   archiveMessage = signal('');
 
-  ngOnInit() { this.loadSuppliers(); }
+  ngOnInit() {
+    this.loadSuppliers();
+    this.api.getApifySettings().subscribe({
+      next: (s) => { this.apifyResults = s.results; this.apifyHasToken.set(s.hasToken); },
+      error: () => {}
+    });
+  }
+
+  // ---------- Ajustes de Apify (nº resultados / token) ----------
+  saveApifySettings() {
+    const body: { results?: number; token?: string } = { results: +this.apifyResults };
+    if (this.apifyTokenInput.trim()) body.token = this.apifyTokenInput.trim();
+    this.settingsMsg.set('Guardando…');
+    this.api.saveApifySettings(body).subscribe({
+      next: (s) => {
+        this.apifyResults = s.results;
+        this.apifyHasToken.set(s.hasToken);
+        this.apifyTokenInput = '';
+        this.settingsMsg.set('✓ ' + s.message);
+      },
+      error: (err) => this.settingsMsg.set('✗ ' + (err.error?.message || 'No se pudo guardar.'))
+    });
+  }
+
+  // ---------- Fotos faltantes del catálogo (por proveedor) ----------
+  onMissSupplierChange(e: Event) {
+    const v = (e.target as HTMLSelectElement).value;
+    this.missSupplierId.set(v && v !== 'null' ? +v : null);
+    this.missing.set([]); this.missMsg.set('');
+  }
+  loadMissing() {
+    const sid = this.missSupplierId();
+    if (sid == null) { this.missMsg.set('Selecciona un proveedor.'); return; }
+    this.missLoading.set(true); this.missMsg.set('');
+    this.api.getMissingImages(sid).subscribe({
+      next: (list) => {
+        this.missLoading.set(false);
+        this.missing.set(list);
+        this.missMsg.set(list.length ? `${list.length} productos sin foto.` : 'No hay productos sin foto para este proveedor.');
+      },
+      error: (err) => { this.missLoading.set(false); this.missMsg.set(err.error?.message || 'No se pudo cargar.'); }
+    });
+  }
+  private missQuery(p: { brand: string; name: string; ml: number | null }): string {
+    const ml = p.ml ? `${p.ml}ml` : '';
+    return `${p.brand ?? ''} ${p.name ?? ''} ${ml} perfume`.replace(/\s+/g, ' ').trim();
+  }
+  enrichMissing() {
+    const list = this.missing().filter(p => !p.imageUrl);
+    if (!list.length) { this.missMsg.set('Todos ya tienen foto.'); return; }
+    this.missPaused.set(false); this.missEnriching.set(true);
+    this.missTotal.set(list.length); this.missDone.set(0); this.missMsg.set('');
+    this.processMissingOne(list, 0, 0);
+  }
+  pauseMissing() { this.missPaused.set(true); }
+  private processMissingOne(list: { id: number; brand: string; name: string; ml: number | null; upc: string | null; imageUrl?: string | null }[], i: number, found: number) {
+    if (this.missPaused()) { this.missEnriching.set(false); this.missMsg.set(`⏸ Pausado. ${found} de ${this.missTotal()} con foto.`); return; }
+    if (i >= list.length) { this.missEnriching.set(false); this.missMsg.set(`✓ ${found} de ${this.missTotal()} rellenadas.`); return; }
+    const p = list[i];
+    const items = [{ idx: p.id, upc: p.upc ?? null, query: this.missQuery(p) }];
+    this.api.fetchApifyImages(items).subscribe({
+      next: (res) => {
+        const url = res?.[String(p.id)];
+        if (url) {
+          this.api.updateProduct(p.id, { imageUrl: url }).subscribe();
+          p.imageUrl = url; found++;
+        }
+        this.missDone.set(i + 1);
+        this.processMissingOne(list, i + 1, found);
+      },
+      error: (err) => { this.missEnriching.set(false); this.missMsg.set(err.error?.message || 'Error consultando Apify.'); }
+    });
+  }
 
   loadSuppliers(keepSelection = false) {
     this.api.getSuppliers().subscribe({
