@@ -1,60 +1,286 @@
 <div class="import-wrap">
   <a routerLink="/admin" class="back">← Volver al panel</a>
-  <h1>Importar lista de precios</h1>
-  <p class="sub">Sube el Excel del proveedor. Se cruza por código de barras (UPC); cada importación actualiza precios y stock.</p>
+  <h1>Proveedores e importación de precios</h1>
+  <p class="sub">Todo se cruza por código de barras (UPC). Puedes agregar cualquier proveedor: sube su Excel, revísalo y publícalo cuando esté correcto.</p>
 
-  <label class="field">
-    <span>Proveedor</span>
-    <select (change)="onSupplierChange($event)">
-      @for (s of suppliers(); track s.id) {
-        <option [value]="s.id" [selected]="s.id === selectedSupplierId()">
-          {{ s.name }} @if (s.minOrderUsd > 0) { (mín. ${{ s.minOrderUsd }}) }
-        </option>
-      }
-    </select>
-  </label>
-
-  <div class="dropzone" [class.drag]="dragging()"
-       (dragover)="onDragOver($event)" (dragleave)="onDragLeave($event)" (drop)="onDrop($event)">
-    @if (loading()) {
-      <p class="big">⏳ Procesando…</p>
-    } @else {
-      <p class="big">Arrastra el Excel aquí</p>
-      <p class="or">o</p>
-      <label class="btn">
-        Elegir archivo
-        <input type="file" accept=".xlsx,.xls" (change)="onFileSelected($event)" hidden />
-      </label>
-    }
-  </div>
-
-  @if (message()) { <p class="ok">{{ message() }}</p> }
-  @if (error()) { <p class="err">{{ error() }}</p> }
-
-  @if (summary(); as s) {
-    <div class="summary">
-      <h2>Resultado — {{ s.supplierName }}</h2>
-      <div class="grid">
-        <div><b>{{ s.rowsRead }}</b><span>filas leídas</span></div>
-        <div><b>{{ s.productsCreated }}</b><span>productos nuevos</span></div>
-        <div><b>{{ s.offersCreated }}</b><span>ofertas creadas</span></div>
-        <div><b>{{ s.offersUpdated }}</b><span>ofertas actualizadas</span></div>
-        <div [class.warn]="s.collisions > 0"><b>{{ s.collisions }}</b><span>colisiones UPC (separadas)</span></div>
-        <div [class.warn]="s.noUpcRows > 0"><b>{{ s.noUpcRows }}</b><span>sin código</span></div>
-        <div><b>{{ s.markedOutOfStock }}</b><span>fuera de stock</span></div>
-      </div>
-      @if (s.notes.length) {
-        <ul class="notes">@for (n of s.notes; track n) { <li>{{ n }}</li> }</ul>
-      }
+  <!-- ===== Panel de proveedores ===== -->
+  <section class="panel">
+    <div class="panel-head">
+      <h2>Proveedores</h2>
+      <button class="btn sm" (click)="openNew()">+ Nuevo proveedor</button>
     </div>
-  }
 
-  <div class="cutover">
+    @if (supplierMsg()) { <p class="ok">{{ supplierMsg() }}</p> }
+    @if (supplierErr()) { <p class="err">{{ supplierErr() }}</p> }
+
+    @if (showForm()) {
+      <div class="sform">
+        <div class="sform-row">
+          <label>Nombre
+            <input type="text" [(ngModel)]="sForm.name" placeholder="Ej. FRAGSENSE LLC" />
+          </label>
+          <label>Mínimo USD
+            <input type="number" [(ngModel)]="sForm.minOrderUsd" min="0" />
+          </label>
+          <label class="chk">
+            <input type="checkbox" [(ngModel)]="sForm.priorityToReachMin" />
+            Prioridad (llegar al mínimo)
+          </label>
+        </div>
+        <div class="sform-actions">
+          <button class="btn" (click)="saveSupplier()" [disabled]="savingSupplier()">
+            {{ savingSupplier() ? 'Guardando…' : (sForm.id == null ? 'Crear' : 'Guardar') }}
+          </button>
+          <button class="btn ghost" (click)="cancelForm()">Cancelar</button>
+        </div>
+      </div>
+    }
+
+    <table class="stable">
+      <thead>
+        <tr><th>Proveedor</th><th>Mín. USD</th><th>Prioridad</th><th>Estado</th><th></th></tr>
+      </thead>
+      <tbody>
+        @for (s of suppliers(); track s.id) {
+          <tr [class.off]="!s.active">
+            <td>{{ s.name }}</td>
+            <td>{{ s.minOrderUsd > 0 ? ('$' + s.minOrderUsd) : '—' }}</td>
+            <td>{{ s.priorityToReachMin ? '⭐' : '' }}</td>
+            <td>
+              <span class="badge" [class.on]="s.active">{{ s.active ? 'Activo' : 'Inactivo' }}</span>
+            </td>
+            <td class="row-actions">
+              <button class="link" (click)="openEdit(s)">Editar</button>
+              <button class="link" (click)="toggleActive(s)">{{ s.active ? 'Desactivar' : 'Activar' }}</button>
+              <button class="link danger" (click)="removeSupplier(s)">Eliminar</button>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </section>
+
+  <!-- ===== Importar lista de precios ===== -->
+  <section class="panel">
+    <div class="panel-head"><h2>Importar lista de precios</h2></div>
+
+    <label class="field">
+      <span>Proveedor</span>
+      <select (change)="onSupplierChange($event)">
+        @for (s of suppliers(); track s.id) {
+          <option [value]="s.id" [selected]="s.id === selectedSupplierId()">
+            {{ s.name }} @if (!s.active) { (inactivo) }
+          </option>
+        }
+      </select>
+    </label>
+
+    @if (!preview()) {
+      <div class="dropzone" [class.drag]="dragging()"
+           (dragover)="onDragOver($event)" (dragleave)="onDragLeave($event)" (drop)="onDrop($event)">
+        @if (loading()) {
+          <p class="big">⏳ Procesando…</p>
+        } @else {
+          <p class="big">Arrastra el Excel aquí</p>
+          <p class="or">o</p>
+          <label class="btn">
+            Elegir archivo
+            <input type="file" accept=".xlsx,.xls" (change)="onFileSelected($event)" hidden />
+          </label>
+        }
+      </div>
+    }
+
+    @if (message()) { <p class="ok">{{ message() }}</p> }
+    @if (error()) { <p class="err">{{ error() }}</p> }
+
+    <!-- Vista previa -->
+    @if (preview(); as p) {
+      <div class="preview">
+        <div class="pv-head">
+          <h3>Vista previa — {{ p.supplierName }}</h3>
+          <span class="pv-tag">NO publicado aún</span>
+        </div>
+
+        <!-- Selector de columnas (solo parser genérico) -->
+        @if (p.generic && editMapping) {
+          <div class="mapping">
+            <p class="mm-title">Columnas detectadas <span>(corrige si algo está mal y pulsa Re-analizar)</span></p>
+            <div class="mm-grid">
+              <label>Nombre / Descripción
+                <select [(ngModel)]="editMapping.descriptionCol">
+                  @for (h of p.headers; track $index) { <option [ngValue]="$index">{{ h }}</option> }
+                </select>
+              </label>
+              <label>UPC / Código
+                <select [(ngModel)]="editMapping.upcCol">
+                  <option [ngValue]="null">— ninguna —</option>
+                  @for (h of p.headers; track $index) { <option [ngValue]="$index">{{ h }}</option> }
+                </select>
+              </label>
+              <label>Precio (costo)
+                <select [(ngModel)]="editMapping.priceCol">
+                  <option [ngValue]="null">— ninguna —</option>
+                  @for (h of p.headers; track $index) { <option [ngValue]="$index">{{ h }}</option> }
+                </select>
+              </label>
+              <label>Marca (opcional)
+                <select [(ngModel)]="editMapping.brandCol">
+                  <option [ngValue]="null">— ninguna —</option>
+                  @for (h of p.headers; track $index) { <option [ngValue]="$index">{{ h }}</option> }
+                </select>
+              </label>
+              <label>Estado / Stock (opcional)
+                <select [(ngModel)]="editMapping.statusCol">
+                  <option [ngValue]="null">— ninguna —</option>
+                  @for (h of p.headers; track $index) { <option [ngValue]="$index">{{ h }}</option> }
+                </select>
+              </label>
+              <label>Tamaño
+                <select [(ngModel)]="editMapping.sizeUnit">
+                  <option value="auto">auto</option>
+                  <option value="ml">ml</option>
+                  <option value="oz">oz</option>
+                </select>
+              </label>
+            </div>
+            <button class="btn ghost sm" (click)="reparse()" [disabled]="loading()">
+              {{ loading() ? 'Analizando…' : '↻ Re-analizar' }}
+            </button>
+          </div>
+        }
+
+        <!-- Contadores -->
+        <div class="grid">
+          <div><b>{{ p.rowsRead }}</b><span>filas leídas</span></div>
+          <div><b>{{ p.newProducts }}</b><span>productos nuevos</span></div>
+          <div><b>{{ p.updatedOffers }}</b><span>ofertas actualizadas</span></div>
+          <div [class.warn]="p.noUpcRows > 0"><b>{{ p.noUpcRows }}</b><span>sin código</span></div>
+          <div [class.warn]="p.collisions > 0"><b>{{ p.collisions }}</b><span>colisiones UPC</span></div>
+          <div [class.warn]="p.outOfStock > 0"><b>{{ p.outOfStock }}</b><span>fuera de stock</span></div>
+          <div [class.good]="p.priceDrops > 0"><b>{{ p.priceDrops }}</b><span>precios que bajan</span></div>
+          <div><b>{{ p.priceRises }}</b><span>precios que suben</span></div>
+        </div>
+
+        <p class="legend">
+          <span class="dot exist"></span> UPC ya en tu catálogo: se conservan marca, nombre, ml, aromas y foto (solo cambia precio/stock).
+          <span class="dot brandnew"></span> Nuevo: puedes corregir marca, nombre y ml aquí antes de publicar.
+        </p>
+
+        <!-- Rellenar fotos con Apify (solo filas nuevas, de 1 en 1 con pausa) -->
+        @if (newRows().length) {
+          <div class="enrich">
+            @if (!enriching()) {
+              <button class="btn ghost sm" (click)="enrichPhotos()">🖼️ Rellenar fotos con Apify ({{ newRows().length }} nuevos)</button>
+            } @else {
+              <button class="btn danger sm" (click)="pauseEnrich()">⏸ Pausar</button>
+              <span class="searching">Buscando: {{ enrichDone() + 1 }}/{{ enrichTotal() }}…</span>
+            }
+            @if (enriching()) {
+              <div class="bar"><div class="bar-fill" [style.width.%]="enrichTotal() ? (enrichDone() / enrichTotal() * 100) : 0"></div></div>
+            }
+            @if (!enriching()) {
+              <button class="link" (click)="clearPhotoCache()" title="Volver a buscar desde cero">🗑 Limpiar caché de fotos</button>
+            }
+            @if (enrichMsg()) { <span class="enrich-msg">{{ enrichMsg() }}</span> }
+          </div>
+        }
+
+        <!-- Tabla de filas -->
+        <div class="pv-table-wrap">
+          <table class="pv-table">
+            <thead>
+              <tr>
+                <th>Foto</th><th>Marca</th><th>Nombre</th><th>ml</th><th>UPC</th>
+                <th>Costo $</th><th>Stock</th><th>Precio al cliente S/</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (r of p.rows; track r.idx) {
+                <tr [class.oos]="!r.inStock" [class.isnew]="r.editable">
+                  <!-- Foto: del producto existente (por UPC). Nuevos: sin foto todavía. -->
+                  <td class="pv-foto">
+                    @if (r.matchedImageUrl) {
+                      <img [src]="r.matchedImageUrl | cdnImg:120" loading="lazy" alt="" />
+                    } @else if (r.editable && overrides[r.idx]?.imageUrl) {
+                      <img [src]="overrides[r.idx].imageUrl | cdnImg:120" loading="lazy" alt="" (error)="imgFailed(r.idx)" />
+                    } @else if (r.editable) {
+                      <span class="nofoto">nuevo</span>
+                    } @else { <span class="nofoto">—</span> }
+                  </td>
+
+                  @if (r.editable) {
+                    <!-- Fila nueva: editable -->
+                    <td><input class="pv-in" [(ngModel)]="overrides[r.idx].brand" placeholder="Marca" /></td>
+                    <td><input class="pv-in wide" [(ngModel)]="overrides[r.idx].name" placeholder="Nombre (sin marca)" /></td>
+                    <td><input class="pv-in num" type="number" [(ngModel)]="overrides[r.idx].ml" placeholder="ml" /></td>
+                  } @else {
+                    <!-- UPC existente: datos tuyos, no se tocan -->
+                    <td>{{ r.matchedBrand }}</td>
+                    <td>{{ r.matchedName }} <span class="exist">en catálogo</span></td>
+                    <td>{{ r.matchedMl || '' }}</td>
+                  }
+
+                  <td class="mono">{{ r.upc || '—' }}</td>
+                  <td>{{ r.costUsd != null ? (r.costUsd | number:'1.0-2') : '—' }}</td>
+                  <td>{{ r.inStock ? '✓' : 'SOLD' }}</td>
+                  <td class="pv-price">
+                    @if (r.currentPricePen != null) {
+                      @if (r.newPricePen != null && r.newPricePen < r.currentPricePen) {
+                        <span class="old">{{ r.currentPricePen | number:'1.0-0' }}</span>
+                        <span class="drop">→ {{ r.newPricePen | number:'1.0-0' }} ▼ baja</span>
+                      } @else if (r.newPricePen != null && r.newPricePen > r.currentPricePen) {
+                        <span class="old">{{ r.currentPricePen | number:'1.0-0' }}</span>
+                        <span class="rise">→ {{ r.newPricePen | number:'1.0-0' }} ▲ sube</span>
+                      } @else {
+                        {{ r.currentPricePen | number:'1.0-0' }} <span class="same">sin cambio</span>
+                      }
+                    } @else if (r.newPricePen != null) {
+                      {{ r.newPricePen | number:'1.0-0' }} <span class="new">NUEVO</span>
+                    } @else { — }
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <div class="pv-actions">
+          <button class="btn publish" (click)="publish()" [disabled]="publishing()">
+            {{ publishing() ? 'Publicando…' : '✓ Publicar a la tienda' }}
+          </button>
+          <button class="btn ghost" (click)="discard()" [disabled]="publishing()">Descartar</button>
+        </div>
+      </div>
+    }
+
+    <!-- Resultado de publicación -->
+    @if (summary(); as s) {
+      <div class="summary">
+        <h2>Publicado — {{ s.supplierName }}</h2>
+        <div class="grid">
+          <div><b>{{ s.rowsRead }}</b><span>filas leídas</span></div>
+          <div><b>{{ s.productsCreated }}</b><span>productos nuevos</span></div>
+          <div><b>{{ s.offersCreated }}</b><span>ofertas creadas</span></div>
+          <div><b>{{ s.offersUpdated }}</b><span>ofertas actualizadas</span></div>
+          <div [class.warn]="s.collisions > 0"><b>{{ s.collisions }}</b><span>colisiones UPC</span></div>
+          <div [class.warn]="s.noUpcRows > 0"><b>{{ s.noUpcRows }}</b><span>sin código</span></div>
+          <div><b>{{ s.markedOutOfStock }}</b><span>fuera de stock</span></div>
+        </div>
+        @if (s.notes.length) {
+          <ul class="notes">@for (n of s.notes; track n) { <li>{{ n }}</li> }</ul>
+        }
+      </div>
+    }
+  </section>
+
+  <!-- ===== Cutover ===== -->
+  <section class="panel cutover">
     <h2>Cutover (una sola vez)</h2>
     <p class="sub">Archiva el catálogo viejo de Crisfragance (productos sin ofertas). No borra nada: el historial queda intacto.</p>
     <button class="btn danger" (click)="archive()" [disabled]="archiving()">
       {{ archiving() ? 'Archivando…' : 'Archivar catálogo viejo' }}
     </button>
     @if (archiveMessage()) { <p class="ok">{{ archiveMessage() }}</p> }
-  </div>
+  </section>
 </div>

@@ -319,6 +319,67 @@ export interface ImportSummary {
   notes: string[];
 }
 
+// Alta/edicion de proveedor
+export interface SupplierRequest {
+  name?: string;
+  minOrderUsd?: number;
+  priorityToReachMin?: boolean;
+  active?: boolean;
+}
+
+// Asignacion de columnas del Excel (auto-detectada; editable en la vista previa)
+export interface ColumnMapping {
+  headerRow: number | null;
+  descriptionCol: number | null;
+  upcCol: number | null;
+  priceCol: number | null;
+  brandCol: number | null;
+  statusCol: number | null;
+  sizeUnit: string; // auto | ml | oz
+}
+
+export interface ImportPreviewLine {
+  idx: number;
+  brand: string;
+  name: string;
+  rawTitle: string | null;   // título original del Excel (para buscar por nombre exacto en Apify)
+  ml: number | null;
+  upc: string | null;
+  costUsd: number | null;
+  inStock: boolean;
+  isNew: boolean;
+  editable: boolean;
+  matchedProductId: number | null;
+  matchedBrand: string | null;
+  matchedName: string | null;
+  matchedMl: number | null;
+  matchedImageUrl: string | null;
+  currentPricePen: number | null;
+  newPricePen: number | null;
+}
+
+// Correcciones manuales al publicar (por índice de fila): marca/nombre/ml/foto de productos nuevos
+export interface RowOverride { brand?: string; name?: string; ml?: number | null; imageUrl?: string | null; }
+export interface PublishRequest { overrides?: Record<number, RowOverride>; }
+
+// Vista previa de una importacion ANTES de publicarla al cliente
+export interface ImportPreview {
+  batchId: number;
+  supplierName: string;
+  generic: boolean;
+  mapping: ColumnMapping | null;
+  headers: string[];
+  rowsRead: number;
+  newProducts: number;
+  updatedOffers: number;
+  noUpcRows: number;
+  collisions: number;
+  outOfStock: number;
+  priceDrops: number;
+  priceRises: number;
+  rows: ImportPreviewLine[];
+}
+
 export interface AllocationLine {
   productId: number;
   brand: string;

@@ -7,7 +7,7 @@ import {
   DashboardStats, AppConfig, PublicConfig, OrderRequest, LoginResponse,
   StockPurchaseRequest, BreakdownSection, FullBreakdownResponse,
   Supplier, ImportSummary, AllocationResponse, SuggestResult, OperationsSummary, MissingItem,
-  Promotion, ProfitReport
+  Promotion, ProfitReport, SupplierRequest, ColumnMapping, ImportPreview, PublishRequest
 } from '../models/api.models';
 
 @Injectable({ providedIn: 'root' })
@@ -256,6 +256,51 @@ export class ApiService {
     return this.http.post<ImportSummary>(`${this.url}/admin/suppliers/${supplierId}/import`, fd, {
       headers: this.authHeaders()
     });
+  }
+
+  // --- Proveedores: CRUD + activar/desactivar ---
+  createSupplier(req: SupplierRequest): Observable<Supplier> {
+    return this.http.post<Supplier>(`${this.url}/admin/suppliers`, req, { headers: this.authHeaders() });
+  }
+  updateSupplier(id: number, req: SupplierRequest): Observable<Supplier> {
+    return this.http.put<Supplier>(`${this.url}/admin/suppliers/${id}`, req, { headers: this.authHeaders() });
+  }
+  setSupplierActive(id: number, active: boolean): Observable<Supplier> {
+    return this.http.patch<Supplier>(`${this.url}/admin/suppliers/${id}/active?value=${active}`, {},
+      { headers: this.authHeaders() });
+  }
+  deleteSupplier(id: number): Observable<{ message: string }> {
+    return this.http.delete<{ message: string }>(`${this.url}/admin/suppliers/${id}`, { headers: this.authHeaders() });
+  }
+
+  // --- Importacion con vista previa (staging) ---
+  previewImport(supplierId: number, file: File): Observable<ImportPreview> {
+    const fd = new FormData();
+    fd.append('file', file);
+    return this.http.post<ImportPreview>(`${this.url}/admin/suppliers/${supplierId}/import/preview`, fd,
+      { headers: this.authHeaders() });
+  }
+  reparseBatch(batchId: number, mapping: ColumnMapping): Observable<ImportPreview> {
+    return this.http.post<ImportPreview>(`${this.url}/admin/import-batches/${batchId}/reparse`, mapping,
+      { headers: this.authHeaders() });
+  }
+  publishBatch(batchId: number, req?: PublishRequest): Observable<ImportSummary> {
+    return this.http.post<ImportSummary>(`${this.url}/admin/import-batches/${batchId}/publish`, req ?? {},
+      { headers: this.authHeaders() });
+  }
+  discardBatch(batchId: number): Observable<{ message: string }> {
+    return this.http.delete<{ message: string }>(`${this.url}/admin/import-batches/${batchId}`,
+      { headers: this.authHeaders() });
+  }
+
+  // Apify (con caché por UPC): busca fotos. Body { items:[{idx,upc,query}] } -> { "idx": "imageUrl" }
+  fetchApifyImages(items: { idx: number; upc: string | null; query: string }[]): Observable<Record<string, string>> {
+    return this.http.post<Record<string, string>>(`${this.url}/admin/apify/images`, { items },
+      { headers: this.authHeaders() });
+  }
+  clearApifyCache(): Observable<{ cleared: number; message: string }> {
+    return this.http.delete<{ cleared: number; message: string }>(`${this.url}/admin/apify/cache`,
+      { headers: this.authHeaders() });
   }
 
   archiveLegacyCatalog(): Observable<{ archived: number; message: string }> {
