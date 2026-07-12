@@ -302,12 +302,12 @@ export class ApiService {
     return this.http.delete<{ cleared: number; message: string }>(`${this.url}/admin/apify/cache`,
       { headers: this.authHeaders() });
   }
-  getApifySettings(): Observable<{ results: number; hasToken: boolean }> {
-    return this.http.get<{ results: number; hasToken: boolean }>(`${this.url}/admin/apify/settings`,
+  getApifySettings(): Observable<{ results: number; batch: number; hasToken: boolean }> {
+    return this.http.get<{ results: number; batch: number; hasToken: boolean }>(`${this.url}/admin/apify/settings`,
       { headers: this.authHeaders() });
   }
-  saveApifySettings(body: { results?: number; token?: string }): Observable<{ results: number; hasToken: boolean; message: string }> {
-    return this.http.post<{ results: number; hasToken: boolean; message: string }>(`${this.url}/admin/apify/settings`, body,
+  saveApifySettings(body: { results?: number; batch?: number; token?: string }): Observable<{ results: number; batch: number; hasToken: boolean; message: string }> {
+    return this.http.post<{ results: number; batch: number; hasToken: boolean; message: string }>(`${this.url}/admin/apify/settings`, body,
       { headers: this.authHeaders() });
   }
   // Productos del catálogo (de un proveedor) sin foto

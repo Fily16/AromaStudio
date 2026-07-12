@@ -43,8 +43,9 @@ export class ImportComponent implements OnInit {
   enrichTotal = signal(0);
   enrichMsg = signal('');
 
-  // Ajustes de Apify (nº de resultados y token, editables desde la UI)
+  // Ajustes de Apify (nº de resultados, tamaño de lote y token, editables desde la UI)
   apifyResults = 6;
+  apifyBatch = 10;
   apifyTokenInput = '';
   apifyHasToken = signal(false);
   settingsMsg = signal('');
@@ -70,19 +71,20 @@ export class ImportComponent implements OnInit {
   ngOnInit() {
     this.loadSuppliers();
     this.api.getApifySettings().subscribe({
-      next: (s) => { this.apifyResults = s.results; this.apifyHasToken.set(s.hasToken); },
+      next: (s) => { this.apifyResults = s.results; this.apifyBatch = s.batch; this.apifyHasToken.set(s.hasToken); },
       error: () => {}
     });
   }
 
   // ---------- Ajustes de Apify (nº resultados / token) ----------
   saveApifySettings() {
-    const body: { results?: number; token?: string } = { results: +this.apifyResults };
+    const body: { results?: number; batch?: number; token?: string } = { results: +this.apifyResults, batch: +this.apifyBatch };
     if (this.apifyTokenInput.trim()) body.token = this.apifyTokenInput.trim();
     this.settingsMsg.set('Guardando…');
     this.api.saveApifySettings(body).subscribe({
       next: (s) => {
         this.apifyResults = s.results;
+        this.apifyBatch = s.batch;
         this.apifyHasToken.set(s.hasToken);
         this.apifyTokenInput = '';
         this.settingsMsg.set('✓ ' + s.message);
@@ -120,23 +122,25 @@ export class ImportComponent implements OnInit {
     this.missSource.set(source);
     this.missPaused.set(false); this.missEnriching.set(true);
     this.missTotal.set(list.length); this.missDone.set(0); this.missMsg.set('');
-    this.processMissingOne(list, 0, 0);
+    this.processMissingChunk(list, 0, 0);
   }
   pauseMissing() { this.missPaused.set(true); }
-  private processMissingOne(list: { id: number; brand: string; name: string; ml: number | null; upc: string | null; imageUrl?: string | null }[], i: number, found: number) {
+  // Procesa POR LOTES (tamaño configurable): manda N perfumes en una sola corrida del actor.
+  private processMissingChunk(list: { id: number; brand: string; name: string; ml: number | null; upc: string | null; imageUrl?: string | null }[], start: number, found: number) {
     if (this.missPaused()) { this.missEnriching.set(false); this.missMsg.set(`⏸ Pausado. ${found} de ${this.missTotal()} con foto.`); return; }
-    if (i >= list.length) { this.missEnriching.set(false); this.missMsg.set(`✓ ${found} de ${this.missTotal()} rellenadas.`); return; }
-    const p = list[i];
-    const items = [{ idx: p.id, upc: p.upc ?? null, query: this.missQuery(p) }];
+    if (start >= list.length) { this.missEnriching.set(false); this.missMsg.set(`✓ ${found} de ${this.missTotal()} rellenadas.`); return; }
+    const size = Math.max(1, +this.apifyBatch || 1);
+    const chunk = list.slice(start, start + size);
+    const items = chunk.map(p => ({ idx: p.id, upc: p.upc ?? null, query: this.missQuery(p) }));
     this.api.fetchApifyImages(items, this.missSource()).subscribe({
       next: (res) => {
-        const url = res?.[String(p.id)];
-        if (url) {
-          this.api.updateProduct(p.id, { imageUrl: url }).subscribe();
-          p.imageUrl = url; found++;
+        let f = found;
+        for (const p of chunk) {
+          const url = res?.[String(p.id)];
+          if (url) { this.api.updateProduct(p.id, { imageUrl: url }).subscribe(); p.imageUrl = url; f++; }
         }
-        this.missDone.set(i + 1);
-        this.processMissingOne(list, i + 1, found);
+        this.missDone.set(Math.min(this.missTotal(), start + chunk.length));
+        this.processMissingChunk(list, start + size, f);
       },
       error: (err) => { this.missEnriching.set(false); this.missMsg.set(err.error?.message || 'Error consultando Apify.'); }
     });

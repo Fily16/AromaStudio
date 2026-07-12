@@ -281,6 +281,9 @@
       <label>Resultados por perfume
         <input type="number" [(ngModel)]="apifyResults" min="1" max="30" />
       </label>
+      <label>Buscar de N en N (lote)
+        <input type="number" [(ngModel)]="apifyBatch" min="1" max="50" title="Cuántos perfumes por corrida (más = más rápido)" />
+      </label>
       <label style="flex:1; min-width:240px;">Token de Apify (cambiar de cuenta)
         <input type="password" [(ngModel)]="apifyTokenInput"
                [placeholder]="apifyHasToken() ? 'Token configurado — pega uno nuevo para cambiar' : 'Pega tu token de Apify'" />
@@ -322,7 +325,7 @@
           <button class="btn ghost sm" (click)="enrichMissing('fragrantica')" title="Buscar por nombre en Fragrantica">🌸 Fragrantica</button>
         } @else {
           <button class="btn danger sm" (click)="pauseMissing()">⏸ Pausar</button>
-          <span class="searching">Buscando ({{ missSource() }}) {{ missDone() + 1 }}/{{ missTotal() }}…</span>
+          <span class="searching">Buscando ({{ missSource() }}) {{ missDone() }}/{{ missTotal() }}…</span>
         }
         @if (missEnriching()) {
           <div class="bar"><div class="bar-fill" [style.width.%]="missTotal() ? (missDone() / missTotal() * 100) : 0"></div></div>
