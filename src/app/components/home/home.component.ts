@@ -356,6 +356,6 @@ export class HomeComponent implements OnInit, OnDestroy {
     event.preventDefault();
     try { (window as any).ttq?.track('Contact', { content_type: 'product', content_name: 'WhatsApp FAB' }); } catch {}
     try { (window as any).fbq?.('track', 'Contact', { content_name: 'WhatsApp FAB' }); } catch {}
-    setTimeout(() => { window.open('https://wa.me/51981587009', '_blank'); }, 300);
+    setTimeout(() => { window.open('https://wa.me/51933134699', '_blank'); }, 300);
   }
 }

@@ -7,6 +7,10 @@
       <button class="adm-btn" [class.primary]="showBreakdown()" (click)="toggleBreakdown()">
         {{ showBreakdown() ? 'Ocultar desglose' : 'Pedido final' }}
       </button>
+      <button class="adm-btn" [class.primary]="showUnavailable()" (click)="toggleUnavailable()"
+              title="Pedidos separados con perfumes que ya no tenemos">
+        Revisar separados @if (unavailableReport().length) { ({{ unavailableReport().length }}) }
+      </button>
       @if (shalomOrders().length) {
         <button class="adm-btn" (click)="printShalom()" title="Imprimir etiquetas Shalom (4 por hoja)">
           🖨 Shalom ({{ shalomOrders().length }})
@@ -370,20 +374,21 @@
 
       @if (closeStep() === 'upload') {
         <p style="color:var(--a-muted);font-size:.88rem;margin-bottom:14px">
-          Sube los Excel de los 2 proveedores. Se aplicará la regla Zimaxx (mín. US$2000) y se detectará qué perfumes faltan.
+          Sube el Excel de los proveedores que quieras actualizar (solo esos se importan). Se detectará qué perfumes faltan y se avisa a los clientes.
         </p>
-        <div class="adm-field" style="margin-bottom:12px">
-          <label>Excel Zimaxx (.xlsx)</label>
-          <input class="adm-input" type="file" accept=".xlsx,.xls" (change)="onZimaxxFile($event)">
-        </div>
-        <div class="adm-field" style="margin-bottom:16px">
-          <label>Excel Magnet (.xlsx)</label>
-          <input class="adm-input" type="file" accept=".xlsx,.xls" (change)="onMagnetFile($event)">
-        </div>
+        @for (s of closeSuppliers(); track s.id) {
+          <div class="adm-field" style="margin-bottom:12px">
+            <label>Excel {{ s.name }} (.xlsx)</label>
+            <input class="adm-input" type="file" accept=".xlsx,.xls" (change)="onSupplierFile(s.id, $event)">
+          </div>
+        }
+        @if (!closeSuppliers().length) {
+          <p style="color:var(--a-muted);font-size:.85rem">No hay proveedores activos.</p>
+        }
         @if (closeError()) { <p style="color:var(--a-danger);font-size:.85rem;margin-bottom:10px">{{ closeError() }}</p> }
         <div class="ord-modal-actions">
           <button class="adm-btn" (click)="closeCloseModal()">Cancelar</button>
-          <button class="adm-btn primary" (click)="processClose()" [disabled]="!zimaxxFile() || !magnetFile() || closing()">
+          <button class="adm-btn primary" (click)="processClose()" [disabled]="supplierFiles().size === 0 || closing()">
             {{ closing() ? 'Procesando…' : 'Procesar y cerrar' }}
           </button>
         </div>
@@ -440,6 +445,50 @@
           <button class="adm-btn primary" (click)="closeCloseModal()">Listo</button>
         </div>
       }
+    </div>
+  </div>
+}
+
+<!-- Modal: revisar pedidos separados con perfumes que ya no tenemos -->
+@if (showUnavailable()) {
+  <div class="ord-modal-bg" (click)="showUnavailable.set(false)">
+    <div class="ord-modal ord-modal-lg" (click)="$event.stopPropagation()">
+      <div class="ord-detail-head">
+        <h3>Pedidos separados con perfumes que ya no tenemos</h3>
+        <button class="adm-btn ghost sm" (click)="showUnavailable.set(false)">✕</button>
+      </div>
+      @if (unavailableReport().length === 0) {
+        <div class="adm-st green" style="margin:6px 0">✓ Todos los pedidos separados tienen sus perfumes disponibles.</div>
+      } @else {
+        <p style="color:var(--a-muted);font-size:.82rem;margin-bottom:10px">
+          Estos clientes tienen perfumes que ya no tenemos (ocultos al cambiar de proveedor). Avísales por WhatsApp.
+        </p>
+        <div class="ord-detail-items" style="max-height:62vh">
+          @for (e of unavailableReport(); track e.order.id) {
+            <div class="ord-client" style="flex-direction:column;align-items:stretch;gap:6px">
+              <div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
+                <div>
+                  <b>{{ e.order.clientName }}</b>
+                  <span style="color:var(--a-muted)">· {{ e.order.orderCode }} · {{ e.order.clientPhone }}</span>
+                </div>
+                <button class="adm-btn ok sm" (click)="whatsappUnavailable(e)">Enviar WhatsApp</button>
+              </div>
+              <div style="font-size:.82rem">
+                <span style="color:var(--a-danger);font-weight:600">No hay:</span> {{ e.unavailableText }}
+              </div>
+              @if (e.available.length) {
+                <div style="font-size:.8rem;color:var(--a-muted)">Sí hay: {{ e.availableText }}</div>
+              }
+              <div style="font-size:.78rem;color:var(--a-muted)">
+                Devolución S/ {{ e.deducted }} · nuevo total S/ {{ e.newTotal }} · nueva separación S/ {{ e.newDeposit }}
+              </div>
+            </div>
+          }
+        </div>
+      }
+      <div class="ord-modal-actions" style="margin-top:14px">
+        <button class="adm-btn primary" (click)="showUnavailable.set(false)">Listo</button>
+      </div>
     </div>
   </div>
 }

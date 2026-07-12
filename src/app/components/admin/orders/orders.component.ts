@@ -51,8 +51,8 @@ export class OrdersComponent implements OnInit {
   closeStep = signal<'upload' | 'result'>('upload');
   closing = signal(false);
   closeError = signal('');
-  zimaxxFile = signal<File | null>(null);
-  magnetFile = signal<File | null>(null);
+  closeSuppliers = signal<Supplier[]>([]);            // proveedores ACTIVOS para subir su Excel al cerrar
+  supplierFiles = signal<Map<number, File>>(new Map()); // supplierId -> Excel
   missing = signal<MissingItem[]>([]);
   buyElsewhere = signal<Map<number, number>>(new Map()); // productId -> US$/unidad
 
@@ -81,6 +81,62 @@ export class OrdersComponent implements OnInit {
     }
     return [...buckets.values()];
   });
+
+  // --- Revisar pedidos SEPARADOS: perfumes que ya no tenemos (ocultos por cambio de proveedor) ---
+  showUnavailable = signal(false);
+  toggleUnavailable() { this.showUnavailable.update(v => !v); }
+  unavailableReport = computed(() => {
+    const out: {
+      order: Order;
+      unavailable: { label: string; qty: number }[];
+      available: { label: string; qty: number }[];
+      unavailableText: string; availableText: string;
+      deducted: number; newDeposit: number; newTotal: number;
+    }[] = [];
+    for (const o of this.acceptedOrders()) {
+      const un: { label: string; qty: number }[] = [];
+      const av: { label: string; qty: number }[] = [];
+      let totalUnits = 0, unavailUnits = 0, unavailValue = 0;
+      for (const it of o.items) {
+        const p = it.product;
+        if (!p) continue;
+        const qty = it.quantity || 0;
+        totalUnits += qty;
+        const label = `${p.brand} ${p.name}`;
+        const gone = p.available === false || (p as any).archived === true;
+        if (gone) { un.push({ label, qty }); unavailUnits += qty; unavailValue += it.subtotalPen || 0; }
+        else { av.push({ label, qty }); }
+      }
+      if (un.length === 0) continue;
+      const dep = o.depositAmountPen || 0;
+      const deducted = totalUnits > 0 ? Math.round(dep * unavailUnits / totalUnits) : 0;
+      out.push({ order: o, unavailable: un, available: av,
+        unavailableText: un.map(i => `${i.label} (x${i.qty})`).join(', '),
+        availableText: av.map(i => `${i.label} (x${i.qty})`).join(', '),
+        deducted, newDeposit: dep - deducted, newTotal: (o.totalPen || 0) - unavailValue });
+    }
+    return out;
+  });
+  whatsappUnavailable(e: { order: Order; unavailable: { label: string; qty: number }[]; available: { label: string; qty: number }[]; deducted: number; newDeposit: number; newTotal: number }) {
+    const o = e.order;
+    const noHay = e.unavailable.map(i => `• ${i.label} (x${i.qty})`).join('\n');
+    const siHay = e.available.length ? e.available.map(i => `• ${i.label} (x${i.qty})`).join('\n') : '—';
+    const msg =
+`Hola ${o.clientName} 👋 Sobre tu pedido ${o.orderCode}:
+Lamentablemente ya no contamos con:
+${noHay}
+
+Tienes 2 opciones:
+1) Te devolvemos S/ ${e.deducted} (lo que separaste por esos perfumes).
+2) Lo descontamos de tu pedido: tu nuevo total sería S/ ${e.newTotal} y tu separación S/ ${e.newDeposit}.
+
+Lo que SÍ tenemos de tu pedido:
+${siHay}
+
+Cuéntanos qué prefieres. ¡Gracias por tu comprensión! 🙏`;
+    const phone = '51' + (o.clientPhone || '').replace(/\D/g, '').slice(-9);
+    window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, '_blank');
+  }
 
   // Detalle de pedido (fila expandible) + desglose final
   expandedOrders = signal<Set<number>>(new Set());
@@ -342,49 +398,53 @@ export class OrdersComponent implements OnInit {
   openClose() {
     this.closeStep.set('upload');
     this.closeError.set('');
-    this.zimaxxFile.set(null);
-    this.magnetFile.set(null);
+    this.supplierFiles.set(new Map());
     this.buyElsewhere.set(new Map());
+    this.api.getSuppliers().subscribe({
+      next: (s) => this.closeSuppliers.set(s.filter(x => x.active)),
+      error: () => this.closeSuppliers.set([])
+    });
     this.showCloseModal.set(true);
   }
   closeCloseModal() { this.showCloseModal.set(false); }
-  onZimaxxFile(e: Event) { this.zimaxxFile.set((e.target as HTMLInputElement).files?.[0] || null); }
-  onMagnetFile(e: Event) { this.magnetFile.set((e.target as HTMLInputElement).files?.[0] || null); }
+  onSupplierFile(supplierId: number, e: Event) {
+    const f = (e.target as HTMLInputElement).files?.[0] || null;
+    const next = new Map(this.supplierFiles());
+    if (f) next.set(supplierId, f); else next.delete(supplierId);
+    this.supplierFiles.set(next);
+  }
 
   processClose() {
     const id = this.selectedId();
-    const fz = this.zimaxxFile();
-    const fm = this.magnetFile();
-    if (id == null || !fz || !fm) return;
+    if (id == null) return;
+    const entries = [...this.supplierFiles().entries()];  // [supplierId, File] de los que marcaste
+    if (!entries.length) { this.closeError.set('Sube al menos el Excel de un proveedor.'); return; }
     this.closing.set(true);
     this.closeError.set('');
 
-    this.api.getSuppliers().subscribe({
-      next: (sups: Supplier[]) => {
-        const zimaxx = sups.find(s => s.name.toLowerCase().includes('zimaxx'));
-        const magnet = sups.find(s => s.name.toLowerCase().includes('magnet'));
-        if (!zimaxx || !magnet) { this.closing.set(false); this.closeError.set('No se encontraron los proveedores Zimaxx/Magnet.'); return; }
+    // Importar cada Excel (secuencial) → cerrar → allocation + faltantes
+    const importNext = (i: number) => {
+      if (i >= entries.length) { this.finishClose(id); return; }
+      const [sid, file] = entries[i];
+      this.api.importSupplierExcel(sid, file).subscribe({
+        next: () => importNext(i + 1),
+        error: () => { this.closing.set(false); this.closeError.set('Error al importar el Excel de un proveedor.'); }
+      });
+    };
+    importNext(0);
+  }
 
-        // Importar Zimaxx → Magnet → cerrar → allocation + faltantes
-        this.api.importSupplierExcel(zimaxx.id, fz).subscribe({
-          next: () => this.api.importSupplierExcel(magnet.id, fm).subscribe({
-            next: () => this.api.closeConsolidado(id).subscribe({
-              next: () => {
-                this.loadConsolidados();
-                this.api.getAllocation(id).subscribe({ next: (a) => this.allocation.set(a), error: () => {} });
-                this.api.getMissing(id).subscribe({
-                  next: (m) => { this.missing.set(m); this.closing.set(false); this.closeStep.set('result'); },
-                  error: () => { this.closing.set(false); this.closeStep.set('result'); }
-                });
-              },
-              error: () => { this.closing.set(false); this.closeError.set('Error al cerrar el consolidado.'); }
-            }),
-            error: () => { this.closing.set(false); this.closeError.set('Error al importar el Excel de Magnet.'); }
-          }),
-          error: () => { this.closing.set(false); this.closeError.set('Error al importar el Excel de Zimaxx.'); }
+  private finishClose(id: number) {
+    this.api.closeConsolidado(id).subscribe({
+      next: () => {
+        this.loadConsolidados();
+        this.api.getAllocation(id).subscribe({ next: (a) => this.allocation.set(a), error: () => {} });
+        this.api.getMissing(id).subscribe({
+          next: (m) => { this.missing.set(m); this.closing.set(false); this.closeStep.set('result'); },
+          error: () => { this.closing.set(false); this.closeStep.set('result'); }
         });
       },
-      error: () => { this.closing.set(false); this.closeError.set('No se pudieron cargar los proveedores.'); }
+      error: () => { this.closing.set(false); this.closeError.set('Error al cerrar el consolidado.'); }
     });
   }
 

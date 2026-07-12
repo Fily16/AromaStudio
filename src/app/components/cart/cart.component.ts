@@ -260,7 +260,7 @@ export class CartComponent implements OnDestroy {
       msg += `${nl}*Entrega:* Lima (coordinar)${nl}`;
     }
     msg += `${nl}Quiero coordinar el pago. ¡Gracias! 🌸`;
-    window.open(`https://wa.me/51981587009?text=${encodeURIComponent(msg)}`, '_blank');
+    window.open(`https://wa.me/51933134699?text=${encodeURIComponent(msg)}`, '_blank');
   }
 
   finishHome() { this.router.navigate(['/']); }
@@ -283,7 +283,7 @@ export class CartComponent implements OnDestroy {
       (window as any).fbq('track', 'Contact', { value: this.cart.totalPen(), currency: 'PEN' });
     }
 
-    const url = `https://wa.me/51981587009?text=${encodeURIComponent(message)}`;
+    const url = `https://wa.me/51933134699?text=${encodeURIComponent(message)}`;
     setTimeout(() => {
       window.open(url, '_blank');
       this.cart.clear();

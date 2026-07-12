@@ -206,7 +206,7 @@ export class CheckoutComponent implements OnInit {
       message += `\n\nEnvío a: Shalom ${this.selectedAgency()!.nombre}`;
     }
 
-    const url = `https://wa.me/51981587009?text=${encodeURIComponent(message)}`;
+    const url = `https://wa.me/51933134699?text=${encodeURIComponent(message)}`;
     window.open(url, '_blank');
   }
 

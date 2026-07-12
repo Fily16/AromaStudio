@@ -215,7 +215,7 @@ export class ProductDetailComponent implements OnInit {
     const p = this.product();
     if (!p) return '';
     const message = `¡Hola! Me interesa:\n\n${p.brand} - ${p.name} ${p.ml}ml\nPrecio: S/ ${this.price()}\n\n¿Tienen disponibilidad?`;
-    return `https://wa.me/51981587009?text=${encodeURIComponent(message)}`;
+    return `https://wa.me/51933134699?text=${encodeURIComponent(message)}`;
   }
 
   goToCart() {
@@ -226,6 +226,6 @@ export class ProductDetailComponent implements OnInit {
     event.preventDefault();
     try { (window as any).ttq?.track('Contact', { content_type: 'product', content_name: 'WhatsApp Detalle' }); } catch {}
     try { (window as any).fbq?.('track', 'Contact', { content_name: 'WhatsApp Detalle' }); } catch {}
-    window.open(this.getWhatsAppLink() || 'https://wa.me/51981587009', '_blank');
+    window.open(this.getWhatsAppLink() || 'https://wa.me/51933134699', '_blank');
   }
 }
