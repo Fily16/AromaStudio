@@ -7,6 +7,7 @@ import { Product, Banner, Promotion } from '../../models/api.models';
 import { ProductCardComponent } from '../shared/product-card.component';
 import { CdnImgPipe } from '../../shared/cdn-img.pipe';
 import { SHALOM_AGENCIES, SHALOM_DEPARTMENTS, ShalomAgency } from '../../data/shalom-agencies';
+import { downloadResellerExcel } from '../../shared/reseller-excel.util';
 
 @Component({
   selector: 'app-cart',
@@ -154,6 +155,12 @@ export class CartComponent implements OnDestroy {
   savedItems = signal<{ label: string; qty: number; sub: number }[]>([]);
   successChannel = signal('');
 
+  // Excel de reventa (+S/30) para el público del cliente
+  savedForExcel = signal<{ brand: string; name: string; ml: number | null; imageUrl: string | null; unitPen: number }[]>([]);
+  xlGenerating = signal(false);
+  xlDone = signal(0);
+  xlTotal = signal(0);
+
   goToCheckout() {
     if (this.cart.isEmpty()) return;
     if (!this.minReached() && this.cart.catalogType() !== 'STOCK') return;
@@ -200,6 +207,10 @@ export class CartComponent implements OnDestroy {
       label: `PROMO ${p.promo.name}`, qty: p.quantity, sub: p.promo.pricePen * p.quantity
     }));
     this.savedItems.set([...saved, ...savedPromos]);
+    this.savedForExcel.set(this.cart.cartItems().map(i => ({
+      brand: i.product.brand, name: i.product.name, ml: i.product.ml,
+      imageUrl: i.product.imageUrl, unitPen: i.unitPricePen
+    })));
     this.savedTotal.set(this.cart.totalPen());
     this.successDeposit.set(this.depositPen());
     this.successChannel.set(this.cart.catalogType() || 'CONSOLIDADO');
@@ -236,6 +247,29 @@ export class CartComponent implements OnDestroy {
       },
       error: (err) => { this.submitError.set(err.error?.message || 'Error al crear el pedido. Intenta de nuevo.'); this.submitting.set(false); }
     });
+  }
+
+  // Excel bonito con lo que compró + S/30 por perfume, para que lo revenda a su público
+  async downloadResellerList() {
+    const items = this.savedForExcel();
+    if (!items.length || this.xlGenerating()) return;
+    this.xlGenerating.set(true);
+    this.xlTotal.set(items.length);
+    this.xlDone.set(0);
+    const rows = items.map(i => ({
+      brand: i.brand, name: i.name, ml: i.ml, imageUrl: i.imageUrl,
+      sellPen: Math.round(i.unitPen) + 30
+    }));
+    try {
+      await downloadResellerExcel({
+        title: 'AromaStudio · Tu lista para vender',
+        subtitle: `Pedido ${this.successCode()} — precios sugeridos para tu público`,
+        filename: `AromaStudio-${this.successCode() || 'pedido'}.xlsx`,
+        rows, withImages: true,
+        onProgress: (d, t) => { this.xlDone.set(d); this.xlTotal.set(t); }
+      });
+    } catch { /* noop */ }
+    this.xlGenerating.set(false);
   }
 
   sendCheckoutWhatsApp() {

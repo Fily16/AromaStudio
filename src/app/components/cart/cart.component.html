@@ -14,6 +14,10 @@
       </div>
       <p class="co-done-note">Envíanos tu pedido por WhatsApp para coordinar el pago y la entrega.</p>
       <button class="as-btn as-btn-wa as-btn-block" (click)="sendCheckoutWhatsApp()">Confirmar por WhatsApp</button>
+      <button class="as-btn as-btn-block" style="background:#2E1065;color:#fff" (click)="downloadResellerList()" [disabled]="xlGenerating()">
+        {{ xlGenerating() ? ('Generando Excel… ' + xlDone() + '/' + xlTotal()) : '📄 Descargar tu lista para vender (+S/30)' }}
+      </button>
+      <p class="co-done-note" style="margin-top:-2px">Excel con tus perfumes y precios sugeridos (+S/30) para ofrecer a tu público.</p>
       <button class="as-btn as-btn-block co-ghost" (click)="finishHome()">Volver al inicio</button>
     </div>
 

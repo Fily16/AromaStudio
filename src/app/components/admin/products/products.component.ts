@@ -3,6 +3,7 @@ import { DecimalPipe } from '@angular/common';
 import { ApiService } from '../../../services/api.service';
 import { Product } from '../../../models/api.models';
 import { CdnImgPipe } from '../../../shared/cdn-img.pipe';
+import { downloadResellerExcel } from '../../../shared/reseller-excel.util';
 
 /**
  * Productos (ERP): tabla clara con costo USD, puesto en Perú (con envío + caja),
@@ -28,6 +29,37 @@ export class ProductsComponent implements OnInit {
 
   // Config para recálculo en el editor
   cfg = signal({ courier: 9, tc: 3.4, repackPerBox: 3.5, perBox: 4 });
+
+  // Excel lista de precios reventa (+S/30)
+  xlGenerating = signal(false);
+  xlWithImages = signal(false);
+  xlDone = signal(0);
+  xlTotal = signal(0);
+
+  async downloadPriceList() {
+    if (this.xlGenerating()) return;
+    const rows = this.products()
+      .filter(p => p.available !== false && !(p as any).archived && (p.wholesalePricePen || 0) > 0)
+      .sort((a, b) => `${a.brand} ${a.name}`.localeCompare(`${b.brand} ${b.name}`))
+      .map(p => ({
+        brand: p.brand, name: p.name, ml: p.ml, imageUrl: p.imageUrl,
+        sellPen: Math.round(p.wholesalePricePen || 0) + 30
+      }));
+    if (!rows.length) { this.message.set('No hay productos con precio para exportar.'); return; }
+    this.xlGenerating.set(true);
+    this.xlTotal.set(rows.length);
+    this.xlDone.set(0);
+    try {
+      await downloadResellerExcel({
+        title: 'AromaStudio · Lista de precios',
+        subtitle: 'Precios sugeridos de venta para tu público (incluye tu ganancia)',
+        filename: 'AromaStudio-lista-precios.xlsx',
+        rows, withImages: this.xlWithImages(),
+        onProgress: (d, t) => { this.xlDone.set(d); this.xlTotal.set(t); }
+      });
+    } catch { /* noop */ }
+    this.xlGenerating.set(false);
+  }
 
   // Edición
   editingId = signal<number | null>(null);

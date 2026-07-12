@@ -11,6 +11,13 @@
       <option value="price_asc">Costo USD ↑</option>
       <option value="stock">Más stock</option>
     </select>
+    <label style="display:flex;align-items:center;gap:5px;font-size:.82rem;color:var(--a-muted)" title="Incluir fotos hace el Excel más pesado y lento">
+      <input type="checkbox" (change)="xlWithImages.set($any($event.target).checked)"> con fotos
+    </label>
+    <button class="adm-btn" (click)="downloadPriceList()" [disabled]="xlGenerating()"
+            title="Excel de precios de reventa (+S/30 por perfume) para tus clientes">
+      {{ xlGenerating() ? ('Generando… ' + xlDone() + '/' + xlTotal()) : '📄 Lista de precios (+S/30)' }}
+    </button>
     <button class="adm-btn primary" (click)="toggleCreate()">+ Nuevo</button>
   </div>
 </div>
