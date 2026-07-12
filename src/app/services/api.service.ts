@@ -293,9 +293,9 @@ export class ApiService {
       { headers: this.authHeaders() });
   }
 
-  // Apify (con caché por UPC): busca fotos. Body { items:[{idx,upc,query}] } -> { "idx": "imageUrl" }
-  fetchApifyImages(items: { idx: number; upc: string | null; query: string }[]): Observable<Record<string, string>> {
-    return this.http.post<Record<string, string>>(`${this.url}/admin/apify/images`, { items },
+  // Apify (con caché por UPC): busca fotos. source: 'google' (por defecto) | 'fragrantica'
+  fetchApifyImages(items: { idx: number; upc: string | null; query: string }[], source?: string): Observable<Record<string, string>> {
+    return this.http.post<Record<string, string>>(`${this.url}/admin/apify/images`, { items, source },
       { headers: this.authHeaders() });
   }
   clearApifyCache(): Observable<{ cleared: number; message: string }> {

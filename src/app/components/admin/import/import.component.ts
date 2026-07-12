@@ -58,6 +58,7 @@ export class ImportComponent implements OnInit {
   missDone = signal(0);
   missTotal = signal(0);
   missMsg = signal('');
+  missSource = signal<'google' | 'fragrantica'>('google');
   summary = signal<ImportSummary | null>(null);
   message = signal('');
   error = signal('');
@@ -113,9 +114,10 @@ export class ImportComponent implements OnInit {
     const ml = p.ml ? `${p.ml}ml` : '';
     return `${p.brand ?? ''} ${p.name ?? ''} ${ml} perfume`.replace(/\s+/g, ' ').trim();
   }
-  enrichMissing() {
+  enrichMissing(source: 'google' | 'fragrantica' = 'google') {
     const list = this.missing().filter(p => !p.imageUrl);
     if (!list.length) { this.missMsg.set('Todos ya tienen foto.'); return; }
+    this.missSource.set(source);
     this.missPaused.set(false); this.missEnriching.set(true);
     this.missTotal.set(list.length); this.missDone.set(0); this.missMsg.set('');
     this.processMissingOne(list, 0, 0);
@@ -126,7 +128,7 @@ export class ImportComponent implements OnInit {
     if (i >= list.length) { this.missEnriching.set(false); this.missMsg.set(`✓ ${found} de ${this.missTotal()} rellenadas.`); return; }
     const p = list[i];
     const items = [{ idx: p.id, upc: p.upc ?? null, query: this.missQuery(p) }];
-    this.api.fetchApifyImages(items).subscribe({
+    this.api.fetchApifyImages(items, this.missSource()).subscribe({
       next: (res) => {
         const url = res?.[String(p.id)];
         if (url) {

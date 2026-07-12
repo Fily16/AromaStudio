@@ -318,10 +318,11 @@
     @if (missing().length) {
       <div class="enrich" style="margin-top:12px;">
         @if (!missEnriching()) {
-          <button class="btn publish sm" (click)="enrichMissing()">🖼️ Rellenar fotos ({{ missing().length }})</button>
+          <button class="btn publish sm" (click)="enrichMissing('google')" title="Buscar fotos en Google Images">🖼️ Google ({{ missing().length }})</button>
+          <button class="btn ghost sm" (click)="enrichMissing('fragrantica')" title="Buscar por nombre en Fragrantica">🌸 Fragrantica</button>
         } @else {
           <button class="btn danger sm" (click)="pauseMissing()">⏸ Pausar</button>
-          <span class="searching">Buscando {{ missDone() + 1 }}/{{ missTotal() }}…</span>
+          <span class="searching">Buscando ({{ missSource() }}) {{ missDone() + 1 }}/{{ missTotal() }}…</span>
         }
         @if (missEnriching()) {
           <div class="bar"><div class="bar-fill" [style.width.%]="missTotal() ? (missDone() / missTotal() * 100) : 0"></div></div>
