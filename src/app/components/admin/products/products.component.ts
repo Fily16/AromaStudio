@@ -57,7 +57,7 @@ export class ProductsComponent implements OnInit {
     try {
       await downloadResellerExcel({
         title: 'Lista de precios',
-        subtitle: 'Precios sugeridos de venta para tu público',
+        subtitle: '',
         filename: 'lista-precios.xlsx',
         rows, withImages: this.xlWithImages(),
         onProgress: (d, t) => { this.xlDone.set(d); this.xlTotal.set(t); }
@@ -76,7 +76,7 @@ export class ProductsComponent implements OnInit {
     try {
       await downloadResellerPdf({
         title: 'Catálogo de precios',
-        subtitle: 'Precios sugeridos de venta para tu público',
+        subtitle: '',
         filename: 'catalogo-precios.pdf',
         rows, onProgress: (d, t) => { this.xlDone.set(d); this.xlTotal.set(t); }
       });

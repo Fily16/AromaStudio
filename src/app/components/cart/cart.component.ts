@@ -264,7 +264,7 @@ export class CartComponent implements OnDestroy {
     try {
       await downloadResellerExcel({
         title: 'Lista de precios',
-        subtitle: `Pedido ${this.successCode()} — precios sugeridos para tu público`,
+        subtitle: `Pedido ${this.successCode()}`,
         filename: `lista-${this.successCode() || 'pedido'}.xlsx`,
         rows, withImages: true,
         onProgress: (d, t) => { this.xlDone.set(d); this.xlTotal.set(t); }
@@ -287,7 +287,7 @@ export class CartComponent implements OnDestroy {
     try {
       await downloadResellerPdf({
         title: 'Catálogo de precios',
-        subtitle: `Pedido ${this.successCode()} — precios sugeridos para tu público`,
+        subtitle: `Pedido ${this.successCode()}`,
         filename: `catalogo-${this.successCode() || 'pedido'}.pdf`,
         rows, onProgress: (d, t) => { this.xlDone.set(d); this.xlTotal.set(t); }
       });
