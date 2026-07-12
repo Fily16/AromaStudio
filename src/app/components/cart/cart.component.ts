@@ -263,9 +263,9 @@ export class CartComponent implements OnDestroy {
     }));
     try {
       await downloadResellerExcel({
-        title: 'AromaStudio · Tu lista para vender',
+        title: 'Lista de precios',
         subtitle: `Pedido ${this.successCode()} — precios sugeridos para tu público`,
-        filename: `AromaStudio-${this.successCode() || 'pedido'}.xlsx`,
+        filename: `lista-${this.successCode() || 'pedido'}.xlsx`,
         rows, withImages: true,
         onProgress: (d, t) => { this.xlDone.set(d); this.xlTotal.set(t); }
       });
@@ -286,9 +286,9 @@ export class CartComponent implements OnDestroy {
     }));
     try {
       await downloadResellerPdf({
-        title: 'AromaStudio · Tu catálogo para vender',
+        title: 'Catálogo de precios',
         subtitle: `Pedido ${this.successCode()} — precios sugeridos para tu público`,
-        filename: `AromaStudio-${this.successCode() || 'pedido'}.pdf`,
+        filename: `catalogo-${this.successCode() || 'pedido'}.pdf`,
         rows, onProgress: (d, t) => { this.xlDone.set(d); this.xlTotal.set(t); }
       });
     } catch { /* noop */ }

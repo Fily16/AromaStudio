@@ -10,7 +10,7 @@ export interface ResellerRow {
   sellPen: number;
 }
 
-// Paleta AromaStudio
+// Paleta (colores del Excel)
 const DARK = 'FF2E1065';    // morado oscuro (título)
 const PURPLE = 'FF6D28D9';  // morado (header)
 const GOLD = 'FFC9A227';    // dorado (acentos)

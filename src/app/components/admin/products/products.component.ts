@@ -56,9 +56,9 @@ export class ProductsComponent implements OnInit {
     this.xlDone.set(0);
     try {
       await downloadResellerExcel({
-        title: 'AromaStudio · Lista de precios',
-        subtitle: 'Precios sugeridos de venta para tu público (incluye tu ganancia)',
-        filename: 'AromaStudio-lista-precios.xlsx',
+        title: 'Lista de precios',
+        subtitle: 'Precios sugeridos de venta para tu público',
+        filename: 'lista-precios.xlsx',
         rows, withImages: this.xlWithImages(),
         onProgress: (d, t) => { this.xlDone.set(d); this.xlTotal.set(t); }
       });
@@ -75,9 +75,9 @@ export class ProductsComponent implements OnInit {
     this.xlDone.set(0);
     try {
       await downloadResellerPdf({
-        title: 'AromaStudio · Catálogo de precios',
+        title: 'Catálogo de precios',
         subtitle: 'Precios sugeridos de venta para tu público',
-        filename: 'AromaStudio-catalogo.pdf',
+        filename: 'catalogo-precios.pdf',
         rows, onProgress: (d, t) => { this.xlDone.set(d); this.xlTotal.set(t); }
       });
     } catch { /* noop */ }
