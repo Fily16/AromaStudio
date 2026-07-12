@@ -1,4 +1,5 @@
 import { Workbook } from 'exceljs';
+import { fetchImages } from './img-fetch.util';
 
 /** Una fila de la lista de reventa: datos del perfume + precio de venta ya calculado (S/). */
 export interface ResellerRow {
@@ -28,6 +29,11 @@ export async function downloadResellerExcel(opts: {
   withImages?: boolean;
   onProgress?: (done: number, total: number) => void;
 }): Promise<void> {
+  // Descargar todas las fotos primero (en paralelo) para ir rápido.
+  const imgs = opts.withImages
+    ? await fetchImages(opts.rows.map(r => r.imageUrl), opts.onProgress)
+    : new Map<string, ArrayBuffer>();
+
   const wb = new Workbook();
   const ws = wb.addWorksheet('Precios', { views: [{ state: 'frozen', ySplit: 3 }] });
 
@@ -92,7 +98,7 @@ export async function downloadResellerExcel(opts: {
     xr.height = opts.withImages ? 54 : 20;
 
     if (opts.withImages && row.imageUrl) {
-      const buf = await fetchImageBuffer(row.imageUrl);
+      const buf = imgs.get(row.imageUrl);
       if (buf) {
         try {
           const imgId = wb.addImage({ buffer: buf as any, extension: 'jpeg' });
@@ -101,7 +107,6 @@ export async function downloadResellerExcel(opts: {
       }
     }
     r++;
-    opts.onProgress?.(i + 1, total);
   }
 
   const out = await wb.xlsx.writeBuffer();
@@ -112,17 +117,4 @@ export async function downloadResellerExcel(opts: {
   a.download = opts.filename;
   a.click();
   URL.revokeObjectURL(url);
-}
-
-/** Descarga la imagen (vía proxy wsrv como JPG) para incrustarla. Best-effort. */
-async function fetchImageBuffer(url: string): Promise<ArrayBuffer | null> {
-  try {
-    if (!/^https?:\/\//i.test(url)) return null;
-    const proxied = `https://images.weserv.nl/?url=${encodeURIComponent(url)}&w=128&h=128&fit=cover&output=jpg`;
-    const res = await fetch(proxied);
-    if (!res.ok) return null;
-    return await res.arrayBuffer();
-  } catch {
-    return null;
-  }
 }

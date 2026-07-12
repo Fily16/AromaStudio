@@ -8,6 +8,7 @@ import { ProductCardComponent } from '../shared/product-card.component';
 import { CdnImgPipe } from '../../shared/cdn-img.pipe';
 import { SHALOM_AGENCIES, SHALOM_DEPARTMENTS, ShalomAgency } from '../../data/shalom-agencies';
 import { downloadResellerExcel } from '../../shared/reseller-excel.util';
+import { downloadResellerPdf } from '../../shared/reseller-pdf.util';
 
 @Component({
   selector: 'app-cart',
@@ -267,6 +268,28 @@ export class CartComponent implements OnDestroy {
         filename: `AromaStudio-${this.successCode() || 'pedido'}.xlsx`,
         rows, withImages: true,
         onProgress: (d, t) => { this.xlDone.set(d); this.xlTotal.set(t); }
+      });
+    } catch { /* noop */ }
+    this.xlGenerating.set(false);
+  }
+
+  // PDF decorado (catálogo) con lo que compró + S/30, para mostrar a su público
+  async downloadResellerPdfList() {
+    const items = this.savedForExcel();
+    if (!items.length || this.xlGenerating()) return;
+    this.xlGenerating.set(true);
+    this.xlTotal.set(items.length);
+    this.xlDone.set(0);
+    const rows = items.map(i => ({
+      brand: i.brand, name: i.name, ml: i.ml, imageUrl: i.imageUrl,
+      sellPen: Math.round(i.unitPen) + 30
+    }));
+    try {
+      await downloadResellerPdf({
+        title: 'AromaStudio · Tu catálogo para vender',
+        subtitle: `Pedido ${this.successCode()} — precios sugeridos para tu público`,
+        filename: `AromaStudio-${this.successCode() || 'pedido'}.pdf`,
+        rows, onProgress: (d, t) => { this.xlDone.set(d); this.xlTotal.set(t); }
       });
     } catch { /* noop */ }
     this.xlGenerating.set(false);
