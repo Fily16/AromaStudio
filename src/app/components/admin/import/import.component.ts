@@ -59,7 +59,7 @@ export class ImportComponent implements OnInit {
   missDone = signal(0);
   missTotal = signal(0);
   missMsg = signal('');
-  missSource = signal<'google' | 'fragrantica'>('google');
+  missSource = signal<'google' | 'fragrantica' | 'bing'>('bing');
   summary = signal<ImportSummary | null>(null);
   message = signal('');
   error = signal('');
@@ -116,7 +116,7 @@ export class ImportComponent implements OnInit {
     const ml = p.ml ? `${p.ml}ml` : '';
     return `${p.brand ?? ''} ${p.name ?? ''} ${ml} perfume`.replace(/\s+/g, ' ').trim();
   }
-  enrichMissing(source: 'google' | 'fragrantica' = 'google') {
+  enrichMissing(source: 'google' | 'fragrantica' | 'bing' = 'bing') {
     const list = this.missing().filter(p => !p.imageUrl);
     if (!list.length) { this.missMsg.set('Todos ya tienen foto.'); return; }
     this.missSource.set(source);
