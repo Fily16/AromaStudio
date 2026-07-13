@@ -50,9 +50,10 @@ export class ImportComponent implements OnInit {
   apifyHasToken = signal(false);
   settingsMsg = signal('');
 
-  // Fotos faltantes del catálogo (por proveedor)
+  // Fotos faltantes/rotas del catálogo (por proveedor)
   missSupplierId = signal<number | null>(null);
-  missing = signal<{ id: number; brand: string; name: string; ml: number | null; upc: string | null; imageUrl?: string | null }[]>([]);
+  missMode = signal<'faltantes' | 'rotas'>('faltantes');
+  missing = signal<{ id: number; brand: string; name: string; ml: number | null; upc: string | null; imageUrl?: string | null; selected?: boolean }[]>([]);
   missLoading = signal(false);
   missEnriching = signal(false);
   missPaused = signal(false);
@@ -102,6 +103,7 @@ export class ImportComponent implements OnInit {
   loadMissing() {
     const sid = this.missSupplierId();
     if (sid == null) { this.missMsg.set('Selecciona un proveedor.'); return; }
+    this.missMode.set('faltantes');
     this.missLoading.set(true); this.missMsg.set('');
     this.api.getMissingImages(sid).subscribe({
       next: (list) => {
@@ -112,27 +114,48 @@ export class ImportComponent implements OnInit {
       error: (err) => { this.missLoading.set(false); this.missMsg.set(err.error?.message || 'No se pudo cargar.'); }
     });
   }
+  loadBroken() {
+    const sid = this.missSupplierId();
+    if (sid == null) { this.missMsg.set('Selecciona un proveedor.'); return; }
+    this.missMode.set('rotas');
+    this.missLoading.set(true); this.missMsg.set('');
+    this.missing.set([]);
+    this.api.getBrokenImages(sid).subscribe({
+      next: (list) => {
+        this.missLoading.set(false);
+        this.missing.set(list.map(p => ({ ...p, selected: true })));
+        this.missMsg.set(list.length ? `${list.length} con foto rota. Revisa las miniaturas y destilda las que estén bien.` : 'Ninguna foto rota para este proveedor. 🎉');
+      },
+      error: (err) => { this.missLoading.set(false); this.missMsg.set(err.error?.message || 'No se pudo revisar.'); }
+    });
+  }
+  toggleMissSelected(id: number, checked: boolean) {
+    this.missing.update(list => list.map(p => p.id === id ? { ...p, selected: checked } : p));
+  }
   private missQuery(p: { brand: string; name: string; ml: number | null }): string {
     const ml = p.ml ? `${p.ml}ml` : '';
     return `${p.brand ?? ''} ${p.name ?? ''} ${ml} perfume`.replace(/\s+/g, ' ').trim();
   }
   enrichMissing(source: 'google' | 'fragrantica' | 'bing' = 'bing') {
-    const list = this.missing().filter(p => !p.imageUrl);
-    if (!list.length) { this.missMsg.set('Todos ya tienen foto.'); return; }
+    const rotas = this.missMode() === 'rotas';
+    const list = rotas
+      ? this.missing().filter(p => p.selected !== false)   // rotas: solo las marcadas
+      : this.missing().filter(p => !p.imageUrl);            // faltantes: las sin foto
+    if (!list.length) { this.missMsg.set(rotas ? 'No hay ninguna seleccionada.' : 'Todos ya tienen foto.'); return; }
     this.missSource.set(source);
     this.missPaused.set(false); this.missEnriching.set(true);
     this.missTotal.set(list.length); this.missDone.set(0); this.missMsg.set('');
-    this.processMissingChunk(list, 0, 0);
+    this.processMissingChunk(list, 0, 0, rotas);
   }
   pauseMissing() { this.missPaused.set(true); }
   // Procesa POR LOTES (tamaño configurable): manda N perfumes en una sola corrida del actor.
-  private processMissingChunk(list: { id: number; brand: string; name: string; ml: number | null; upc: string | null; imageUrl?: string | null }[], start: number, found: number) {
+  private processMissingChunk(list: { id: number; brand: string; name: string; ml: number | null; upc: string | null; imageUrl?: string | null }[], start: number, found: number, force = false) {
     if (this.missPaused()) { this.missEnriching.set(false); this.missMsg.set(`⏸ Pausado. ${found} de ${this.missTotal()} con foto.`); return; }
-    if (start >= list.length) { this.missEnriching.set(false); this.missMsg.set(`✓ ${found} de ${this.missTotal()} rellenadas.`); return; }
+    if (start >= list.length) { this.missEnriching.set(false); this.missMsg.set(`✓ ${found} de ${this.missTotal()} ${force ? 'reemplazadas' : 'rellenadas'}.`); return; }
     const size = Math.max(1, +this.apifyBatch || 1);
     const chunk = list.slice(start, start + size);
     const items = chunk.map(p => ({ idx: p.id, upc: p.upc ?? null, query: this.missQuery(p) }));
-    this.api.fetchApifyImages(items, this.missSource()).subscribe({
+    this.api.fetchApifyImages(items, this.missSource(), force).subscribe({
       next: (res) => {
         let f = found;
         for (const p of chunk) {
@@ -140,7 +163,7 @@ export class ImportComponent implements OnInit {
           if (url) { this.api.updateProduct(p.id, { imageUrl: url }).subscribe(); p.imageUrl = url; f++; }
         }
         this.missDone.set(Math.min(this.missTotal(), start + chunk.length));
-        this.processMissingChunk(list, start + size, f);
+        this.processMissingChunk(list, start + size, f, force);
       },
       error: (err) => { this.missEnriching.set(false); this.missMsg.set(err.error?.message || 'Error consultando Apify.'); }
     });

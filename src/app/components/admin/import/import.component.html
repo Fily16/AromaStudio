@@ -315,6 +315,10 @@
       <button class="btn ghost" (click)="loadMissing()" [disabled]="missLoading() || missSupplierId() === null">
         {{ missLoading() ? 'Buscando…' : 'Buscar sin foto' }}
       </button>
+      <button class="btn ghost" (click)="loadBroken()" [disabled]="missLoading() || missSupplierId() === null"
+              title="Detecta fotos rotas (no cargan / placeholder) para re-buscarlas">
+        {{ missLoading() ? 'Revisando…' : '🔧 Revisar fotos rotas' }}
+      </button>
       @if (missMsg()) { <span class="ok">{{ missMsg() }}</span> }
     </div>
 
@@ -335,12 +339,18 @@
 
       <div class="pv-table-wrap" style="margin-top:10px; max-height:360px;">
         <table class="pv-table">
-          <thead><tr><th>Foto</th><th>Marca</th><th>Nombre</th><th>ml</th><th>UPC</th></tr></thead>
+          <thead><tr>
+            @if (missMode() === 'rotas') { <th></th> }
+            <th>Foto @if (missMode() === 'rotas') { (rota) }</th><th>Marca</th><th>Nombre</th><th>ml</th><th>UPC</th>
+          </tr></thead>
           <tbody>
             @for (p of missing(); track p.id) {
               <tr>
+                @if (missMode() === 'rotas') {
+                  <td><input type="checkbox" [checked]="p.selected !== false" (change)="toggleMissSelected(p.id, $any($event.target).checked)"></td>
+                }
                 <td class="pv-foto">
-                  @if (p.imageUrl) { <img [src]="p.imageUrl | cdnImg:120" loading="lazy" alt="" (error)="p.imageUrl = null" /> }
+                  @if (p.imageUrl) { <img [src]="p.imageUrl | cdnImg:120" loading="lazy" alt="" /> }
                   @else { <span class="nofoto">—</span> }
                 </td>
                 <td>{{ p.brand }}</td>

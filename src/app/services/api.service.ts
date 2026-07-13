@@ -293,10 +293,15 @@ export class ApiService {
       { headers: this.authHeaders() });
   }
 
-  // Apify (con caché por UPC): busca fotos. source: 'google' (por defecto) | 'fragrantica'
-  fetchApifyImages(items: { idx: number; upc: string | null; query: string }[], source?: string): Observable<Record<string, string>> {
-    return this.http.post<Record<string, string>>(`${this.url}/admin/apify/images`, { items, source },
+  // Apify (con caché por UPC): busca fotos. source: 'google' | 'fragrantica' | 'bing'; force = ignora caché
+  fetchApifyImages(items: { idx: number; upc: string | null; query: string }[], source?: string, force?: boolean): Observable<Record<string, string>> {
+    return this.http.post<Record<string, string>>(`${this.url}/admin/apify/images`, { items, source, force: !!force },
       { headers: this.authHeaders() });
+  }
+  // Productos del catálogo (de un proveedor) con la foto ROTA
+  getBrokenImages(supplierId: number): Observable<{ id: number; brand: string; name: string; ml: number | null; upc: string | null; imageUrl: string | null }[]> {
+    return this.http.get<{ id: number; brand: string; name: string; ml: number | null; upc: string | null; imageUrl: string | null }[]>(
+      `${this.url}/admin/apify/broken?supplierId=${supplierId}`, { headers: this.authHeaders() });
   }
   clearApifyCache(): Observable<{ cleared: number; message: string }> {
     return this.http.delete<{ cleared: number; message: string }>(`${this.url}/admin/apify/cache`,
