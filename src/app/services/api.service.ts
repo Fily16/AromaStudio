@@ -7,7 +7,8 @@ import {
   DashboardStats, AppConfig, PublicConfig, OrderRequest, LoginResponse,
   StockPurchaseRequest, BreakdownSection, FullBreakdownResponse,
   Supplier, ImportSummary, AllocationResponse, SuggestResult, OperationsSummary, MissingItem,
-  Promotion, ProfitReport, SupplierRequest, ColumnMapping, ImportPreview, PublishRequest
+  Promotion, ProfitReport, SupplierRequest, ColumnMapping, ImportPreview, PublishRequest,
+  MatchCandidate, SupplierConstraint, PurchasePlan, MarginReportRow, ProductOffersView
 } from '../models/api.models';
 
 @Injectable({ providedIn: 'root' })
@@ -329,6 +330,75 @@ export class ApiService {
   getAllocation(consolidadoId: number): Observable<AllocationResponse> {
     return this.http.get<AllocationResponse>(
       `${this.url}/admin/consolidados/${consolidadoId}/allocation`, { headers: this.authHeaders() });
+  }
+
+  // --- Plan de compra (optimizador v2): calcular DRAFT -> confirmar (costo real) ---
+  computePurchasePlan(consolidadoId: number): Observable<AllocationResponse> {
+    return this.http.post<AllocationResponse>(
+      `${this.url}/admin/consolidados/${consolidadoId}/allocation/compute`, {}, { headers: this.authHeaders() });
+  }
+  confirmPurchasePlan(consolidadoId: number, planId: number, force = false): Observable<PurchasePlan> {
+    return this.http.post<PurchasePlan>(
+      `${this.url}/admin/consolidados/${consolidadoId}/allocation/${planId}/confirm?force=${force}`, {},
+      { headers: this.authHeaders() });
+  }
+  getCurrentPurchasePlan(consolidadoId: number): Observable<PurchasePlan | { plan: 'NONE' }> {
+    return this.http.get<PurchasePlan | { plan: 'NONE' }>(
+      `${this.url}/admin/consolidados/${consolidadoId}/allocation/plan`, { headers: this.authHeaders() });
+  }
+  getMarginReport(consolidadoId: number): Observable<MarginReportRow[]> {
+    return this.http.get<MarginReportRow[]>(
+      `${this.url}/admin/consolidados/${consolidadoId}/margin-report`, { headers: this.authHeaders() });
+  }
+
+  // --- Cola de revisión: duplicados, typos de GTIN y conflictos de atributos ---
+  getMatchCandidates(status = 'PENDING', kind?: string): Observable<MatchCandidate[]> {
+    const params: any = { status };
+    if (kind) params.kind = kind;
+    return this.http.get<MatchCandidate[]>(`${this.url}/admin/match-candidates`,
+      { params, headers: this.authHeaders() });
+  }
+  getPendingReviewCount(): Observable<{ pending: number }> {
+    return this.http.get<{ pending: number }>(`${this.url}/admin/match-candidates/count`,
+      { headers: this.authHeaders() });
+  }
+  acceptMatchCandidate(id: number): Observable<any> {
+    return this.http.post(`${this.url}/admin/match-candidates/${id}/accept`, {}, { headers: this.authHeaders() });
+  }
+  rejectMatchCandidate(id: number): Observable<any> {
+    return this.http.post(`${this.url}/admin/match-candidates/${id}/reject`, {}, { headers: this.authHeaders() });
+  }
+  scanDuplicates(): Observable<{ candidatesCreated: number; pending: number }> {
+    return this.http.post<{ candidatesCreated: number; pending: number }>(
+      `${this.url}/admin/duplicates/scan`, {}, { headers: this.authHeaders() });
+  }
+  mergeProducts(canonicalId: number, duplicateId: number): Observable<any> {
+    return this.http.post(`${this.url}/admin/products/${canonicalId}/merge/${duplicateId}`, {},
+      { headers: this.authHeaders() });
+  }
+
+  // --- Restricciones de compra por proveedor (mínimos como datos) ---
+  getSupplierConstraints(supplierId: number): Observable<SupplierConstraint[]> {
+    return this.http.get<SupplierConstraint[]>(`${this.url}/admin/suppliers/${supplierId}/constraints`,
+      { headers: this.authHeaders() });
+  }
+  addSupplierConstraint(supplierId: number, c: SupplierConstraint): Observable<SupplierConstraint> {
+    return this.http.post<SupplierConstraint>(`${this.url}/admin/suppliers/${supplierId}/constraints`, c,
+      { headers: this.authHeaders() });
+  }
+  updateSupplierConstraint(supplierId: number, constraintId: number, c: Partial<SupplierConstraint>): Observable<SupplierConstraint> {
+    return this.http.put<SupplierConstraint>(`${this.url}/admin/suppliers/${supplierId}/constraints/${constraintId}`, c,
+      { headers: this.authHeaders() });
+  }
+  deleteSupplierConstraint(supplierId: number, constraintId: number): Observable<any> {
+    return this.http.delete(`${this.url}/admin/suppliers/${supplierId}/constraints/${constraintId}`,
+      { headers: this.authHeaders() });
+  }
+
+  // --- Ofertas por producto (vista multi-proveedor + costo que define el precio) ---
+  getProductOffers(productId: number): Observable<ProductOffersView> {
+    return this.http.get<ProductOffersView>(`${this.url}/admin/products/${productId}/offers`,
+      { headers: this.authHeaders() });
   }
 
   // ERP: faltantes (perfumes pedidos sin proveedor) con el cliente que los pidió

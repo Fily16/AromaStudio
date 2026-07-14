@@ -331,6 +331,13 @@ input, select, textarea { font-family: inherit; }
 .adm-nav a.active { background: var(--a-accent); color: #fff; font-weight: 600; }
 .adm-nav a svg { width: 18px; height: 18px; flex: 0 0 auto; opacity: .9; }
 .adm-nav-spacer { flex: 1; }
+/* Badge de pendientes en el menú (ej. cola de revisión de duplicados) */
+.adm-nav-badge {
+  margin-left: auto; min-width: 20px; height: 20px; padding: 0 6px;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: #e15252; color: #fff; border-radius: 999px;
+  font-size: .7rem; font-weight: 700;
+}
 
 .adm-main { display: flex; flex-direction: column; min-width: 0; }
 .adm-topbar {

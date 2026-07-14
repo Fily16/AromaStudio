@@ -35,6 +35,17 @@ import { ApiService } from '../../../services/api.service';
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3v12m0 0l-4-4m4 4l4-4M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2"/></svg>
               Importar Excel
             </a>
+            <a routerLink="/admin/revision" routerLinkActive="active">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 11l3 3 8-8M20 12v6a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h9"/></svg>
+              Revisión
+              @if (pendingReviews() > 0) {
+                <span class="adm-nav-badge">{{ pendingReviews() }}</span>
+              }
+            </a>
+            <a routerLink="/admin/compra" routerLinkActive="active">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="20" r="1.5"/><circle cx="17" cy="20" r="1.5"/><path d="M3 4h2l2.5 12h11L21 8H6"/></svg>
+              Plan de compra
+            </a>
             <div class="adm-nav-spacer"></div>
             <a routerLink="/admin/ajustes" routerLinkActive="active">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 00-.1-1l2-1.5-2-3.4-2.3 1a7 7 0 00-1.7-1L14.5 2h-4l-.4 2.6a7 7 0 00-1.7 1l-2.3-1-2 3.4 2 1.5a7 7 0 000 2l-2 1.5 2 3.4 2.3-1a7 7 0 001.7 1l.4 2.6h4l.4-2.6a7 7 0 001.7-1l2.3 1 2-3.4-2-1.5a7 7 0 00.1-1z"/></svg>
@@ -73,10 +84,16 @@ export class AdminShellComponent {
 
   menuOpen = signal(false);
   consolidado = signal<number | null>(null);
+  pendingReviews = signal(0);
 
   constructor() {
     this.api.getActiveConsolidado().subscribe({
       next: (c) => this.consolidado.set(c?.id ?? null),
+      error: () => {}
+    });
+    // Badge de la cola de revisión (posibles duplicados esperando decisión)
+    this.api.getPendingReviewCount().subscribe({
+      next: (r) => this.pendingReviews.set(r?.pending ?? 0),
       error: () => {}
     });
   }

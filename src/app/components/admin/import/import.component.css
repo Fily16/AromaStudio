@@ -119,3 +119,21 @@ h1 { margin: 0 0 4px; }
 .notes { margin: 14px 0 0; padding-left: 18px; color: #555; font-size: 14px; }
 
 .cutover h2 { font-size: 18px; margin: 0 0 4px; }
+
+/* ===== Multi-proveedor v2: badges de matching, cuarentena y sospechosas ===== */
+.pv-table .tag { font-size: 10px; font-weight: 700; padding: 1px 7px; border-radius: 999px; margin-left: 4px; white-space: nowrap; }
+.pv-table .tag.byname { background: #e8f0fe; color: #1a56b8; }
+.pv-table .tag.review { background: #fef3e0; color: #b05c00; display: inline-block; margin-top: 3px; }
+.pv-table .tag.quarantine { background: #fdecea; color: #c5221f; }
+.pv-table .susp { display: block; margin-top: 3px; font-size: 11px; color: #b05c00; font-weight: 600; cursor: pointer; white-space: nowrap; }
+.pv-table .susp input { vertical-align: middle; margin-right: 3px; }
+.legend.warn-note { color: #7a4a00; background: #fff8ec; border: 1px solid #f4dfb8; border-radius: 8px; padding: 8px 12px; display: block; }
+.review-cta { margin-top: 12px; background: #fef3e0; border: 1px solid #f4dfb8; border-radius: 8px; padding: 10px 14px; font-size: 14px; }
+.review-cta a { color: #b05c00; text-decoration: underline; }
+
+/* Restricciones de compra del proveedor (chips) */
+.constraints { margin-top: 14px; border-top: 1px dashed #ddd; padding-top: 12px; }
+.constraints .chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0; }
+.constraints .chip { background: #eef3ff; color: #1a56b8; border-radius: 999px; padding: 4px 12px; font-size: 13px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; }
+.constraints .chip.off { opacity: .5; text-decoration: line-through; }
+.constraints .chip-x { border: none; background: none; color: inherit; font-size: 15px; cursor: pointer; padding: 0 2px; line-height: 1; }

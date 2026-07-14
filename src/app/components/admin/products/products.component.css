@@ -16,3 +16,22 @@
 
 /* La barra de estado como chip clickeable */
 .adm-st { font-family: inherit; }
+
+/* ===== Multi-proveedor v2: flags de estado y modal de ofertas ===== */
+.prod-flags { display: flex; gap: 6px; margin-top: 4px; flex-wrap: wrap; }
+.pflag { font-size: .66rem; font-weight: 700; padding: 2px 8px; border-radius: 999px; white-space: nowrap; }
+.pflag.review { background: #fef3e0; color: #b05c00; }
+.pflag.conflict { background: #fdecea; color: #c5221f; }
+.pflag.basis { background: #e8f5e9; color: #2e7d32; margin-left: 6px; }
+.pflag.flash { background: #fff8e1; color: #f57f17; margin-left: 6px; }
+
+.offers-scrim { position: fixed; inset: 0; background: rgba(15,18,25,.45); z-index: 90; }
+.offers-modal {
+  position: fixed; z-index: 91; top: 50%; left: 50%; transform: translate(-50%,-50%);
+  width: min(680px, calc(100vw - 32px)); max-height: 80vh; overflow: auto; padding: 18px 20px;
+}
+.offers-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 10px; }
+.offers-sub { font-size: .84rem; color: var(--a-muted); margin-bottom: 12px; }
+.offers-sub .mono, .offers-table .mono { font-family: ui-monospace, monospace; }
+.offers-table tr.dim td { opacity: .55; }
+.offers-note { margin-top: 12px; font-size: .8rem; color: var(--a-muted); }

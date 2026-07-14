@@ -41,6 +41,8 @@ export const routes: Routes = [
       { path: 'productos', loadComponent: () => import('./components/admin/products/products.component').then(m => m.ProductsComponent) },
       { path: 'stock', loadComponent: () => import('./components/admin/stock-launch/stock-launch.component').then(m => m.StockLaunchComponent) },
       { path: 'importar', loadComponent: () => import('./components/admin/import/import.component').then(m => m.ImportComponent) },
+      { path: 'revision', loadComponent: () => import('./components/admin/review/review.component').then(m => m.ReviewComponent) },
+      { path: 'compra', loadComponent: () => import('./components/admin/purchase-plan/purchase-plan.component').then(m => m.PurchasePlanComponent) },
       { path: 'ajustes', loadComponent: () => import('./components/admin/settings/settings.component').then(m => m.SettingsComponent) },
     ]
   },

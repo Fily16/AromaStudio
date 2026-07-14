@@ -3,7 +3,7 @@ import { DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { ApiService } from '../../../services/api.service';
-import { Supplier, ImportSummary, ImportPreview, ImportPreviewLine, ColumnMapping, RowOverride } from '../../../models/api.models';
+import { Supplier, SupplierConstraint, ImportSummary, ImportPreview, ImportPreviewLine, ColumnMapping, RowOverride } from '../../../models/api.models';
 import { CdnImgPipe } from '../../../shared/cdn-img.pipe';
 
 @Component({
@@ -27,6 +27,12 @@ export class ImportComponent implements OnInit {
   supplierMsg = signal('');
   supplierErr = signal('');
 
+  // Restricciones de compra del proveedor en edición (mínimos: USD, unidades, por marca)
+  sConstraints = signal<SupplierConstraint[]>([]);
+  newConstraint: { type: string; valueNum: number | null; brand: string } =
+    { type: 'MIN_UNITS', valueNum: null, brand: '' };
+  constraintMsg = signal('');
+
   // Import + vista previa
   dragging = signal(false);
   loading = signal(false);
@@ -34,6 +40,8 @@ export class ImportComponent implements OnInit {
   editMapping: ColumnMapping | null = null;
   // Correcciones manuales (marca/nombre/ml/foto) de filas nuevas, por índice de fila
   overrides: Record<number, RowOverride> = {};
+  // Filas con costo sospechoso (typo probable) aprobadas a mano por el admin
+  approvedSuspicious: Record<number, boolean> = {};
   publishing = signal(false);
 
   // Apify: rellenar fotos de filas nuevas (de 1 en 1, con barra y pausa)
@@ -201,8 +209,64 @@ export class ImportComponent implements OnInit {
     this.sForm = { id: s.id, name: s.name, minOrderUsd: s.minOrderUsd, priorityToReachMin: s.priorityToReachMin };
     this.supplierMsg.set(''); this.supplierErr.set('');
     this.showForm.set(true);
+    this.loadConstraints(s.id);
   }
-  cancelForm() { this.showForm.set(false); }
+  cancelForm() { this.showForm.set(false); this.sConstraints.set([]); }
+
+  // ---------- Restricciones de compra (mínimos como datos) ----------
+  private loadConstraints(supplierId: number) {
+    this.sConstraints.set([]);
+    this.constraintMsg.set('');
+    this.api.getSupplierConstraints(supplierId).subscribe({
+      next: (list) => this.sConstraints.set(list),
+      error: () => {}
+    });
+  }
+
+  constraintLabel(c: SupplierConstraint): string {
+    switch (c.type) {
+      case 'MIN_ORDER_USD': return `Pedido mínimo $${c.valueNum}`;
+      case 'MIN_UNITS': return `Mínimo ${c.valueNum} unidades`;
+      case 'MIN_UNITS_PER_BRAND': {
+        let brand = '';
+        try { brand = JSON.parse(c.scopeJson || '{}').brand ?? ''; } catch {}
+        return `Mínimo ${c.valueNum} uds de ${brand || '(marca?)'}`;
+      }
+      default: return `${c.type} = ${c.valueNum}`;
+    }
+  }
+
+  addConstraint() {
+    const sid = this.sForm.id;
+    if (sid == null || this.newConstraint.valueNum == null || this.newConstraint.valueNum <= 0) {
+      this.constraintMsg.set('Ingresa un valor mayor a 0.');
+      return;
+    }
+    const body: SupplierConstraint = {
+      type: this.newConstraint.type,
+      valueNum: +this.newConstraint.valueNum,
+      scopeJson: this.newConstraint.type === 'MIN_UNITS_PER_BRAND' && this.newConstraint.brand.trim()
+        ? JSON.stringify({ brand: this.newConstraint.brand.trim() }) : null,
+      active: true
+    };
+    this.api.addSupplierConstraint(sid, body).subscribe({
+      next: () => {
+        this.constraintMsg.set('✓ Restricción agregada. El plan de compra la respetará.');
+        this.newConstraint = { type: 'MIN_UNITS', valueNum: null, brand: '' };
+        this.loadConstraints(sid);
+      },
+      error: (e) => this.constraintMsg.set(e.error?.message || 'No se pudo agregar.')
+    });
+  }
+
+  removeConstraint(c: SupplierConstraint) {
+    const sid = this.sForm.id;
+    if (sid == null || c.id == null) return;
+    this.api.deleteSupplierConstraint(sid, c.id).subscribe({
+      next: () => { this.constraintMsg.set('✓ Eliminada.'); this.loadConstraints(sid); },
+      error: (e) => this.constraintMsg.set(e.error?.message || 'No se pudo eliminar.')
+    });
+  }
 
   saveSupplier() {
     if (!this.sForm.name.trim()) { this.supplierErr.set('El nombre es obligatorio.'); return; }
@@ -266,8 +330,16 @@ export class ImportComponent implements OnInit {
   }
 
   resetImport() {
-    this.preview.set(null); this.editMapping = null; this.overrides = {}; this.summary.set(null);
+    this.preview.set(null); this.editMapping = null; this.overrides = {}; this.approvedSuspicious = {};
+    this.summary.set(null);
     this.message.set(''); this.error.set('');
+  }
+
+  /** Cuántas filas sospechosas siguen sin aprobar (quedarían fuera de stock). */
+  suspiciousUnapproved(): number {
+    const p = this.preview();
+    if (!p) return 0;
+    return p.rows.filter(r => r.suspicious && !this.approvedSuspicious[r.idx]).length;
   }
 
   /** Inicializa las correcciones de las filas nuevas con lo que detectó el parser. */
@@ -320,9 +392,15 @@ export class ImportComponent implements OnInit {
   publish() {
     const p = this.preview();
     if (!p) return;
-    if (!confirm('Se publicará a la tienda: los productos y precios quedarán visibles para el cliente. ¿Continuar?')) return;
+    const pendingSusp = this.suspiciousUnapproved();
+    const warn = pendingSusp > 0
+      ? `\n\nOJO: ${pendingSusp} fila(s) con costo sospechoso quedarán FUERA de stock (marca su casilla ✓ para aprobarlas).`
+      : '';
+    if (!confirm('Se publicará a la tienda: los productos y precios quedarán visibles para el cliente.' + warn + '\n¿Continuar?')) return;
+    const approvedSuspiciousIdx = Object.entries(this.approvedSuspicious)
+      .filter(([, ok]) => ok).map(([idx]) => +idx);
     this.publishing.set(true); this.error.set('');
-    this.api.publishBatch(p.batchId, { overrides: this.overrides }).subscribe({
+    this.api.publishBatch(p.batchId, { overrides: this.overrides, approvedSuspiciousIdx }).subscribe({
       next: (s) => {
         this.publishing.set(false);
         this.summary.set(s);

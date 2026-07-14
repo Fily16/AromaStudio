@@ -24,7 +24,8 @@
       "Bash(taskkill //PID 8364 //F)",
       "Bash(node -e \":*)",
       "Bash(dir \"C:\\\\Users\\\\Fily\\\\Negocios\\\\PERFUMES\\\\paginaweb\\\\PedidosConsolidado.xls\")",
-      "Bash(node generate-catalog-pdf.js)"
+      "Bash(node generate-catalog-pdf.js)",
+      "WebFetch(domain:cristfragances.com)"
     ]
   }
 }

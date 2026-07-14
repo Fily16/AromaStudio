@@ -82,6 +82,16 @@
                 <div style="font-size:.72rem;text-transform:uppercase;letter-spacing:.03em;color:var(--a-muted);font-weight:700">{{ p.brand }}</div>
                 <div>{{ p.name }} @if (p.ml) { · {{ p.ml }}ml }</div>
                 <div style="font-size:.74rem;color:var(--a-faint)">{{ p.sku }}</div>
+                @if (p.matchPending || p.gtinConflict) {
+                  <div class="prod-flags">
+                    @if (p.matchPending) {
+                      <span class="pflag review" title="Puede ser duplicado de otro producto: decide en Revisión.">🔍 en revisión</span>
+                    }
+                    @if (p.gtinConflict) {
+                      <span class="pflag conflict" title="Su código de barras chocó con otro producto distinto o es inválido (typo del proveedor).">⚠ código dudoso</span>
+                    }
+                  </div>
+                }
               </div>
             </div>
           </td>
@@ -97,6 +107,7 @@
           </td>
           <td>
             <div class="ord-actions">
+              <button class="adm-btn sm" (click)="showOffers(p)" title="Proveedores que venden este perfume y qué costo define el precio">🏭</button>
               <button class="adm-btn sm" (click)="startEdit(p)">Editar</button>
               <button class="adm-btn danger sm" (click)="deleteProduct(p.id)">Eliminar</button>
             </div>
@@ -140,5 +151,57 @@
 @if (hasMore()) {
   <div style="text-align:center;margin-top:16px">
     <button class="adm-btn" (click)="loadMore()">Ver más ({{ filtered().length - visible().length }})</button>
+  </div>
+}
+
+<!-- Modal: proveedores del producto (multi-proveedor) -->
+@if (offersProduct(); as op) {
+  <div class="offers-scrim" (click)="closeOffers()"></div>
+  <div class="offers-modal adm-card">
+    <div class="offers-head">
+      <b>{{ op.brand }} {{ op.name }} {{ op.ml ? op.ml + 'ml' : '' }}</b>
+      <button class="adm-btn sm" (click)="closeOffers()">✕</button>
+    </div>
+    @if (offersLoading()) {
+      <p style="color:var(--a-muted)">Cargando proveedores…</p>
+    } @else if (offersView(); as v) {
+      <p class="offers-sub">
+        GTIN: <span class="mono">{{ v.gtin || '— sin código confiable' }}</span>
+        @if (v.basisCostUsd != null) {
+          · El precio publicado se calcula con <b>${{ v.basisCostUsd | number:'1.2-2' }}</b>
+          ({{ basisLabel(v.pricingBasis) }}).
+        }
+      </p>
+      @if (!v.offers.length) {
+        <p style="color:var(--a-muted)">Ningún proveedor ofrece este producto (producto propio o catálogo antiguo).</p>
+      } @else {
+        <table class="adm-table offers-table">
+          <thead><tr><th>Proveedor</th><th class="num">Costo $</th><th>Stock</th><th>Código</th><th>Últ. import</th></tr></thead>
+          <tbody>
+            @for (o of v.offers; track o.offerId) {
+              <tr [class.dim]="!o.inStock || !o.supplierActive">
+                <td>
+                  <b>{{ o.supplierName }}</b>
+                  @if (!o.supplierActive) { <small> (inactivo)</small> }
+                  @if (o.isBasis) { <span class="pflag basis" title="Esta oferta define el precio publicado al cliente">💰 define el precio</span> }
+                  @if (o.flashSale) { <span class="pflag flash">⚡ flash</span> }
+                </td>
+                <td class="num">{{ o.costUsd != null ? (o.costUsd | number:'1.2-2') : '—' }}</td>
+                <td>{{ o.inStock ? '✓' : 'agotado' }}</td>
+                <td class="mono" style="font-size:.72rem">
+                  {{ o.gtin || '—' }}
+                  @if (o.gtinStatus === 'CHECKSUM_FAIL') { <span class="pflag conflict">typo</span> }
+                </td>
+                <td style="font-size:.76rem;color:var(--a-muted)">{{ o.lastImportedAt ? (o.lastImportedAt | date:'dd/MM/yy') : '—' }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+        <p class="offers-note">
+          El sistema publica el precio con la base de arriba, pero la compra real la decide el
+          <b>Plan de compra</b> (respetando los mínimos de cada proveedor).
+        </p>
+      }
+    }
   </div>
 }

@@ -1,7 +1,7 @@
 import { Component, inject, signal, computed, OnInit } from '@angular/core';
-import { DecimalPipe } from '@angular/common';
+import { DatePipe, DecimalPipe } from '@angular/common';
 import { ApiService } from '../../../services/api.service';
-import { Product } from '../../../models/api.models';
+import { Product, ProductOffersView } from '../../../models/api.models';
 import { CdnImgPipe } from '../../../shared/cdn-img.pipe';
 import { downloadResellerExcel } from '../../../shared/reseller-excel.util';
 import { downloadResellerPdf } from '../../../shared/reseller-pdf.util';
@@ -13,7 +13,7 @@ import { downloadResellerPdf } from '../../../shared/reseller-pdf.util';
 @Component({
   selector: 'app-products',
   standalone: true,
-  imports: [DecimalPipe, CdnImgPipe],
+  imports: [DecimalPipe, DatePipe, CdnImgPipe],
   templateUrl: './products.component.html',
   styleUrl: './products.component.css'
 })
@@ -82,6 +82,31 @@ export class ProductsComponent implements OnInit {
       });
     } catch { /* noop */ }
     this.xlGenerating.set(false);
+  }
+
+  // Vista multi-proveedor: ofertas del producto (quién lo vende y a qué costo)
+  offersView = signal<ProductOffersView | null>(null);
+  offersProduct = signal<Product | null>(null);
+  offersLoading = signal(false);
+
+  showOffers(p: Product) {
+    this.offersProduct.set(p);
+    this.offersView.set(null);
+    this.offersLoading.set(true);
+    this.api.getProductOffers(p.id).subscribe({
+      next: (v) => { this.offersLoading.set(false); this.offersView.set(v); },
+      error: () => { this.offersLoading.set(false); this.toast('No se pudieron cargar los proveedores.'); }
+    });
+  }
+  closeOffers() { this.offersProduct.set(null); this.offersView.set(null); }
+
+  basisLabel(basis: string): string {
+    switch (basis) {
+      case 'CHEAPEST': return 'el proveedor más barato';
+      case 'PRIORITY': return 'el proveedor prioritario';
+      case 'WORST_PLAUSIBLE': return 'el más caro plausible (conservador)';
+      default: return basis;
+    }
   }
 
   // Edición

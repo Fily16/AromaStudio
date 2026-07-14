@@ -20,6 +20,9 @@ export interface Product {
   isNew: boolean;
   isHighlighted: boolean;
   gtin?: string | null;
+  gtinConflict?: boolean;     // el UPC choca con otro producto distinto (typo del proveedor)
+  matchPending?: boolean;     // espera revisión en la cola de duplicados
+  mergedIntoId?: number | null; // si fue fusionado: id del producto canónico
   forma?: string | null;
   // Notas olfativas (slugs CSV) + perfil derivado — ver components/shared/note-catalog.ts
   notesTop?: string | null;
@@ -304,6 +307,16 @@ export interface Supplier {
   currency: string;
   active: boolean;
   priorityToReachMin: boolean;
+  parserProfileJson?: string | null;
+}
+
+// Restricción de compra de un proveedor (mínimos como datos, no como código)
+export interface SupplierConstraint {
+  id?: number;
+  type: 'MIN_ORDER_USD' | 'MIN_UNITS' | 'MIN_UNITS_PER_BRAND' | string;
+  valueNum: number;
+  scopeJson?: string | null;   // ej. {"brand":"Lattafa"} para MIN_UNITS_PER_BRAND
+  active?: boolean;
 }
 
 export interface ImportSummary {
@@ -316,6 +329,9 @@ export interface ImportSummary {
   collisions: number;
   noUpcRows: number;
   markedOutOfStock: number;
+  l2AutoMatched: number;   // filas sin UPC enganchadas a producto existente por nombre
+  reviewQueued: number;    // posibles duplicados enviados a la cola de revisión
+  suspiciousRows: number;  // filas con costo fuera de rango, guardadas fuera de stock
   notes: string[];
 }
 
@@ -356,11 +372,18 @@ export interface ImportPreviewLine {
   matchedImageUrl: string | null;
   currentPricePen: number | null;
   newPricePen: number | null;
+  matchLevel: 'L1' | 'L2_AUTO' | 'L2_REVIEW' | 'NEW' | 'EXISTING' | null; // cómo se resolvió la identidad
+  matchScore: number | null;   // similitud del mejor candidato (L2)
+  gtinStatus: 'OK' | 'EMPTY' | 'INVALID_LENGTH' | 'CHECKSUM_FAIL' | 'AMBIGUOUS' | null;
+  suspicious: boolean;         // costo fuera de rango plausible: no repreciará salvo aprobación
 }
 
 // Correcciones manuales al publicar (por índice de fila): marca/nombre/ml/foto de productos nuevos
 export interface RowOverride { brand?: string; name?: string; ml?: number | null; imageUrl?: string | null; }
-export interface PublishRequest { overrides?: Record<number, RowOverride>; }
+export interface PublishRequest {
+  overrides?: Record<number, RowOverride>;
+  approvedSuspiciousIdx?: number[]; // filas sospechosas que el admin aprueba igual
+}
 
 // Vista previa de una importacion ANTES de publicarla al cliente
 export interface ImportPreview {
@@ -377,6 +400,10 @@ export interface ImportPreview {
   outOfStock: number;
   priceDrops: number;
   priceRises: number;
+  l2AutoMatched: number;    // enganchados a producto existente por nombre (seguro)
+  reviewCandidates: number; // irán a la cola de revisión al publicar
+  suspiciousRows: number;   // costo fuera de rango (typo probable)
+  layoutFallback: boolean;  // el parser afinado no reconoció el layout; se usó el genérico
   rows: ImportPreviewLine[];
 }
 
@@ -415,6 +442,31 @@ export interface UnfulfillableItem {
   quantity: number;
 }
 
+// Decisión del optimizador por proveedor con mínimo insatisfecho: forzar vs saltar
+export interface SupplierDecision {
+  supplierId: number;
+  name: string;
+  forceTotalUsd: number | null; // costo total del mejor plan FORZANDO su mínimo
+  skipTotalUsd: number | null;  // costo total del mejor plan SALTÁNDOLO
+  decision: 'FORZAR' | 'SALTAR';
+}
+
+export interface MarginWarning {
+  productId: number;
+  name: string;
+  supplierId: number | null;
+  supplierName: string | null;
+  marginPen: number;  // margen unitario resultante (S/)
+  floorPen: number;   // piso configurado (min_margin_pen_per_unit)
+}
+
+export interface LostSale {
+  productId: number;
+  name: string;
+  quantity: number;
+  reason: string;
+}
+
 export interface AllocationResponse {
   consolidadoId: number;
   suppliers: SupplierAllocation[];
@@ -427,4 +479,109 @@ export interface AllocationResponse {
   storeFillSuggestions: FillSuggestion[];
   unfulfillable: UnfulfillableItem[];
   notes: string[];
+  // v2: plan persistido + análisis forzar/saltar + guardia de margen
+  planId: number | null;
+  skipAnalysis: SupplierDecision[];
+  marginWarnings: MarginWarning[];
+  lostSales: LostSale[];
+  penaltiesUsd: number;
+}
+
+// --- Plan de compra persistido (DRAFT -> CONFIRMED) ---
+export interface PurchasePlanLine {
+  id: number;
+  productId: number;
+  supplierId: number | null;
+  qty: number;
+  unitCostUsd: number | null;
+  movedToReachMin: boolean;
+  penaltyUsd: number | null;
+  reason: string | null;
+}
+
+export interface PurchasePlan {
+  id: number;
+  consolidadoId: number;
+  status: 'DRAFT' | 'CONFIRMED' | 'SUPERSEDED';
+  baselineTotalUsd: number | null;
+  totalUsd: number | null;
+  extraCostUsd: number | null;
+  createdAt: string;
+  confirmedAt: string | null;
+  lines: PurchasePlanLine[];
+}
+
+// --- Reporte de margen por producto del consolidado ---
+export interface MarginReportRow {
+  productId: number;
+  name: string;
+  quantity: number;
+  avgUnitPricePen: number | null;
+  unitCostUsd: number | null;
+  landedPen: number | null;
+  marginPen: number | null;
+  belowFloor: boolean;
+  costSource: 'PLAN_CONFIRMADO' | 'BASE_ACTUAL';
+}
+
+// --- Cola de revisión: candidatos a fusión / typos / conflictos ---
+export interface MatchCandidateProduct {
+  id: number;
+  sku: string;
+  brand: string;
+  name: string;
+  ml: number | null;
+  gtin: string | null;
+  imageUrl: string | null;
+  pricePen: number | null;
+  archived: boolean;
+  mergedIntoId: number | null;
+}
+
+export interface MatchCandidateOffer {
+  id: number;
+  supplierName: string | null;
+  rawTitle: string | null;
+  costUsd: number | null;
+  gtinRaw: string | null;
+  gtinStatus: string | null;
+}
+
+export interface MatchCandidate {
+  id: number;
+  kind: 'L2_IMPORT' | 'DEDUP_SCAN' | 'GTIN_TYPO' | 'ATTR_CONFLICT' | string;
+  score: number | null;
+  status: 'PENDING' | 'ACCEPTED' | 'REJECTED';
+  createdAt: string;
+  reasons: string[];
+  source: MatchCandidateProduct | null; // el producto "duplicado" (se fusionaría dentro del target)
+  target: MatchCandidateProduct | null; // el producto canónico del catálogo
+  offer?: MatchCandidateOffer;
+}
+
+// --- Ofertas por producto (vista multi-proveedor) ---
+export interface ProductOffer {
+  offerId: number;
+  supplierId: number;
+  supplierName: string | null;
+  supplierActive: boolean;
+  costUsd: number | null;
+  inStock: boolean;
+  flashSale: boolean;
+  gtin: string | null;
+  gtinStatus: string | null;
+  rawTitle: string | null;
+  lastImportedAt: string | null;
+  isBasis: boolean; // esta oferta define el precio publicado
+}
+
+export interface ProductOffersView {
+  productId: number;
+  gtin: string | null;
+  gtinConflict: boolean;
+  matchPending: boolean;
+  basisCostUsd: number | null;
+  cheapestCostUsd: number | null;
+  pricingBasis: string;
+  offers: ProductOffer[];
 }

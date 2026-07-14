@@ -33,6 +33,44 @@
           </button>
           <button class="btn ghost" (click)="cancelForm()">Cancelar</button>
         </div>
+
+        <!-- Restricciones de compra (solo al editar): mínimos que el plan de compra respeta -->
+        @if (sForm.id != null) {
+          <div class="constraints">
+            <p class="mm-title">Mínimos de compra <span>(el plan de compra decide si conviene forzarlos o saltar el proveedor)</span></p>
+            @if (sConstraints().length) {
+              <div class="chips">
+                @for (c of sConstraints(); track c.id) {
+                  <span class="chip" [class.off]="c.active === false">
+                    {{ constraintLabel(c) }}
+                    <button class="chip-x" title="Eliminar" (click)="removeConstraint(c)">×</button>
+                  </span>
+                }
+              </div>
+            } @else {
+              <p class="sub">Sin mínimos: se le compra libremente lo que sea más barato.</p>
+            }
+            <div class="sform-row">
+              <label>Tipo
+                <select [(ngModel)]="newConstraint.type">
+                  <option value="MIN_ORDER_USD">Pedido mínimo (USD)</option>
+                  <option value="MIN_UNITS">Mínimo de unidades</option>
+                  <option value="MIN_UNITS_PER_BRAND">Mínimo de unidades por marca</option>
+                </select>
+              </label>
+              <label>Valor
+                <input type="number" [(ngModel)]="newConstraint.valueNum" min="1" placeholder="Ej. 48" />
+              </label>
+              @if (newConstraint.type === 'MIN_UNITS_PER_BRAND') {
+                <label>Marca
+                  <input type="text" [(ngModel)]="newConstraint.brand" placeholder="Ej. Lattafa" />
+                </label>
+              }
+              <button class="btn sm" style="align-self:end" (click)="addConstraint()">+ Agregar mínimo</button>
+            </div>
+            @if (constraintMsg()) { <p class="ok">{{ constraintMsg() }}</p> }
+          </div>
+        }
       </div>
     }
 
@@ -150,12 +188,19 @@
           </div>
         }
 
+        @if (p.layoutFallback) {
+          <p class="err">⚠ El proveedor cambió el formato de su Excel: se usó la detección automática de columnas. Revisa el mapeo de arriba antes de publicar.</p>
+        }
+
         <!-- Contadores -->
         <div class="grid">
           <div><b>{{ p.rowsRead }}</b><span>filas leídas</span></div>
           <div><b>{{ p.newProducts }}</b><span>productos nuevos</span></div>
           <div><b>{{ p.updatedOffers }}</b><span>ofertas actualizadas</span></div>
-          <div [class.warn]="p.noUpcRows > 0"><b>{{ p.noUpcRows }}</b><span>sin código</span></div>
+          <div [class.good]="p.l2AutoMatched > 0"><b>{{ p.l2AutoMatched }}</b><span>unidos por nombre</span></div>
+          <div [class.warn]="p.reviewCandidates > 0"><b>{{ p.reviewCandidates }}</b><span>irán a revisión</span></div>
+          <div [class.warn]="p.suspiciousRows > 0"><b>{{ p.suspiciousRows }}</b><span>costo sospechoso</span></div>
+          <div [class.warn]="p.noUpcRows > 0"><b>{{ p.noUpcRows }}</b><span>sin código válido</span></div>
           <div [class.warn]="p.collisions > 0"><b>{{ p.collisions }}</b><span>colisiones UPC</span></div>
           <div [class.warn]="p.outOfStock > 0"><b>{{ p.outOfStock }}</b><span>fuera de stock</span></div>
           <div [class.good]="p.priceDrops > 0"><b>{{ p.priceDrops }}</b><span>precios que bajan</span></div>
@@ -166,6 +211,12 @@
           <span class="dot exist"></span> UPC ya en tu catálogo: se conservan marca, nombre, ml, aromas y foto (solo cambia precio/stock).
           <span class="dot brandnew"></span> Nuevo: puedes corregir marca, nombre y ml aquí antes de publicar.
         </p>
+        @if (p.suspiciousRows > 0) {
+          <p class="legend warn-note">
+            💲 Las filas con <b>costo sospechoso</b> (fuera del rango normal, típico typo del proveedor) se publican
+            <b>fuera de stock</b> y no tocan precios — salvo que marques su casilla ✓ para aprobarlas.
+          </p>
+        }
 
         <!-- Rellenar fotos con Apify (solo filas nuevas, de 1 en 1 con pausa) -->
         @if (newRows().length) {
@@ -212,17 +263,43 @@
                   @if (r.editable) {
                     <!-- Fila nueva: editable -->
                     <td><input class="pv-in" [(ngModel)]="overrides[r.idx].brand" placeholder="Marca" /></td>
-                    <td><input class="pv-in wide" [(ngModel)]="overrides[r.idx].name" placeholder="Nombre (sin marca)" /></td>
+                    <td>
+                      <input class="pv-in wide" [(ngModel)]="overrides[r.idx].name" placeholder="Nombre (sin marca)" />
+                      @if (r.matchLevel === 'L2_REVIEW') {
+                        <span class="tag review" title="Se parece a un producto existente (similitud {{ (r.matchScore || 0) * 100 | number:'1.0-0' }}%): al publicar irá a la cola de Revisión para que decidas si es el mismo.">🔍 irá a revisión</span>
+                      }
+                    </td>
                     <td><input class="pv-in num" type="number" [(ngModel)]="overrides[r.idx].ml" placeholder="ml" /></td>
                   } @else {
-                    <!-- UPC existente: datos tuyos, no se tocan -->
+                    <!-- Ya existe en el catálogo: datos tuyos, no se tocan -->
                     <td>{{ r.matchedBrand }}</td>
-                    <td>{{ r.matchedName }} <span class="exist">en catálogo</span></td>
+                    <td>
+                      {{ r.matchedName }}
+                      @if (r.matchLevel === 'L2_AUTO') {
+                        <span class="tag byname" title="Sin código de barras, pero el nombre coincide EXACTO con este producto: la oferta se une a él.">unido por nombre</span>
+                      } @else {
+                        <span class="exist">en catálogo</span>
+                      }
+                    </td>
                     <td>{{ r.matchedMl || '' }}</td>
                   }
 
-                  <td class="mono">{{ r.upc || '—' }}</td>
-                  <td>{{ r.costUsd != null ? (r.costUsd | number:'1.0-2') : '—' }}</td>
+                  <td class="mono">
+                    {{ r.upc || '—' }}
+                    @if (r.gtinStatus === 'CHECKSUM_FAIL') {
+                      <span class="tag quarantine" title="El código de barras tiene un dígito mal (checksum inválido): NO se usa como identidad. El producto se cruza por nombre.">⚠ typo</span>
+                    } @else if (r.gtinStatus === 'INVALID_LENGTH' || r.gtinStatus === 'AMBIGUOUS') {
+                      <span class="tag quarantine" title="Código no reconocible como UPC/EAN.">⚠ inválido</span>
+                    }
+                  </td>
+                  <td>
+                    {{ r.costUsd != null ? (r.costUsd | number:'1.0-2') : '—' }}
+                    @if (r.suspicious) {
+                      <label class="susp" title="Costo fuera del rango normal (posible typo del proveedor). Sin aprobar: se publica FUERA de stock y no toca precios.">
+                        <input type="checkbox" [(ngModel)]="approvedSuspicious[r.idx]" /> 💲 aprobar
+                      </label>
+                    }
+                  </td>
                   <td>{{ r.inStock ? '✓' : 'SOLD' }}</td>
                   <td class="pv-price">
                     @if (r.currentPricePen != null) {
@@ -263,10 +340,19 @@
           <div><b>{{ s.productsCreated }}</b><span>productos nuevos</span></div>
           <div><b>{{ s.offersCreated }}</b><span>ofertas creadas</span></div>
           <div><b>{{ s.offersUpdated }}</b><span>ofertas actualizadas</span></div>
+          <div [class.good]="s.l2AutoMatched > 0"><b>{{ s.l2AutoMatched }}</b><span>unidos por nombre</span></div>
+          <div [class.warn]="s.reviewQueued > 0"><b>{{ s.reviewQueued }}</b><span>a revisión</span></div>
+          <div [class.warn]="s.suspiciousRows > 0"><b>{{ s.suspiciousRows }}</b><span>costo sospechoso</span></div>
           <div [class.warn]="s.collisions > 0"><b>{{ s.collisions }}</b><span>colisiones UPC</span></div>
-          <div [class.warn]="s.noUpcRows > 0"><b>{{ s.noUpcRows }}</b><span>sin código</span></div>
+          <div [class.warn]="s.noUpcRows > 0"><b>{{ s.noUpcRows }}</b><span>sin código válido</span></div>
           <div><b>{{ s.markedOutOfStock }}</b><span>fuera de stock</span></div>
         </div>
+        @if (s.reviewQueued > 0) {
+          <p class="review-cta">
+            🔍 {{ s.reviewQueued }} posible(s) duplicado(s) esperan tu decisión en
+            <a routerLink="/admin/revision"><b>Revisión</b></a>.
+          </p>
+        }
         @if (s.notes.length) {
           <ul class="notes">@for (n of s.notes; track n) { <li>{{ n }}</li> }</ul>
         }
