@@ -372,6 +372,10 @@ export class ApiService {
     return this.http.post<{ candidatesCreated: number; pending: number }>(
       `${this.url}/admin/duplicates/scan`, {}, { headers: this.authHeaders() });
   }
+  clearPendingCandidates(): Observable<{ cleared: number; pending: number }> {
+    return this.http.delete<{ cleared: number; pending: number }>(
+      `${this.url}/admin/match-candidates/pending`, { headers: this.authHeaders() });
+  }
   mergeProducts(canonicalId: number, duplicateId: number): Observable<any> {
     return this.http.post(`${this.url}/admin/products/${canonicalId}/merge/${duplicateId}`, {},
       { headers: this.authHeaders() });

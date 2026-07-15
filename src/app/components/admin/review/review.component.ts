@@ -21,6 +21,12 @@ import { CdnImgPipe } from '../../../shared/cdn-img.pipe';
         <button class="adm-btn" (click)="scan()" [disabled]="scanning()">
           {{ scanning() ? 'Escaneando…' : '↻ Re-escanear catálogo' }}
         </button>
+        @if (candidates().length > 0) {
+          <button class="adm-btn danger" (click)="clearAll()" [disabled]="clearing()"
+                  title="Elimina todos los pendientes SIN marcar nada. Un re-escaneo los puede volver a proponer.">
+            {{ clearing() ? 'Vaciando…' : '🗑 Vaciar cola' }}
+          </button>
+        }
       </div>
     </div>
     <p class="rev-sub">
@@ -172,6 +178,7 @@ export class ReviewComponent implements OnInit {
   candidates = signal<MatchCandidate[]>([]);
   loading = signal(false);
   scanning = signal(false);
+  clearing = signal(false);
   busyId = signal<number | null>(null);
   msg = signal('');
   err = signal('');
@@ -206,6 +213,20 @@ export class ReviewComponent implements OnInit {
   }
   kindLabel(k: string) {
     return this.tabs.find(t => t.kind === k)?.label ?? k;
+  }
+
+  clearAll() {
+    if (!confirm(`Vaciar la cola: se eliminan los ${this.candidates().length} candidatos pendientes.\n` +
+      `No se fusiona ni se rechaza nada; si vuelves a escanear o importar, se pueden volver a proponer.\n¿Continuar?`)) return;
+    this.clearing.set(true); this.msg.set(''); this.err.set('');
+    this.api.clearPendingCandidates().subscribe({
+      next: (r) => {
+        this.clearing.set(false);
+        this.candidates.set([]);
+        this.msg.set(`✓ Cola vaciada (${r.cleared} candidatos eliminados).`);
+      },
+      error: (e) => { this.clearing.set(false); this.err.set(e.error?.message || 'No se pudo vaciar.'); }
+    });
   }
 
   scan() {

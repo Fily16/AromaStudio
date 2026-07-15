@@ -34,6 +34,10 @@
           <button class="btn ghost" (click)="cancelForm()">Cancelar</button>
         </div>
 
+        @if (sForm.id == null) {
+          <p class="sub" style="margin-top:10px">Los mínimos de compra (unidades, por marca…) se agregan aquí mismo apenas lo crees.</p>
+        }
+
         <!-- Restricciones de compra (solo al editar): mínimos que el plan de compra respeta -->
         @if (sForm.id != null) {
           <div class="constraints">
@@ -88,9 +92,13 @@
               <span class="badge" [class.on]="s.active">{{ s.active ? 'Activo' : 'Inactivo' }}</span>
             </td>
             <td class="row-actions">
-              <button class="link" (click)="openEdit(s)">Editar</button>
-              <button class="link" (click)="toggleActive(s)">{{ s.active ? 'Desactivar' : 'Activar' }}</button>
-              <button class="link danger" (click)="removeSupplier(s)">Eliminar</button>
+              @if (busySupplierId() === s.id) {
+                <span class="sub">⏳ procesando…</span>
+              } @else {
+                <button class="link" (click)="openEdit(s)">Editar</button>
+                <button class="link" (click)="toggleActive(s)">{{ s.active ? 'Desactivar' : 'Activar' }}</button>
+                <button class="link danger" (click)="removeSupplier(s)">Eliminar</button>
+              }
             </td>
           </tr>
         }

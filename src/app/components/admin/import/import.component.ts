@@ -276,43 +276,71 @@ export class ImportComponent implements OnInit {
       minOrderUsd: +this.sForm.minOrderUsd || 0,
       priorityToReachMin: !!this.sForm.priorityToReachMin
     };
-    const done = (msg: string) => {
-      this.savingSupplier.set(false);
-      this.supplierMsg.set(msg);
-      this.showForm.set(false);
-      this.loadSuppliers(true);
-    };
     const fail = (err: any) => {
       this.savingSupplier.set(false);
       this.supplierErr.set(err.error?.message || 'No se pudo guardar el proveedor.');
     };
     if (this.sForm.id == null) {
-      this.api.createSupplier(req).subscribe({ next: () => done('✓ Proveedor creado.'), error: fail });
+      // Al CREAR: el formulario pasa a modo edición para agregar los mínimos de compra
+      // ahí mismo (antes había que cerrar y volver a entrar con "Editar").
+      this.api.createSupplier(req).subscribe({
+        next: (s) => {
+          this.savingSupplier.set(false);
+          this.sForm.id = s.id;
+          this.supplierMsg.set('✓ Proveedor creado. Ahora puedes agregar sus mínimos de compra aquí abajo.');
+          this.loadConstraints(s.id);
+          this.loadSuppliers(true);
+        },
+        error: fail
+      });
     } else {
-      this.api.updateSupplier(this.sForm.id, req).subscribe({ next: () => done('✓ Proveedor actualizado.'), error: fail });
+      this.api.updateSupplier(this.sForm.id, req).subscribe({
+        next: () => {
+          this.savingSupplier.set(false);
+          this.supplierMsg.set('✓ Proveedor actualizado.');
+          this.showForm.set(false);
+          this.loadSuppliers(true);
+        },
+        error: fail
+      });
     }
   }
 
+  busySupplierId = signal<number | null>(null);
+
   toggleActive(s: Supplier) {
     this.supplierErr.set(''); this.supplierMsg.set('');
+    this.busySupplierId.set(s.id);
     this.api.setSupplierActive(s.id, !s.active).subscribe({
       next: () => {
-        this.supplierMsg.set(!s.active ? `✓ ${s.name} activado.` : `✓ ${s.name} desactivado (fuera de precios y comparación).`);
+        this.busySupplierId.set(null);
+        this.supplierMsg.set(!s.active
+          ? `✓ ${s.name} activado. Los precios se recalculan en segundo plano (puede tardar unos minutos en reflejarse).`
+          : `✓ ${s.name} desactivado. Sus ofertas salen de precios y comparación; el recálculo corre en segundo plano.`);
         this.loadSuppliers(true);
       },
-      error: (err) => this.supplierErr.set(err.error?.message || 'No se pudo cambiar el estado.')
+      error: (err) => {
+        this.busySupplierId.set(null);
+        this.supplierErr.set(err.error?.message || 'No se pudo cambiar el estado.');
+      }
     });
   }
 
   removeSupplier(s: Supplier) {
-    if (!confirm(`Eliminar PERMANENTEMENTE a "${s.name}" y todas sus ofertas. Los precios se recalculan. ¿Continuar?`)) return;
+    if (!confirm(`Eliminar PERMANENTEMENTE a "${s.name}" y todas sus ofertas. Los precios se recalculan en segundo plano. ¿Continuar?`)) return;
+    this.busySupplierId.set(s.id);
+    this.supplierErr.set(''); this.supplierMsg.set('');
     this.api.deleteSupplier(s.id).subscribe({
       next: () => {
-        this.supplierMsg.set(`✓ ${s.name} eliminado.`);
+        this.busySupplierId.set(null);
+        this.supplierMsg.set(`✓ ${s.name} eliminado. Los precios de sus productos se recalculan en segundo plano.`);
         if (this.selectedSupplierId() === s.id) this.selectedSupplierId.set(null);
         this.loadSuppliers();
       },
-      error: (err) => this.supplierErr.set(err.error?.message || 'No se pudo eliminar.')
+      error: (err) => {
+        this.busySupplierId.set(null);
+        this.supplierErr.set(err.error?.message || 'No se pudo eliminar.');
+      }
     });
   }
 
