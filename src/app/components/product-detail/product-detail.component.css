@@ -153,3 +153,12 @@
   padding: 3px 11px; border-radius: 999px;
 }
 .psl-sugg { font-size: 0.72rem; color: var(--muted); font-style: italic; }
+
+/* Consolidado cerrado: el canal "por encargo" queda inhabilitado con aviso claro. */
+.pd-mode.off { opacity: .5; cursor: not-allowed; }
+.pd-mode.off:hover { border-color: var(--line); background: transparent; }
+.pd-closed {
+  background: #fff5f6; border: 1px solid #f6d3d8; border-radius: 10px;
+  padding: 10px 14px; font-size: .84rem; color: #8a1122; margin: 12px 0;
+}
+.pd-add:disabled { background: var(--line); border-color: var(--line); color: var(--muted); cursor: not-allowed; font-size: .78rem; }

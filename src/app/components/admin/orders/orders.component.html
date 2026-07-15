@@ -24,6 +24,14 @@
         <option [value]="c.id" [selected]="c.id === selectedId()">Consolidado #{{ c.id }} · {{ c.status }}</option>
       }
     </select>
+    @if (canSchedule()) {
+      <button class="adm-btn" (click)="openSchedule()" title="Fecha de cierre, aviso e imagen del consolidado">
+        ⏱ Configurar plazo
+      </button>
+    }
+    @if (!hasOpenOrScheduled()) {
+      <button class="adm-btn primary" (click)="openWizard()">+ Abrir consolidado</button>
+    }
     @if (selectedConsolidado(); as c) {
       @if (c.status === 'ABIERTO') {
         <button class="adm-btn primary" (click)="openClose()">Cerrar consolidado</button>
@@ -34,6 +42,27 @@
     }
   </div>
 </div>
+
+<!-- Plazo del consolidado seleccionado (lo que ve el cliente en el aviso) -->
+@if (selectedConsolidado(); as c) {
+  @if (c.status === 'ABIERTO' || c.status === 'PROGRAMADO') {
+    <div class="ord-deadline" [class.none]="!c.endsAt">
+      @if (c.endsAt) {
+        <span class="dl-ico">⏱</span>
+        <span>
+          {{ c.status === 'PROGRAMADO' ? 'Abre y luego cierra' : 'Cierra' }} el <b>{{ deadlineLabel() }}</b>
+          @if (c.extended) { <span class="dl-ext">plazo extendido</span> }
+        </span>
+        @if (c.title) { <span class="dl-title">“{{ c.title }}”</span> }
+        <span class="dl-hint">El cierre es automático: los pedidos por encargo se bloquean solos.</span>
+      } @else {
+        <span class="dl-ico">⚠️</span>
+        <span>Este consolidado <b>no tiene plazo</b>: no hay cuenta regresiva en la tienda y no se cerrará solo.</span>
+        <button class="adm-btn sm" (click)="openSchedule()">Configurar ahora</button>
+      }
+    </div>
+  }
+}
 
 <!-- Pestañas: consolidado vs en stock -->
 <div class="ord-tabs">
@@ -441,6 +470,13 @@
             </div>
           }
         }
+        <!-- Cerrado el lote, lo natural es abrir el siguiente: se ofrece aquí mismo. -->
+        <div class="ord-next">
+          <b>¿Abrir el siguiente consolidado?</b>
+          <span>Los clientes verán el aviso con la nueva cuenta regresiva.</span>
+          <button class="adm-btn primary sm" (click)="closeCloseModal(); openWizard()">Abrir ahora</button>
+        </div>
+
         <div class="ord-modal-actions" style="margin-top:14px">
           <button class="adm-btn primary" (click)="closeCloseModal()">Listo</button>
         </div>
@@ -510,6 +546,118 @@
         <button class="adm-btn" (click)="cancelEdit()">Cancelar</button>
         <button class="adm-btn primary" (click)="saveEdit()">Guardar</button>
       </div>
+    </div>
+  </div>
+}
+
+<!-- ===== Configurar plazo / aviso / imagen del consolidado ===== -->
+@if (showScheduleModal()) {
+  <div class="ord-modal-bg" (click)="showScheduleModal.set(false)">
+    <div class="ord-modal ord-modal-lg" (click)="$event.stopPropagation()">
+      <h3>Plazo y aviso del consolidado #{{ selectedId() }}</h3>
+      <p class="sch-sub">Esto es lo que verán tus clientes en el aviso con cuenta regresiva.</p>
+
+      <div class="sch-scroll">
+        <div class="adm-field">
+          <label>Título del aviso</label>
+          <input class="adm-input" [value]="sched().title" (input)="setSched('title', $event)"
+                 placeholder="Ej. Consolidado de Julio">
+        </div>
+        <div class="adm-field">
+          <label>Descripción (opcional)</label>
+          <input class="adm-input" [value]="sched().description" (input)="setSched('description', $event)"
+                 placeholder="Ej. Llega en 3 semanas · Separa con S/20">
+        </div>
+        @if (selectedConsolidado()?.status === 'PROGRAMADO') {
+          <div class="adm-field">
+            <label>Apertura</label>
+            <input class="adm-input" type="datetime-local" [value]="sched().startAt" (input)="setSched('startAt', $event)">
+          </div>
+        }
+        <div class="adm-field">
+          <label>Cierre (la cuenta regresiva llega a cero aquí)</label>
+          <input class="adm-input" type="datetime-local" [value]="sched().endsAt" (input)="setSched('endsAt', $event)">
+          <small class="sch-hint">Al vencer, el consolidado se cierra solo y los encargos se bloquean.
+            Si lo mueves hacia adelante, el aviso anuncia “¡Plazo extendido!”.</small>
+        </div>
+        <div class="adm-field">
+          <label>Imagen del aviso</label>
+          <admin-media-gallery [selectMode]="true" [selectedId]="sched().imageMediaId"
+                               (picked)="setSchedImage($event)" />
+        </div>
+      </div>
+
+      @if (scheduleError()) { <p class="sch-err">{{ scheduleError() }}</p> }
+      <div class="ord-modal-actions">
+        <button class="adm-btn" (click)="showScheduleModal.set(false)">Cancelar</button>
+        <button class="adm-btn primary" (click)="saveSchedule()" [disabled]="savingSchedule()">
+          {{ savingSchedule() ? 'Guardando…' : 'Guardar plazo' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- ===== Wizard: abrir un consolidado nuevo ===== -->
+@if (showOpenWizard()) {
+  <div class="ord-modal-bg" (click)="showOpenWizard.set(false)">
+    <div class="ord-modal ord-modal-lg" (click)="$event.stopPropagation()">
+      @if (wizardStep() === 'form') {
+        <h3>¿Deseas abrir un nuevo consolidado?</h3>
+        <p class="sch-sub">Se anunciará en la tienda con una cuenta regresiva hasta el cierre.</p>
+
+        <div class="sch-scroll">
+          <div class="adm-field">
+            <label>Título</label>
+            <input class="adm-input" [value]="sched().title" (input)="setSched('title', $event)"
+                   placeholder="Ej. Consolidado de Agosto">
+          </div>
+          <div class="adm-field">
+            <label>Descripción (opcional)</label>
+            <input class="adm-input" [value]="sched().description" (input)="setSched('description', $event)"
+                   placeholder="Ej. Cierra el viernes · Llega en 3 semanas">
+          </div>
+          <div class="adm-field">
+            <label>Apertura (vacío = ahora mismo)</label>
+            <input class="adm-input" type="datetime-local" [value]="sched().startAt" (input)="setSched('startAt', $event)">
+            <small class="sch-hint">Si eliges una fecha futura, queda PROGRAMADO y abre solo.</small>
+          </div>
+          <div class="adm-field">
+            <label>Cierre *</label>
+            <input class="adm-input" type="datetime-local" [value]="sched().endsAt" (input)="setSched('endsAt', $event)">
+          </div>
+          <div class="adm-field">
+            <label>Imagen del aviso</label>
+            <admin-media-gallery [selectMode]="true" [selectedId]="sched().imageMediaId"
+                                 (picked)="setSchedImage($event)" />
+          </div>
+        </div>
+
+        @if (scheduleError()) { <p class="sch-err">{{ scheduleError() }}</p> }
+        <div class="ord-modal-actions">
+          <button class="adm-btn" (click)="showOpenWizard.set(false)">Cancelar</button>
+          <button class="adm-btn primary" (click)="goToConfirm()">Continuar</button>
+        </div>
+      } @else {
+        <h3>Confirmar apertura</h3>
+        <div class="sch-confirm">
+          <div><span>Título</span><b>{{ wizardSummary().title }}</b></div>
+          @if (wizardSummary().description) {
+            <div><span>Descripción</span><b>{{ wizardSummary().description }}</b></div>
+          }
+          <div><span>Abre</span><b>{{ wizardSummary().start }}</b></div>
+          <div><span>Cierra</span><b>{{ wizardSummary().end }}</b></div>
+          <div><span>Imagen</span><b>{{ wizardSummary().hasImage ? 'Sí' : 'Sin imagen' }}</b></div>
+        </div>
+        <p class="sch-sub">Al confirmar, los clientes verán el aviso y podrán hacer pedidos por encargo.</p>
+        @if (scheduleError()) { <p class="sch-err">{{ scheduleError() }}</p> }
+        <div class="ord-modal-actions">
+          <button class="adm-btn" (click)="wizardStep.set('form')">← Volver</button>
+          <button class="adm-btn primary" (click)="confirmOpen()" [disabled]="savingSchedule()">
+            {{ savingSchedule() ? 'Abriendo…' : 'Sí, abrir consolidado' }}
+          </button>
+        </div>
+      }
     </div>
   </div>
 }

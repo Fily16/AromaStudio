@@ -1,8 +1,9 @@
-import { Component, ElementRef, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, ElementRef, OnDestroy, OnInit, computed, effect, inject, signal } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { ApiService } from '../../services/api.service';
 import { CartService } from '../../services/cart.service';
+import { ConsolidadoStateService } from '../../services/consolidado-state.service';
 import { Product, Banner, Promotion } from '../../models/api.models';
 import { ProductCardComponent } from '../shared/product-card.component';
 import { ScrollerComponent } from '../shared/scroller.component';
@@ -28,6 +29,21 @@ export class HomeComponent implements OnInit, OnDestroy {
   private router = inject(Router);
   private host = inject(ElementRef<HTMLElement>);
   cart = inject(CartService);
+  private consolidado = inject(ConsolidadoStateService);
+
+  constructor() {
+    // Si el aviso del consolidado tiene el turno, el popup de promos queda en espera
+    // y sale recién cuando el visitante cierra el aviso (nunca los dos encimados).
+    effect(() => {
+      const claimed = this.consolidado.modalClaimed();
+      if (!claimed && this.popupPending() && !this.popupDecided) {
+        this.popupDecided = true;
+        const pubs = this.popupPending()!;
+        this.popupPending.set(null);
+        this.showPopupNow(pubs, 800);
+      }
+    });
+  }
 
   allProducts = signal<Product[]>([]);
   loading = signal(true);
@@ -38,6 +54,8 @@ export class HomeComponent implements OnInit, OnDestroy {
   promoPopup = signal<Banner | null>(null);
   popupPromo = signal<Promotion | null>(null);
   private popupDecided = false;
+  /** Publicaciones en espera mientras el aviso del consolidado tiene el turno (signal: lo lee un effect). */
+  private popupPending = signal<{ kind: 'banner' | 'promo'; banner?: Banner; promo?: Promotion }[] | null>(null);
   private cfgLoaded = false;
   private promosLoaded = false;
   stockMap = signal<Record<number, number>>({});
@@ -241,12 +259,23 @@ export class HomeComponent implements OnInit, OnDestroy {
     ];
     if (!pubs.length) return;
     try { if (sessionStorage.getItem('promo_popup_seen')) { this.popupDecided = true; return; } } catch {}
+
+    // El aviso del consolidado tiene prioridad: si ya tomó el turno (aunque todavía
+    // no se dibuje), este popup espera a que lo cierren.
+    if (this.consolidado.modalClaimed()) {
+      this.popupPending.set(pubs);
+      return;
+    }
     this.popupDecided = true;
+    this.showPopupNow(pubs, 1200);
+  }
+
+  private showPopupNow(pubs: { kind: 'banner' | 'promo'; banner?: Banner; promo?: Promotion }[], delayMs: number) {
     const pick = pubs[Math.floor(Math.random() * pubs.length)];
     setTimeout(() => {
       if (pick.kind === 'promo') this.popupPromo.set(pick.promo!);
       else this.promoPopup.set(pick.banner!);
-    }, 1200);
+    }, delayMs);
   }
 
   closePromoPopup() {

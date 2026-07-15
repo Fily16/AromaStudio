@@ -129,7 +129,7 @@ export interface OperationsSummary {
 
 export interface Consolidado {
   id: number;
-  status: 'ABIERTO' | 'CERRADO' | 'ENVIADO' | 'ENTREGADO';
+  status: 'PROGRAMADO' | 'ABIERTO' | 'CERRADO' | 'ENVIADO' | 'ENTREGADO';
   openDate: string;
   closeDate: string | null;
   totalWeightG: number;
@@ -139,6 +139,40 @@ export interface Consolidado {
   totalRevenuePen: number;
   projectedProfitPen: number;
   notes: string | null;
+  createdAt: string;
+  // --- Programación y aviso público (v2) ---
+  title?: string | null;
+  description?: string | null;
+  startAt?: string | null;      // ISO (Instant serializado)
+  endsAt?: string | null;       // ISO: plazo de cierre; alimenta el countdown y el cierre automático
+  extended?: boolean;           // el admin movió el plazo hacia adelante
+  imageMediaId?: number | null; // imagen del aviso (galería)
+}
+
+/**
+ * Estado público del consolidado para el aviso/countdown (GET /consolidados/current).
+ * Fechas en epoch millis + serverNowMs: el contador se calcula contra la hora del
+ * SERVIDOR, no la del visitante (inmune a relojes desfasados y zonas horarias).
+ */
+export interface ConsolidadoPublic {
+  id: number | null;
+  status: 'PROGRAMADO' | 'ABIERTO' | 'CERRADO' | 'ENTREGADO' | 'NONE';
+  title: string | null;
+  description: string | null;
+  startAtMs: number | null;
+  endsAtMs: number | null;
+  serverNowMs: number;
+  extended: boolean;
+  imageMediaId: number | null;
+  open: boolean;                // única fuente de verdad para habilitar compras por encargo
+}
+
+/** Imagen de la galería (banners de consolidados). */
+export interface MediaSummary {
+  id: number;
+  name: string;
+  contentType: string;
+  sizeBytes: number;
   createdAt: string;
 }
 

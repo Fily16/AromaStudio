@@ -3,6 +3,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { DecimalPipe } from '@angular/common';
 import { ApiService } from '../../services/api.service';
 import { CartService } from '../../services/cart.service';
+import { ConsolidadoStateService } from '../../services/consolidado-state.service';
 import { Product } from '../../models/api.models';
 import { ProductCardComponent } from '../shared/product-card.component';
 import { NoteIconComponent } from '../shared/note-icon.component';
@@ -22,6 +23,7 @@ export class ProductDetailComponent implements OnInit {
   private router = inject(Router);
   private api = inject(ApiService);
   cart = inject(CartService);
+  consolidado = inject(ConsolidadoStateService);
 
   product = signal<Product | null>(null);
   allProducts = signal<Product[]>([]);
@@ -81,6 +83,10 @@ export class ProductDetailComponent implements OnInit {
     const p = this.product();
     return !!p && this.isInStock(p.id) && !!p.stockPricePen;
   });
+  /** Los encargos se bloquean si el consolidado no está abierto; la venta de stock no. */
+  consolidadoClosed = computed(() => !this.consolidado.open());
+  /** No hay forma de comprar este perfume: encargo cerrado y sin stock inmediato. */
+  cannotBuy = computed(() => this.consolidadoClosed() && !this.canBuyStock());
   // Precio según el canal elegido: stock (costo+35) o consolidado (costo+20).
   price = computed(() => {
     const p = this.product();
@@ -132,6 +138,10 @@ export class ProductDetailComponent implements OnInit {
         this.product.set(product);
         this.loading.set(false);
 
+        // Con el encargo cerrado, la ficha abre directo en "entrega inmediata"
+        // (si hay stock): el cliente no elige un canal que no puede comprar.
+        this.buyMode.set(this.consolidadoClosed() && this.canBuyStock() ? 'STOCK' : 'CONSOLIDADO');
+
         try {
           (window as any).ttq?.track('ViewContent', {
             content_id: product.id.toString(),
@@ -163,6 +173,7 @@ export class ProductDetailComponent implements OnInit {
   stockHit = signal(false);
 
   setBuyMode(mode: 'CONSOLIDADO' | 'STOCK') {
+    if (mode === 'CONSOLIDADO' && this.consolidadoClosed()) return; // encargo cerrado
     this.buyMode.set(mode);
     if (mode === 'STOCK') this.quantity.set(Math.min(this.quantity(), Math.max(1, this.stockQtyOf())));
   }
@@ -185,6 +196,8 @@ export class ProductDetailComponent implements OnInit {
     const p = this.product();
     if (!p || !p.wholesalePricePen) return;
     const channel = this.buyMode();
+    // El encargo requiere consolidado abierto (el backend lo valida igual).
+    if (channel === 'CONSOLIDADO' && this.consolidadoClosed()) return;
     const ok = this.cart.addItem(p, this.quantity(), channel, this.price());
     if (!ok) {
       this.blocked.set(true);

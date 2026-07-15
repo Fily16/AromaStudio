@@ -2,6 +2,7 @@ import { Component, computed, effect, inject, signal, OnDestroy } from '@angular
 import { Router, RouterLink } from '@angular/router';
 import { CartService } from '../../services/cart.service';
 import { ApiService } from '../../services/api.service';
+import { ConsolidadoStateService } from '../../services/consolidado-state.service';
 import { DecimalPipe } from '@angular/common';
 import { Product, Banner, Promotion } from '../../models/api.models';
 import { ProductCardComponent } from '../shared/product-card.component';
@@ -20,6 +21,7 @@ import { downloadResellerPdf } from '../../shared/reseller-pdf.util';
 export class CartComponent implements OnDestroy {
   cart = inject(CartService);
   private api = inject(ApiService);
+  consolidado = inject(ConsolidadoStateService);
   private router = inject(Router);
 
   // Mosaico rotativo de promociones (checkout), igual que el home pero un poco más chico
@@ -162,8 +164,22 @@ export class CartComponent implements OnDestroy {
   xlDone = signal(0);
   xlTotal = signal(0);
 
+  /** Mensaje único del encargo cerrado (el backend responde exactamente lo mismo). */
+  static readonly CLOSED_MSG = 'El consolidado está cerrado. Espera la apertura del próximo.';
+
+  /**
+   * Carrito de encargo con el consolidado cerrado: no se puede enviar.
+   * Las compras de stock y los packs nunca se bloquean.
+   */
+  consolidadoBlocked = computed(() =>
+    this.cart.catalogType() === 'CONSOLIDADO' && !this.consolidado.open());
+
   goToCheckout() {
     if (this.cart.isEmpty()) return;
+    if (this.consolidadoBlocked()) {
+      this.submitError.set(CartComponent.CLOSED_MSG);
+      return;
+    }
     if (!this.minReached() && this.cart.catalogType() !== 'STOCK') return;
     if (typeof (window as any).ttq !== 'undefined') {
       (window as any).ttq.track('InitiateCheckout', {
@@ -193,6 +209,8 @@ export class CartComponent implements OnDestroy {
   }
 
   submitOrder() {
+    // Candado del encargo (el backend valida igual: esto solo evita el viaje).
+    if (this.consolidadoBlocked()) { this.submitError.set(CartComponent.CLOSED_MSG); return; }
     if (!this.clientName() || !this.clientPhone()) { this.submitError.set('Completa tu nombre y número de WhatsApp.'); return; }
     if (this.isAddingToExisting() && !this.existingOrderCode().trim()) { this.submitError.set('Ingresa el código de tu pedido anterior (ej. AS-0012).'); return; }
     if (this.deliveryMethod() === 'SHALOM') {

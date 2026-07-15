@@ -151,3 +151,38 @@
 .ord-profit-legend .dot.stock { background: #38bdf8; }
 .ord-profit-legend .dot.promo { background: #a78bfa; }
 .ord-profit-legend .dot.cons { background: #34d399; }
+
+/* ===== Plazo del consolidado (chip informativo) ===== */
+.ord-deadline {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  background: #f3f7ff; border: 1px solid #d8e4fb; border-radius: 10px;
+  padding: 9px 14px; margin-bottom: 14px; font-size: .85rem;
+}
+.ord-deadline.none { background: #fff8ec; border-color: #f4dfb8; }
+.ord-deadline .dl-ico { font-size: 1rem; }
+.ord-deadline .dl-ext {
+  background: #ffe9e2; color: #c2410c; font-weight: 700; font-size: .68rem;
+  padding: 2px 8px; border-radius: 999px; margin-left: 6px; text-transform: uppercase;
+}
+.ord-deadline .dl-title { color: var(--a-muted); font-style: italic; }
+.ord-deadline .dl-hint { color: var(--a-muted); font-size: .76rem; margin-left: auto; }
+
+/* ===== Modales de plazo / wizard ===== */
+.sch-sub { color: var(--a-muted); font-size: .84rem; margin: 4px 0 14px; }
+.sch-scroll { overflow-y: auto; padding-right: 4px; margin-bottom: 12px; }
+.sch-scroll .adm-field { margin-bottom: 14px; }
+.sch-hint { display: block; color: var(--a-muted); font-size: .74rem; margin-top: 4px; line-height: 1.4; }
+.sch-err { color: #e15252; font-weight: 600; font-size: .84rem; margin-bottom: 10px; }
+.sch-confirm { display: flex; flex-direction: column; gap: 8px; margin: 14px 0; }
+.sch-confirm div { display: flex; justify-content: space-between; gap: 12px; border-bottom: 1px solid var(--a-line); padding-bottom: 7px; }
+.sch-confirm span { color: var(--a-muted); font-size: .82rem; }
+.sch-confirm b { font-size: .86rem; text-align: right; }
+
+/* Cerrado el lote: atajo para abrir el siguiente sin buscar el botón */
+.ord-next {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  background: #f3f7ff; border: 1px solid #d8e4fb; border-radius: 10px;
+  padding: 10px 14px; margin-top: 16px; font-size: .85rem;
+}
+.ord-next span { color: var(--a-muted); font-size: .78rem; }
+.ord-next .adm-btn { margin-left: auto; }

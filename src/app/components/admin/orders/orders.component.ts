@@ -4,6 +4,7 @@ import { ApiService } from '../../../services/api.service';
 import { Order, Consolidado, AllocationResponse, MissingItem, Supplier,
          Promotion, ProfitReport, OrderPromo, OrderItem } from '../../../models/api.models';
 import { CdnImgPipe } from '../../../shared/cdn-img.pipe';
+import { MediaGalleryComponent } from '../shared/media-gallery.component';
 
 /**
  * Pedidos = núcleo del ERP. KPIs del consolidado (total, Lima, provincia, por vendedor,
@@ -13,7 +14,7 @@ import { CdnImgPipe } from '../../../shared/cdn-img.pipe';
 @Component({
   selector: 'app-orders',
   standalone: true,
-  imports: [DecimalPipe, DatePipe, CdnImgPipe],
+  imports: [DecimalPipe, DatePipe, CdnImgPipe, MediaGalleryComponent],
   templateUrl: './orders.component.html',
   styleUrl: './orders.component.css'
 })
@@ -45,6 +46,26 @@ export class OrdersComponent implements OnInit {
 
   // Allocation (al cerrar)
   allocation = signal<AllocationResponse | null>(null);
+
+  // --- Consolidados v2: plazo, aviso e imagen ---
+  showScheduleModal = signal(false);
+  showOpenWizard = signal(false);
+  wizardStep = signal<'form' | 'confirm'>('form');
+  savingSchedule = signal(false);
+  scheduleError = signal('');
+  /** Formulario compartido por "Configurar plazo" y el wizard de apertura. */
+  sched = signal<{ title: string; description: string; startAt: string; endsAt: string; imageMediaId: number | null }>(
+    { title: '', description: '', startAt: '', endsAt: '', imageMediaId: null });
+
+  /** ¿Hay un consolidado recibiendo (o por recibir) pedidos? Si no, se puede abrir uno nuevo. */
+  hasOpenOrScheduled = computed(() =>
+    this.consolidados().some(c => c.status === 'ABIERTO' || c.status === 'PROGRAMADO'));
+
+  /** El consolidado seleccionado se puede reprogramar (plazo/aviso/imagen). */
+  canSchedule = computed(() => {
+    const c = this.selectedConsolidado();
+    return !!c && (c.status === 'ABIERTO' || c.status === 'PROGRAMADO');
+  });
 
   // --- Flujo de cierre con Excel + faltantes ---
   showCloseModal = signal(false);
@@ -309,6 +330,154 @@ Cuéntanos qué prefieres. ¡Gracias por tu comprensión! 🙏`;
     this.selectedId.set(id);
     this.allocation.set(null);
     this.loadOrders(id);
+  }
+
+  // =====================================================================
+  // Plazo del consolidado, aviso público e imagen
+  // =====================================================================
+
+  /** ISO/epoch -> valor de <input type="datetime-local"> en HORA LOCAL del admin. */
+  private toLocalInput(iso: string | null | undefined): string {
+    if (!iso) return '';
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return '';
+    const pad = (n: number) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  }
+  /** El navegador convierte la hora local a epoch UTC: el backend nunca adivina zonas. */
+  private toMs(local: string): number | null {
+    if (!local) return null;
+    const ms = new Date(local).getTime();
+    return isNaN(ms) ? null : ms;
+  }
+
+  /** Texto del plazo para el chip del header. */
+  deadlineLabel = computed(() => {
+    const c = this.selectedConsolidado();
+    if (!c?.endsAt) return null;
+    const d = new Date(c.endsAt);
+    return d.toLocaleString('es-PE', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
+  });
+
+  openSchedule() {
+    const c = this.selectedConsolidado();
+    if (!c) return;
+    this.sched.set({
+      title: c.title || '',
+      description: c.description || '',
+      startAt: this.toLocalInput(c.startAt),
+      endsAt: this.toLocalInput(c.endsAt),
+      imageMediaId: c.imageMediaId ?? null
+    });
+    this.scheduleError.set('');
+    this.showScheduleModal.set(true);
+  }
+
+  openWizard() {
+    // Por defecto: abre ahora y cierra en 7 días (lo típico del negocio).
+    const in7 = new Date(Date.now() + 7 * 86400000);
+    this.sched.set({
+      title: '', description: '', startAt: '',
+      endsAt: this.toLocalInput(in7.toISOString()), imageMediaId: null
+    });
+    this.scheduleError.set('');
+    this.wizardStep.set('form');
+    this.showOpenWizard.set(true);
+  }
+
+  setSched(field: 'title' | 'description' | 'startAt' | 'endsAt', ev: Event) {
+    const v = (ev.target as HTMLInputElement).value;
+    this.sched.update(s => ({ ...s, [field]: v }));
+  }
+  setSchedImage(id: number | null) {
+    this.sched.update(s => ({ ...s, imageMediaId: id }));
+  }
+
+  /** Resumen legible para el paso de confirmación del wizard. */
+  wizardSummary = computed(() => {
+    const s = this.sched();
+    const fmt = (v: string) => v ? new Date(v).toLocaleString('es-PE',
+      { weekday: 'short', day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) : null;
+    return {
+      title: s.title || '(sin título)',
+      description: s.description,
+      start: fmt(s.startAt) || 'ahora mismo',
+      end: fmt(s.endsAt),
+      hasImage: s.imageMediaId != null
+    };
+  });
+
+  goToConfirm() {
+    if (!this.sched().endsAt) { this.scheduleError.set('Elige la fecha y hora de cierre.'); return; }
+    if (this.toMs(this.sched().endsAt)! <= Date.now()) {
+      this.scheduleError.set('El cierre debe ser en el futuro.');
+      return;
+    }
+    this.scheduleError.set('');
+    this.wizardStep.set('confirm');
+  }
+
+  /** Abre (o programa) el consolidado nuevo. */
+  confirmOpen() {
+    const s = this.sched();
+    const endsAtMs = this.toMs(s.endsAt);
+    if (endsAtMs == null) { this.scheduleError.set('Elige la fecha y hora de cierre.'); return; }
+    this.savingSchedule.set(true); this.scheduleError.set('');
+    this.api.openConsolidado({
+      title: s.title.trim() || null,
+      description: s.description.trim() || null,
+      startAtMs: this.toMs(s.startAt),
+      endsAtMs,
+      imageMediaId: s.imageMediaId
+    }).subscribe({
+      next: (c) => {
+        this.savingSchedule.set(false);
+        this.showOpenWizard.set(false);
+        this.selectedId.set(c.id);
+        this.loadConsolidados();
+        this.showMessage(c.status === 'PROGRAMADO'
+          ? '✓ Consolidado programado: abrirá solo en la fecha indicada.'
+          : '✓ Consolidado abierto. El aviso ya se ve en la tienda.');
+      },
+      error: (e) => {
+        this.savingSchedule.set(false);
+        this.scheduleError.set(e.error?.message || 'No se pudo abrir el consolidado.');
+      }
+    });
+  }
+
+  /** Guarda plazo/aviso/imagen del consolidado actual (extender el plazo se anuncia solo). */
+  saveSchedule() {
+    const c = this.selectedConsolidado();
+    const s = this.sched();
+    if (!c) return;
+    const endsAtMs = this.toMs(s.endsAt);
+    if (endsAtMs == null) { this.scheduleError.set('Elige la fecha y hora de cierre.'); return; }
+    const extending = !!c.endsAt && endsAtMs > new Date(c.endsAt).getTime();
+    this.savingSchedule.set(true); this.scheduleError.set('');
+    // Sentinels de "limpiar": el backend usa null como "no tocar este campo", así que
+    // vaciar se manda como '' (título/descripción) y 0 (imagen). Sin esto, la imagen
+    // o el título del aviso no se podrían quitar nunca.
+    this.api.updateConsolidadoSchedule(c.id, {
+      title: s.title.trim(),
+      description: s.description.trim(),
+      startAtMs: this.toMs(s.startAt),
+      endsAtMs,
+      imageMediaId: s.imageMediaId ?? 0
+    }).subscribe({
+      next: () => {
+        this.savingSchedule.set(false);
+        this.showScheduleModal.set(false);
+        this.loadConsolidados();
+        this.showMessage(extending
+          ? '✓ Plazo extendido. El aviso lo anuncia y vuelve a mostrarse a los clientes.'
+          : '✓ Plazo actualizado.');
+      },
+      error: (e) => {
+        this.savingSchedule.set(false);
+        this.scheduleError.set(e.error?.message || 'No se pudo guardar.');
+      }
+    });
   }
 
   loadOrders(consolidadoId: number) {

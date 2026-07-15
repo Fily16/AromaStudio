@@ -3,6 +3,7 @@ import { RouterLink } from '@angular/router';
 import { DecimalPipe } from '@angular/common';
 import { Product } from '../../models/api.models';
 import { CartService } from '../../services/cart.service';
+import { ConsolidadoStateService } from '../../services/consolidado-state.service';
 import { cdnImage } from '../../shared/img.util';
 
 /**
@@ -40,6 +41,8 @@ import { cdnImage } from '../../shared/img.util';
           @if (mode === 'STOCK') {
             @if (lowStock) { <span class="pc-stock low">¡Últimas unidades!</span> }
             @else { <span class="pc-stock in">Entrega inmediata</span> }
+          } @else if (consolidadoClosed) {
+            <span class="pc-stock off">Encargo cerrado</span>
           } @else {
             <span class="pc-stock">Por encargo</span>
           }
@@ -52,8 +55,14 @@ import { cdnImage } from '../../shared/img.util';
         @if (hasSaving) { <span class="pc-save">{{ savingPct }}% de descuento</span> }
       </div>
 
-      <button type="button" class="pc-add" (click)="addToCart($event)" [class.added]="added()" [class.blocked]="blocked()">
-        {{ blocked() ? 'Vacía el carrito primero' : (added() ? '✓ Agregado' : 'Agregar') }}
+      <button type="button" class="pc-add" (click)="addToCart($event)"
+              [class.added]="added()" [class.blocked]="blocked()" [class.closed]="consolidadoClosed"
+              [disabled]="consolidadoClosed">
+        @if (consolidadoClosed) {
+          Espera la apertura del próximo consolidado
+        } @else {
+          {{ blocked() ? 'Vacía el carrito primero' : (added() ? '✓ Agregado' : 'Agregar') }}
+        }
       </button>
     </a>
   `,
@@ -102,6 +111,7 @@ import { cdnImage } from '../../shared/img.util';
     }
     .pc-stock { font-size: 0.72rem; color: var(--muted); font-weight: 500; }
     .pc-stock.in { color: var(--ok); font-weight: 600; }
+    .pc-stock.off { color: var(--faint, #9aa0a6); font-style: italic; }
     .pc-stock.low { color: var(--sale); font-weight: 700; }
 
     .pc-price { display: flex; align-items: baseline; gap: 8px; margin-top: 8px; }
@@ -123,6 +133,12 @@ import { cdnImage } from '../../shared/img.util';
     .pc-add:hover { background: var(--accent); color: #fff; }
     .pc-add.added { background: var(--ok); border-color: var(--ok); color: #fff; }
     .pc-add.blocked { background: var(--sale); border-color: var(--sale); color: #fff; font-size: 0.74rem; }
+    /* Consolidado cerrado: el encargo no se puede agregar hasta la próxima apertura. */
+    .pc-add.closed {
+      background: var(--line); border-color: var(--line); color: var(--muted);
+      font-size: 0.68rem; cursor: not-allowed; line-height: 1.25;
+    }
+    .pc-add.closed:hover { background: var(--line); color: var(--muted); }
 
     @container (max-width: 190px) {
       .pc-name { font-size: 0.86rem; }
@@ -147,7 +163,19 @@ export class ProductCardComponent {
   }
 
   private cart = inject(CartService);
+  private consolidado = inject(ConsolidadoStateService);
   added = signal(false);
+
+  /**
+   * Los encargos se bloquean cuando el consolidado no está abierto. El stock nunca.
+   * Getter y NO computed: `mode` es un @Input plano y un computed solo se recalcula
+   * con signals — al cambiar el filtro a "En stock" se quedaría con el valor viejo
+   * y bloquearía perfumes de entrega inmediata. El getter lee open() dentro de la
+   * plantilla, así que la reactividad del signal se mantiene.
+   */
+  get consolidadoClosed(): boolean {
+    return this.mode === 'CONSOLIDADO' && !this.consolidado.open();
+  }
 
   /** Imagen optimizada vía CDN (redimensiona + comprime + WebP + caché). */
   imgUrl(u: string | null, w = 500): string { return cdnImage(u, w); }
@@ -188,6 +216,8 @@ export class ProductCardComponent {
   addToCart(ev: Event) {
     ev.preventDefault();
     ev.stopPropagation();
+    // Consolidado cerrado: el encargo no se agrega (el backend también lo rechaza).
+    if (this.consolidadoClosed) return;
     // Agrega con el canal del modo. Si hay mezcla de canales, se bloquea.
     const ok = this.cart.addItem(this.product, 1, this.mode, this.displayPrice);
     if (!ok) {

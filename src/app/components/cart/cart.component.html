@@ -130,12 +130,18 @@
           }
           <div class="sum-total"><span>Total</span><span>S/ {{ cart.totalPen() | number:'1.0-0' }}</span></div>
 
+          @if (consolidadoBlocked()) {
+            <p class="sum-closed">
+              🔒 El consolidado se cerró. Estos perfumes son por encargo: espera la apertura del próximo
+              para enviar tu pedido, o consúltanos por WhatsApp.
+            </p>
+          }
           <button class="as-btn as-btn-primary as-btn-block sum-cta" (click)="goToCheckout()"
-                  [disabled]="!minReached() && cart.catalogType() !== 'STOCK'">
+                  [disabled]="consolidadoBlocked() || (!minReached() && cart.catalogType() !== 'STOCK')">
             Continuar pedido
           </button>
           <button class="as-btn as-btn-wa as-btn-block" (click)="orderViaWhatsApp()">Pedir por WhatsApp</button>
-          @if (!minReached() && cart.catalogType() !== 'STOCK') {
+          @if (!consolidadoBlocked() && !minReached() && cart.catalogType() !== 'STOCK') {
             <p class="sum-note">Agrega {{ unitsLeft() }} más para finalizar, o pídelo directo por WhatsApp.</p>
           }
           <p class="sum-secure">El pago y el envío se coordinan por WhatsApp. Productos 100% originales.</p>

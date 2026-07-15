@@ -8,7 +8,8 @@ import {
   StockPurchaseRequest, BreakdownSection, FullBreakdownResponse,
   Supplier, ImportSummary, AllocationResponse, SuggestResult, OperationsSummary, MissingItem,
   Promotion, ProfitReport, SupplierRequest, ColumnMapping, ImportPreview, PublishRequest,
-  MatchCandidate, SupplierConstraint, PurchasePlan, MarginReportRow, ProductOffersView
+  MatchCandidate, SupplierConstraint, PurchasePlan, MarginReportRow, ProductOffersView,
+  ConsolidadoPublic, MediaSummary
 } from '../models/api.models';
 
 @Injectable({ providedIn: 'root' })
@@ -147,6 +148,44 @@ export class ApiService {
   // --- Consolidados ---
   getActiveConsolidado(): Observable<Consolidado> {
     return this.http.get<Consolidado>(`${this.url}/consolidados/active`);
+  }
+
+  /** Público: estado del consolidado para el aviso/countdown (nunca crea nada). */
+  getCurrentConsolidado(): Observable<ConsolidadoPublic> {
+    return this.http.get<ConsolidadoPublic>(`${this.url}/consolidados/current`);
+  }
+
+  /** Admin: abre (o programa) un consolidado nuevo con fechas, título e imagen. */
+  openConsolidado(body: {
+    title?: string | null; description?: string | null;
+    startAtMs?: number | null; endsAtMs: number; imageMediaId?: number | null;
+  }): Observable<Consolidado> {
+    return this.http.post<Consolidado>(`${this.url}/admin/consolidados/open`, body,
+      { headers: this.authHeaders() });
+  }
+
+  /** Admin: configura plazo/título/descripción/imagen del consolidado abierto o programado. */
+  updateConsolidadoSchedule(id: number, body: {
+    title?: string | null; description?: string | null;
+    startAtMs?: number | null; endsAtMs?: number | null; imageMediaId?: number | null;
+  }): Observable<Consolidado> {
+    return this.http.put<Consolidado>(`${this.url}/admin/consolidados/${id}/schedule`, body,
+      { headers: this.authHeaders() });
+  }
+
+  // --- Galería de imágenes (banners de consolidados) ---
+  /** URL pública de una imagen de la galería (cacheada de forma inmutable). */
+  mediaUrl(id: number): string {
+    return `${this.url}/media/${id}`;
+  }
+  listMedia(): Observable<MediaSummary[]> {
+    return this.http.get<MediaSummary[]>(`${this.url}/admin/media`, { headers: this.authHeaders() });
+  }
+  uploadMedia(body: { name: string; dataUrl: string }): Observable<MediaSummary> {
+    return this.http.post<MediaSummary>(`${this.url}/admin/media`, body, { headers: this.authHeaders() });
+  }
+  deleteMedia(id: number): Observable<{ message: string }> {
+    return this.http.delete<{ message: string }>(`${this.url}/admin/media/${id}`, { headers: this.authHeaders() });
   }
 
   getConsolidados(): Observable<Consolidado[]> {
