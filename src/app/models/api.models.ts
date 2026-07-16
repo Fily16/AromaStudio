@@ -619,3 +619,24 @@ export interface ProductOffersView {
   pricingBasis: string;
   offers: ProductOffer[];
 }
+
+/** Candidata de imagen (una de las N finales del algoritmo de búsqueda). */
+export interface PhotoCandidate {
+  url: string;
+  origin?: string | null;
+  title?: string | null;
+  score: number;
+}
+
+/** Fila de producto para las herramientas de fotos (sin foto / revisar rotas). */
+export interface PhotoRow {
+  id: number;
+  brand: string;
+  name: string;
+  ml: number | null;
+  upc: string | null;
+  imageUrl?: string | null;
+  selected?: boolean;
+  /** Motivo de rotura detectado por el navegador (error/timeout/placeholder/sin-url). */
+  reason?: string;
+}

@@ -9,7 +9,7 @@ import {
   Supplier, ImportSummary, AllocationResponse, SuggestResult, OperationsSummary, MissingItem,
   Promotion, ProfitReport, SupplierRequest, ColumnMapping, ImportPreview, PublishRequest,
   MatchCandidate, SupplierConstraint, PurchasePlan, MarginReportRow, ProductOffersView,
-  ConsolidadoPublic, MediaSummary
+  ConsolidadoPublic, MediaSummary, PhotoCandidate, PhotoRow
 } from '../models/api.models';
 
 @Injectable({ providedIn: 'root' })
@@ -338,10 +338,20 @@ export class ApiService {
     return this.http.post<Record<string, string>>(`${this.url}/admin/apify/images`, { items, source, force: !!force },
       { headers: this.authHeaders() });
   }
-  // Productos del catálogo (de un proveedor) con la foto ROTA
-  getBrokenImages(supplierId: number): Observable<{ id: number; brand: string; name: string; ml: number | null; upc: string | null; imageUrl: string | null }[]> {
-    return this.http.get<{ id: number; brand: string; name: string; ml: number | null; upc: string | null; imageUrl: string | null }[]>(
-      `${this.url}/admin/apify/broken?supplierId=${supplierId}`, { headers: this.authHeaders() });
+  // Igual que fetchApifyImages pero devuelve las N candidatas FINALES por fila (revisión visual)
+  fetchApifyCandidates(items: { idx: number; upc: string | null; query: string }[], source?: string, force?: boolean): Observable<Record<string, PhotoCandidate[]>> {
+    return this.http.post<Record<string, PhotoCandidate[]>>(`${this.url}/admin/apify/candidates`, { items, source, force: !!force },
+      { headers: this.authHeaders() });
+  }
+  // Guarda la foto elegida (auto o manual) y la deja cacheada como definitiva para ese producto
+  choosePhoto(productId: number, imageUrl: string): Observable<PhotoRow> {
+    return this.http.post<PhotoRow>(`${this.url}/admin/apify/choose`, { productId, imageUrl },
+      { headers: this.authHeaders() });
+  }
+  // Productos CON foto para que el navegador del admin las valide. supplierId null = TODO el catálogo
+  getPhotos(supplierId?: number | null): Observable<PhotoRow[]> {
+    const q = supplierId != null ? `?supplierId=${supplierId}` : '';
+    return this.http.get<PhotoRow[]>(`${this.url}/admin/apify/photos${q}`, { headers: this.authHeaders() });
   }
   clearApifyCache(): Observable<{ cleared: number; message: string }> {
     return this.http.delete<{ cleared: number; message: string }>(`${this.url}/admin/apify/cache`,
@@ -355,10 +365,10 @@ export class ApiService {
     return this.http.post<{ results: number; batch: number; hasToken: boolean; message: string }>(`${this.url}/admin/apify/settings`, body,
       { headers: this.authHeaders() });
   }
-  // Productos del catálogo (de un proveedor) sin foto
-  getMissingImages(supplierId: number): Observable<{ id: number; brand: string; name: string; ml: number | null; upc: string | null }[]> {
-    return this.http.get<{ id: number; brand: string; name: string; ml: number | null; upc: string | null }[]>(
-      `${this.url}/admin/apify/missing?supplierId=${supplierId}`, { headers: this.authHeaders() });
+  // Productos sin foto. supplierId null = TODO el catálogo
+  getMissingImages(supplierId?: number | null): Observable<PhotoRow[]> {
+    const q = supplierId != null ? `?supplierId=${supplierId}` : '';
+    return this.http.get<PhotoRow[]>(`${this.url}/admin/apify/missing${q}`, { headers: this.authHeaders() });
   }
 
   archiveLegacyCatalog(): Observable<{ archived: number; message: string }> {

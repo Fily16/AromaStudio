@@ -390,15 +390,16 @@
     <p class="sub" style="margin-top:8px;">Más resultados = más acierto pero más costo (~$1.90 / 1000 imágenes). El token cambia la cuenta de Apify cuando se te acabe el saldo (sobrescribe la variable de entorno).</p>
   </section>
 
-  <!-- ===== Fotos faltantes del catálogo ===== -->
+  <!-- ===== Fotos del catálogo: faltantes y rotas ===== -->
   <section class="panel">
-    <div class="panel-head"><h2>Fotos faltantes del catálogo</h2></div>
-    <p class="sub">Busca fotos para los perfumes que YA están en tu catálogo pero no tienen imagen. Elige el proveedor y solo se buscan los suyos.</p>
+    <div class="panel-head"><h2>Fotos del catálogo (faltantes y rotas)</h2></div>
+    <p class="sub">"Revisar fotos rotas" valida cada imagen EN ESTE navegador con la misma URL que ve el cliente: si a ti no te carga, al cliente tampoco. Puedes revisar un proveedor o todo el catálogo.</p>
 
     <label class="field">
-      <span>Proveedor</span>
+      <span>Alcance</span>
       <select (change)="onMissSupplierChange($event)">
-        <option [value]="null" [selected]="missSupplierId() === null">— elige proveedor —</option>
+        <option [value]="null" [selected]="!missScopeAll() && missSupplierId() === null">— elige proveedor —</option>
+        <option value="all" [selected]="missScopeAll()">🌐 Todo el catálogo</option>
         @for (s of suppliers(); track s.id) {
           <option [value]="s.id" [selected]="s.id === missSupplierId()">{{ s.name }} @if (!s.active) { (inactivo) }</option>
         }
@@ -406,25 +407,34 @@
     </label>
 
     <div class="sform-actions">
-      <button class="btn ghost" (click)="loadMissing()" [disabled]="missLoading() || missSupplierId() === null">
-        {{ missLoading() ? 'Buscando…' : 'Buscar sin foto' }}
+      <button class="btn ghost" (click)="loadMissing()" [disabled]="missLoading() || !missScopeReady()">
+        {{ missLoading() && missMode() === 'faltantes' ? 'Buscando…' : 'Buscar sin foto' }}
       </button>
-      <button class="btn ghost" (click)="loadBroken()" [disabled]="missLoading() || missSupplierId() === null"
-              title="Detecta fotos rotas (no cargan / placeholder) para re-buscarlas">
-        {{ missLoading() ? 'Revisando…' : '🔧 Revisar fotos rotas' }}
+      <button class="btn ghost" (click)="loadBroken()" [disabled]="missLoading() || !missScopeReady()"
+              title="Valida cada foto en el navegador (404/403/corruptas/placeholder) — igual que lo que ve el cliente">
+        {{ missLoading() && missMode() === 'rotas' ? 'Validando en navegador…' : '🔧 Revisar fotos rotas' }}
       </button>
       @if (missMsg()) { <span class="ok">{{ missMsg() }}</span> }
     </div>
 
+    @if (missLoading() && missMode() === 'rotas' && scanTotal()) {
+      <div class="enrich" style="margin-top:12px;">
+        <button class="btn danger sm" (click)="pauseMissing()">⏸ Pausar escaneo</button>
+        <span class="searching">Validando {{ scanDone() }}/{{ scanTotal() }} imágenes…</span>
+        <div class="bar"><div class="bar-fill" [style.width.%]="scanTotal() ? (scanDone() / scanTotal() * 100) : 0"></div></div>
+      </div>
+    }
+
     @if (missing().length) {
       <div class="enrich" style="margin-top:12px;">
         @if (!missEnriching()) {
-          <button class="btn publish sm" (click)="enrichMissing('bing')" title="Buscar en Bing (rápido) — recomendado">⚡ Bing ({{ missing().length }})</button>
+          <button class="btn publish sm" (click)="enrichMissing('bing')" title="Buscar en Bing (rápido) — guarda la primera candidata que SÍ carga">⚡ Bing ({{ missing().length }})</button>
           <button class="btn ghost sm" (click)="enrichMissing('google')" title="Buscar fotos en Google Images">🖼️ Google</button>
           <button class="btn ghost sm" (click)="enrichMissing('fragrantica')" title="Buscar por nombre en Fragrantica (lento)">🌸 Fragrantica</button>
+          <button class="btn ghost sm" (click)="openReview()" title="Ver las N candidatas finales por perfume y elegir a mano la principal">👁 Revisar visualmente</button>
         } @else {
           <button class="btn danger sm" (click)="pauseMissing()">⏸ Pausar</button>
-          <span class="searching">Buscando ({{ missSource() }}) {{ missDone() }}/{{ missTotal() }}…</span>
+          <span class="searching">Buscando y validando ({{ missSource() }}) {{ missDone() }}/{{ missTotal() }}…</span>
         }
         @if (missEnriching()) {
           <div class="bar"><div class="bar-fill" [style.width.%]="missTotal() ? (missDone() / missTotal() * 100) : 0"></div></div>
@@ -435,7 +445,9 @@
         <table class="pv-table">
           <thead><tr>
             @if (missMode() === 'rotas') { <th></th> }
-            <th>Foto @if (missMode() === 'rotas') { (rota) }</th><th>Marca</th><th>Nombre</th><th>ml</th><th>UPC</th>
+            <th>Foto @if (missMode() === 'rotas') { (rota) }</th>
+            @if (missMode() === 'rotas') { <th>Motivo</th> }
+            <th>Marca</th><th>Nombre</th><th>ml</th><th>UPC</th>
           </tr></thead>
           <tbody>
             @for (p of missing(); track p.id) {
@@ -447,6 +459,9 @@
                   @if (p.imageUrl) { <img [src]="p.imageUrl | cdnImg:120" loading="lazy" alt="" /> }
                   @else { <span class="nofoto">—</span> }
                 </td>
+                @if (missMode() === 'rotas') {
+                  <td><span class="reason-chip" [class.warn]="p.reason === 'sin candidata válida'">{{ reasonLabel(p.reason) }}</span></td>
+                }
                 <td>{{ p.brand }}</td>
                 <td>{{ p.name }}</td>
                 <td>{{ p.ml || '' }}</td>
@@ -458,6 +473,80 @@
       </div>
     }
   </section>
+
+  <!-- ===== Modal de revisión visual: N candidatas finales + elección manual ===== -->
+  @if (reviewOpen()) {
+    <div class="rev-overlay">
+      <div class="rev-modal">
+        <div class="rev-head">
+          <h3>
+            {{ reviewRow()?.brand }} — {{ reviewRow()?.name }} {{ reviewRow()?.ml ? reviewRow()!.ml + 'ml' : '' }}
+            <small>{{ reviewIdx() + 1 }} / {{ reviewRows.length }}</small>
+          </h3>
+          <button class="rev-x" (click)="closeReview()" aria-label="Cerrar">✕</button>
+        </div>
+
+        <div class="rev-body">
+          <div class="rev-current">
+            <span class="rev-lbl">Imagen actual</span>
+            <div class="rev-thumb" [class.bad]="reviewCurrent() && !reviewCurrent()!.ok" [class.good]="reviewCurrent()?.ok">
+              @if (reviewRow()?.imageUrl) {
+                <img [src]="reviewUrl(reviewRow()!.imageUrl)" alt="" />
+              } @else {
+                <span class="nofoto">sin foto</span>
+              }
+              @if (reviewCurrent(); as rc) {
+                <span class="rev-flag" [class.ok]="rc.ok">{{ rc.ok ? '✓ carga' : '✗ ' + reasonLabel(rc.reason) }}</span>
+              }
+            </div>
+          </div>
+
+          <div class="rev-cands">
+            <div class="rev-lbl-row">
+              <span class="rev-lbl">Candidatas finales del algoritmo ({{ reviewCands().length }}) · fuente: {{ missSource() }}</span>
+              <button class="btn ghost sm" (click)="loadReviewItem(true)" [disabled]="reviewLoading()"
+                      title="Ignora el caché y trae las N candidatas frescas (gasta Apify)">🔄 Re-buscar</button>
+            </div>
+            @if (reviewLoading()) { <p class="sub">Buscando candidatas…</p> }
+            <div class="rev-grid">
+              @for (c of reviewCands(); track c.url) {
+                <label class="rev-cand"
+                       [class.sel]="reviewChosen() === c.url"
+                       [class.bad]="reviewStates()[c.url] && !reviewStates()[c.url].ok"
+                       [class.good]="reviewStates()[c.url] && reviewStates()[c.url].ok">
+                  <input type="radio" name="revpick"
+                         [checked]="reviewChosen() === c.url"
+                         [disabled]="reviewStates()[c.url] ? !reviewStates()[c.url].ok : false"
+                         (change)="pickReview(c.url)">
+                  <div class="rev-thumb">
+                    <img [src]="reviewUrl(c.url)" alt="" loading="lazy" />
+                    @if (reviewStates()[c.url]; as st) {
+                      <span class="rev-flag" [class.ok]="st.ok">
+                        {{ st.ok ? ('✓ ' + (st.width || '?') + '×' + (st.height || '?')) : '✗ ' + reasonLabel(st.reason) }}
+                      </span>
+                    } @else {
+                      <span class="rev-flag wait">validando…</span>
+                    }
+                  </div>
+                  @if (c.origin) { <small class="rev-origin">{{ c.origin }}</small> }
+                </label>
+              }
+            </div>
+            @if (reviewMsg()) { <p class="ok" style="margin-top:8px;">{{ reviewMsg() }}</p> }
+          </div>
+        </div>
+
+        <div class="rev-foot">
+          <button class="btn ghost sm" (click)="prevReview()" [disabled]="reviewIdx() === 0 || reviewSaving()">← Anterior</button>
+          <span class="spacer"></span>
+          <button class="btn ghost sm" (click)="nextReview()" [disabled]="reviewSaving()">Omitir →</button>
+          <button class="btn publish sm" (click)="saveReview(true)" [disabled]="!reviewChosen() || reviewSaving()">
+            {{ reviewSaving() ? 'Guardando…' : '💾 Guardar y siguiente' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  }
 
   <!-- ===== Cutover ===== -->
   <section class="panel cutover">

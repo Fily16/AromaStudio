@@ -2,9 +2,11 @@ import { Component, inject, signal, OnInit } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
+import { firstValueFrom } from 'rxjs';
 import { ApiService } from '../../../services/api.service';
-import { Supplier, SupplierConstraint, ImportSummary, ImportPreview, ImportPreviewLine, ColumnMapping, RowOverride } from '../../../models/api.models';
+import { Supplier, SupplierConstraint, ImportSummary, ImportPreview, ImportPreviewLine, ColumnMapping, RowOverride, PhotoCandidate, PhotoRow } from '../../../models/api.models';
 import { CdnImgPipe } from '../../../shared/cdn-img.pipe';
+import { ImageProbeService, ProbeResult } from '../../../shared/image-probe.service';
 
 @Component({
   selector: 'app-import',
@@ -15,6 +17,7 @@ import { CdnImgPipe } from '../../../shared/cdn-img.pipe';
 })
 export class ImportComponent implements OnInit {
   private api = inject(ApiService);
+  probe = inject(ImageProbeService);
 
   suppliers = signal<Supplier[]>([]);
   selectedSupplierId = signal<number | null>(null);
@@ -58,10 +61,11 @@ export class ImportComponent implements OnInit {
   apifyHasToken = signal(false);
   settingsMsg = signal('');
 
-  // Fotos faltantes/rotas del catálogo (por proveedor)
+  // Fotos faltantes/rotas del catálogo (por proveedor o TODO el catálogo)
   missSupplierId = signal<number | null>(null);
+  missScopeAll = signal(false);
   missMode = signal<'faltantes' | 'rotas'>('faltantes');
-  missing = signal<{ id: number; brand: string; name: string; ml: number | null; upc: string | null; imageUrl?: string | null; selected?: boolean }[]>([]);
+  missing = signal<PhotoRow[]>([]);
   missLoading = signal(false);
   missEnriching = signal(false);
   missPaused = signal(false);
@@ -69,6 +73,21 @@ export class ImportComponent implements OnInit {
   missTotal = signal(0);
   missMsg = signal('');
   missSource = signal<'google' | 'fragrantica' | 'bing'>('bing');
+  // Escaneo de rotas EN EL NAVEGADOR (el único juez fiel de "se ve / no se ve")
+  scanDone = signal(0);
+  scanTotal = signal(0);
+
+  // Revisión visual: candidatas finales por perfume, con validación y elección manual
+  reviewOpen = signal(false);
+  reviewIdx = signal(0);
+  reviewRows: PhotoRow[] = [];
+  reviewCands = signal<PhotoCandidate[]>([]);
+  reviewStates = signal<Record<string, ProbeResult>>({});
+  reviewChosen = signal<string | null>(null);
+  reviewCurrent = signal<ProbeResult | null>(null);
+  reviewLoading = signal(false);
+  reviewSaving = signal(false);
+  reviewMsg = signal('');
   summary = signal<ImportSummary | null>(null);
   message = signal('');
   error = signal('');
@@ -102,41 +121,66 @@ export class ImportComponent implements OnInit {
     });
   }
 
-  // ---------- Fotos faltantes del catálogo (por proveedor) ----------
+  // ---------- Fotos faltantes/rotas del catálogo ----------
   onMissSupplierChange(e: Event) {
     const v = (e.target as HTMLSelectElement).value;
-    this.missSupplierId.set(v && v !== 'null' ? +v : null);
+    this.missScopeAll.set(v === 'all');
+    this.missSupplierId.set(v && v !== 'null' && v !== 'all' ? +v : null);
     this.missing.set([]); this.missMsg.set('');
   }
+  /** ¿Hay un alcance elegido (proveedor o todo el catálogo)? */
+  missScopeReady(): boolean { return this.missScopeAll() || this.missSupplierId() != null; }
+  private missScopeId(): number | null { return this.missScopeAll() ? null : this.missSupplierId(); }
+
   loadMissing() {
-    const sid = this.missSupplierId();
-    if (sid == null) { this.missMsg.set('Selecciona un proveedor.'); return; }
+    if (!this.missScopeReady()) { this.missMsg.set('Selecciona un proveedor o "Todo el catálogo".'); return; }
     this.missMode.set('faltantes');
     this.missLoading.set(true); this.missMsg.set('');
-    this.api.getMissingImages(sid).subscribe({
+    this.api.getMissingImages(this.missScopeId()).subscribe({
       next: (list) => {
         this.missLoading.set(false);
         this.missing.set(list);
-        this.missMsg.set(list.length ? `${list.length} productos sin foto.` : 'No hay productos sin foto para este proveedor.');
+        this.missMsg.set(list.length ? `${list.length} productos sin foto.` : 'No hay productos sin foto en este alcance.');
       },
       error: (err) => { this.missLoading.set(false); this.missMsg.set(err.error?.message || 'No se pudo cargar.'); }
     });
   }
+
+  /**
+   * Revisar fotos rotas v2: trae los productos CON foto y las valida EN ESTE navegador
+   * cargando la MISMA URL final que ve el cliente (cdnImage). Detecta 404/403/red/
+   * corruptas/MIME falso/placeholders — todo lo que el navegador no puede mostrar.
+   */
   loadBroken() {
-    const sid = this.missSupplierId();
-    if (sid == null) { this.missMsg.set('Selecciona un proveedor.'); return; }
+    if (!this.missScopeReady()) { this.missMsg.set('Selecciona un proveedor o "Todo el catálogo".'); return; }
     this.missMode.set('rotas');
-    this.missLoading.set(true); this.missMsg.set('');
-    this.missing.set([]);
-    this.api.getBrokenImages(sid).subscribe({
-      next: (list) => {
+    this.missLoading.set(true); this.missMsg.set(''); this.missing.set([]);
+    this.missPaused.set(false);
+    this.scanDone.set(0); this.scanTotal.set(0);
+    this.api.getPhotos(this.missScopeId()).subscribe({
+      next: async (list) => {
+        this.scanTotal.set(list.length);
+        const results = await this.probe.probeAll(list, r => r.imageUrl, {
+          concurrency: 10,
+          onProgress: (d) => this.scanDone.set(d),
+          isPaused: () => this.missPaused()
+        });
+        const broken: PhotoRow[] = [];
+        for (const row of list) {
+          const res = results.get(row);
+          if (res && !res.ok) broken.push({ ...row, selected: true, reason: res.reason });
+        }
+        this.missing.set(broken);
         this.missLoading.set(false);
-        this.missing.set(list.map(p => ({ ...p, selected: true })));
-        this.missMsg.set(list.length ? `${list.length} con foto rota. Revisa las miniaturas y destilda las que estén bien.` : 'Ninguna foto rota para este proveedor. 🎉');
+        const paused = this.missPaused() && results.size < list.length;
+        this.missMsg.set(broken.length
+          ? `${broken.length} con foto rota de ${results.size} revisadas${paused ? ' (escaneo pausado)' : ''}. Destilda las que quieras conservar.`
+          : (paused ? `Escaneo pausado (${results.size}/${list.length} revisadas), sin rotas hasta ahora.` : `Ninguna foto rota entre ${results.size} revisadas. 🎉`));
       },
       error: (err) => { this.missLoading.set(false); this.missMsg.set(err.error?.message || 'No se pudo revisar.'); }
     });
   }
+
   toggleMissSelected(id: number, checked: boolean) {
     this.missing.update(list => list.map(p => p.id === id ? { ...p, selected: checked } : p));
   }
@@ -144,7 +188,13 @@ export class ImportComponent implements OnInit {
     const ml = p.ml ? `${p.ml}ml` : '';
     return `${p.brand ?? ''} ${p.name ?? ''} ${ml} perfume`.replace(/\s+/g, ' ').trim();
   }
-  enrichMissing(source: 'google' | 'fragrantica' | 'bing' = 'bing') {
+
+  /**
+   * Auto-fill robusto: pide las N candidatas finales por lote y guarda la PRIMERA
+   * que este navegador SÍ renderiza (antes se guardaba la primera a ciegas).
+   * La elección queda cacheada como definitiva (choosePhoto).
+   */
+  async enrichMissing(source: 'google' | 'fragrantica' | 'bing' = 'bing') {
     const rotas = this.missMode() === 'rotas';
     const list = rotas
       ? this.missing().filter(p => p.selected !== false)   // rotas: solo las marcadas
@@ -153,29 +203,132 @@ export class ImportComponent implements OnInit {
     this.missSource.set(source);
     this.missPaused.set(false); this.missEnriching.set(true);
     this.missTotal.set(list.length); this.missDone.set(0); this.missMsg.set('');
-    this.processMissingChunk(list, 0, 0, rotas);
+    const size = Math.max(1, +this.apifyBatch || 1);
+    let found = 0, invalid = 0;
+    for (let start = 0; start < list.length; start += size) {
+      if (this.missPaused()) {
+        this.missEnriching.set(false);
+        this.missMsg.set(`⏸ Pausado. ${found} de ${this.missTotal()} con foto válida.`);
+        return;
+      }
+      const chunk = list.slice(start, start + size);
+      const items = chunk.map(p => ({ idx: p.id, upc: p.upc ?? null, query: this.missQuery(p) }));
+      let res: Record<string, PhotoCandidate[]>;
+      try {
+        res = await firstValueFrom(this.api.fetchApifyCandidates(items, source, rotas));
+      } catch (err: any) {
+        this.missEnriching.set(false);
+        this.missMsg.set(err?.error?.message || 'Error consultando Apify.');
+        return;
+      }
+      for (const p of chunk) {
+        const cands = res?.[String(p.id)] ?? [];
+        let saved = false;
+        for (const c of cands) {
+          const pr = await this.probe.probe(c.url);
+          if (!pr.ok) continue;
+          try {
+            await firstValueFrom(this.api.choosePhoto(p.id, c.url));
+            p.imageUrl = c.url; p.reason = undefined; found++; saved = true;
+          } catch { /* si no se pudo guardar, no cuenta */ }
+          break;
+        }
+        if (!saved && cands.length) { p.reason = 'sin candidata válida'; invalid++; }
+        this.missDone.update(d => d + 1);
+      }
+      this.missing.update(l => [...l]); // refresca miniaturas
+    }
+    this.missEnriching.set(false);
+    this.missMsg.set(`✓ ${found} de ${this.missTotal()} con foto VALIDADA en navegador${invalid ? `; ${invalid} sin candidata que cargue (revísalas visualmente)` : ''}.`);
   }
   pauseMissing() { this.missPaused.set(true); }
-  // Procesa POR LOTES (tamaño configurable): manda N perfumes en una sola corrida del actor.
-  private processMissingChunk(list: { id: number; brand: string; name: string; ml: number | null; upc: string | null; imageUrl?: string | null }[], start: number, found: number, force = false) {
-    if (this.missPaused()) { this.missEnriching.set(false); this.missMsg.set(`⏸ Pausado. ${found} de ${this.missTotal()} con foto.`); return; }
-    if (start >= list.length) { this.missEnriching.set(false); this.missMsg.set(`✓ ${found} de ${this.missTotal()} ${force ? 'reemplazadas' : 'rellenadas'}.`); return; }
-    const size = Math.max(1, +this.apifyBatch || 1);
-    const chunk = list.slice(start, start + size);
-    const items = chunk.map(p => ({ idx: p.id, upc: p.upc ?? null, query: this.missQuery(p) }));
-    this.api.fetchApifyImages(items, this.missSource(), force).subscribe({
-      next: (res) => {
-        let f = found;
-        for (const p of chunk) {
-          const url = res?.[String(p.id)];
-          if (url) { this.api.updateProduct(p.id, { imageUrl: url }).subscribe(); p.imageUrl = url; f++; }
-        }
-        this.missDone.set(Math.min(this.missTotal(), start + chunk.length));
-        this.processMissingChunk(list, start + size, f, force);
-      },
-      error: (err) => { this.missEnriching.set(false); this.missMsg.set(err.error?.message || 'Error consultando Apify.'); }
-    });
+
+  // ---------- Revisión visual: N candidatas finales + elección manual ----------
+  openReview() {
+    const rotas = this.missMode() === 'rotas';
+    this.reviewRows = rotas ? this.missing().filter(p => p.selected !== false) : [...this.missing()];
+    if (!this.reviewRows.length) { this.missMsg.set('No hay productos para revisar.'); return; }
+    this.reviewIdx.set(0);
+    this.reviewOpen.set(true);
+    this.loadReviewItem(false);
   }
+  reviewRow(): PhotoRow | undefined { return this.reviewRows[this.reviewIdx()]; }
+
+  /** Carga las N candidatas FINALES del perfume actual y las valida con el navegador. */
+  async loadReviewItem(force: boolean) {
+    const p = this.reviewRow();
+    if (!p) return;
+    this.reviewLoading.set(true); this.reviewMsg.set('');
+    this.reviewCands.set([]); this.reviewStates.set({});
+    this.reviewChosen.set(null); this.reviewCurrent.set(null);
+
+    if (p.imageUrl) this.probe.probe(p.imageUrl).then(r => this.reviewCurrent.set(r));
+
+    let cands: PhotoCandidate[] = [];
+    try {
+      const res = await firstValueFrom(this.api.fetchApifyCandidates(
+        [{ idx: p.id, upc: p.upc ?? null, query: this.missQuery(p) }], this.missSource(), force));
+      cands = res?.[String(p.id)] ?? [];
+    } catch (err: any) {
+      this.reviewMsg.set(err?.error?.message || 'Error buscando candidatas.');
+      this.reviewLoading.set(false);
+      return;
+    }
+    this.reviewCands.set(cands);
+    this.reviewLoading.set(false);
+    if (!cands.length) {
+      this.reviewMsg.set('Sin candidatas para este perfume. Prueba "Re-buscar" u otra fuente.');
+      return;
+    }
+    // Validación en paralelo; preselecciona la primera VÁLIDA en el orden del ranking
+    // (exactamente lo que guardaría el auto-fill).
+    const results = await Promise.all(cands.map(c => this.probe.probe(c.url)));
+    const states: Record<string, ProbeResult> = {};
+    cands.forEach((c, i) => { states[c.url] = results[i]; });
+    this.reviewStates.set(states);
+    const firstOk = cands.find((c, i) => results[i].ok);
+    this.reviewChosen.set(firstOk ? firstOk.url : null);
+    if (!firstOk) this.reviewMsg.set('Ninguna candidata carga en el navegador. Usa "Re-buscar" u otra fuente.');
+  }
+
+  pickReview(url: string) { this.reviewChosen.set(url); }
+
+  async saveReview(advance: boolean) {
+    const p = this.reviewRow();
+    const url = this.reviewChosen();
+    if (!p || !url) return;
+    this.reviewSaving.set(true);
+    try {
+      await firstValueFrom(this.api.choosePhoto(p.id, url));
+      p.imageUrl = url;
+      this.missing.update(l => l.map(x => x.id === p.id ? { ...x, imageUrl: url, reason: undefined } : x));
+      this.reviewMsg.set('✓ Guardada.');
+      if (advance) this.nextReview();
+    } catch (err: any) {
+      this.reviewMsg.set(err?.error?.message || 'No se pudo guardar.');
+    }
+    this.reviewSaving.set(false);
+  }
+
+  nextReview() {
+    if (this.reviewIdx() < this.reviewRows.length - 1) {
+      this.reviewIdx.update(i => i + 1);
+      this.loadReviewItem(false);
+    } else {
+      this.reviewOpen.set(false);
+    }
+  }
+  prevReview() {
+    if (this.reviewIdx() > 0) {
+      this.reviewIdx.update(i => i - 1);
+      this.loadReviewItem(false);
+    }
+  }
+  closeReview() { this.reviewOpen.set(false); }
+
+  /** La MISMA URL final que valida el probe y que verá el cliente. */
+  reviewUrl(u: string | null | undefined): string { return this.probe.finalUrl(u); }
+  reasonLabel(r?: string): string { return this.probe.reasonLabel(r); }
 
   loadSuppliers(keepSelection = false) {
     this.api.getSuppliers().subscribe({
