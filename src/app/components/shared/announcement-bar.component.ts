@@ -36,56 +36,67 @@ import { ConsolidadoStateService } from '../../services/consolidado-state.servic
     .ann {
       position: sticky; top: 0; z-index: 70;
       display: flex; align-items: center; justify-content: center;
-      gap: 12px; height: var(--announce-h, 38px);
-      background: var(--accent-700); color: #fff;
-      font-size: 0.8rem; padding-inline: 12px;
+      gap: 14px; height: var(--announce-h, 46px);
+      background: var(--sale); color: #fff;
+      font-size: 0.88rem; padding-inline: 12px;
       overflow: hidden; text-decoration: none;
+      box-shadow: 0 2px 10px rgba(179, 18, 43, 0.3);
       transition: filter .15s var(--ease-out);
     }
     .ann:hover { filter: brightness(1.08); }
-    .ann.urgent { background: var(--sale); }
     .ann.ext { background: linear-gradient(135deg, #b3122b, #e8541e); }
     .ann-pill {
       flex: none;
-      background: rgba(255,255,255,.16);
-      border: 1px solid rgba(255,255,255,.28);
-      border-radius: 999px; padding: 3px 10px;
-      font-weight: 800; font-size: 0.6rem; letter-spacing: 0.06em;
+      background: #fff; color: var(--sale);
+      border-radius: 999px; padding: 4px 12px;
+      font-weight: 800; font-size: 0.64rem; letter-spacing: 0.06em;
       text-transform: uppercase; white-space: nowrap; line-height: 1.4;
     }
+    .ann.ext .ann-pill { color: #c2320f; }
     .ann-msg {
-      font-weight: 600; white-space: nowrap;
+      font-weight: 700; white-space: nowrap;
       overflow: hidden; text-overflow: ellipsis; min-width: 0;
+      text-shadow: 0 1px 2px rgba(0,0,0,.18);
     }
-    .ann-timer { display: flex; align-items: center; gap: 5px; flex: none; }
+    .ann-timer { display: flex; align-items: center; gap: 6px; flex: none; }
     .ann-u {
-      display: flex; align-items: baseline; gap: 3px;
-      background: #fff; color: #1a1a1a;
-      border-radius: 6px; padding: 2px 7px;
+      display: flex; align-items: baseline; gap: 4px;
+      background: #fff; color: var(--sale);
+      border-radius: 7px; padding: 3px 9px;
+      box-shadow: 0 1px 4px rgba(0,0,0,.18);
+      animation: annBeat 1.25s ease-in-out infinite;
     }
     .ann-u b {
-      font-variant-numeric: tabular-nums; font-weight: 800;
-      font-size: 0.88rem; line-height: 1.25;
+      font-variant-numeric: tabular-nums; font-weight: 900;
+      font-size: 1.12rem; line-height: 1.2;
     }
     .ann-u i {
-      font-style: normal; font-weight: 700; font-size: 0.54rem;
-      text-transform: uppercase; letter-spacing: 0.03em; opacity: 0.55;
+      font-style: normal; font-weight: 700; font-size: 0.56rem;
+      text-transform: uppercase; letter-spacing: 0.03em; opacity: 0.6;
     }
     .ann-compact {
       display: none; flex: none;
-      font-variant-numeric: tabular-nums; font-weight: 800; white-space: nowrap;
-      background: #fff; color: #1a1a1a; border-radius: 6px; padding: 2px 8px;
-      font-size: 0.78rem;
+      font-variant-numeric: tabular-nums; font-weight: 900; white-space: nowrap;
+      background: #fff; color: var(--sale); border-radius: 7px; padding: 3px 10px;
+      font-size: 1rem;
+      box-shadow: 0 1px 4px rgba(0,0,0,.18);
+      animation: annBeat 1.25s ease-in-out infinite;
+    }
+    /* Últimas horas: el palpito se acelera */
+    .ann.urgent .ann-u, .ann.urgent .ann-compact { animation-duration: 0.75s; }
+    @keyframes annBeat {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.08); }
     }
     @media (max-width: 640px) {
-      .ann { gap: 8px; font-size: 0.74rem; padding-inline: 10px; }
+      .ann { gap: 8px; font-size: 0.8rem; padding-inline: 10px; }
       .ann-timer { display: none; }
       .ann-compact { display: inline-block; }
-      .ann-pill { font-size: 0.54rem; padding: 2px 8px; letter-spacing: 0.05em; }
-      .ann-msg { max-width: 44vw; }
+      .ann-pill { font-size: 0.56rem; padding: 3px 9px; letter-spacing: 0.05em; }
+      .ann-msg { max-width: 40vw; }
     }
     @media (max-width: 360px) {
-      .ann-msg { max-width: 36vw; }
+      .ann-msg { max-width: 32vw; }
     }
   `]
 })

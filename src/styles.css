@@ -475,9 +475,9 @@ img.fade-img.ld { opacity: 1; }
    anunciar; con la var en 0 todos los calc() valen exactamente lo de hoy.
    ======================================================================== */
 :root { --announce-h: 0px; }
-html.has-announce { --announce-h: 38px; }
+html.has-announce { --announce-h: 46px; }
 @media (max-width: 640px) {
-  html.has-announce { --announce-h: 34px; }
+  html.has-announce { --announce-h: 42px; }
 }
 html { scroll-padding-top: calc(84px + var(--announce-h)); }
 
