@@ -34,6 +34,29 @@ export class ConsolidadoStateService {
     return Math.max(0, s.endsAtMs - (this.nowMs() + this.offsetMs));
   });
 
+  /** Milisegundos que faltan para la apertura (PROGRAMADO); null si no hay fecha de inicio. */
+  remainingToOpenMs = computed(() => {
+    const s = this.state();
+    if (!s?.startAtMs) return null;
+    return Math.max(0, s.startAtMs - (this.nowMs() + this.offsetMs));
+  });
+
+  /**
+   * Qué anuncia la franja superior: 'closes' (abierto con plazo corriendo),
+   * 'opens' (programado con apertura futura) o null (nada que anunciar → la
+   * franja no se renderiza). A diferencia de `open()`, aquí un estado
+   * desconocido NO anuncia nada: mejor sin franja que una franja rota.
+   */
+  announcement = computed<'closes' | 'opens' | null>(() => {
+    const s = this.state();
+    if (!s) return null;
+    const rem = this.remainingMs();
+    if (s.open && rem !== null && rem > 0) return 'closes';
+    const toOpen = this.remainingToOpenMs();
+    if (s.status === 'PROGRAMADO' && toOpen !== null && toOpen > 0) return 'opens';
+    return null;
+  });
+
   /**
    * ¿Se pueden hacer pedidos por encargo? Se cierra en vivo al llegar el contador a 0.
    *
@@ -74,16 +97,39 @@ export class ConsolidadoStateService {
   private startTicking() {
     this.stopTicking();
     const s = this.state();
-    if (!s?.endsAtMs) return;
-    if (s.endsAtMs - (Date.now() + this.offsetMs) <= 0) return;
+    if (!s) return;
+    // Corre si hay CUALQUIER plazo futuro: el cierre (endsAt) o la apertura programada (startAt).
+    const nextDeadline = Math.max(s.endsAtMs ?? 0, s.startAtMs ?? 0);
+    if (nextDeadline - (Date.now() + this.offsetMs) <= 0) return;
     this.nowMs.set(Date.now());
     this.timer = setInterval(() => {
       this.nowMs.set(Date.now());
       if (this.remainingMs() === 0) {
         this.stopTicking();
         this.refresh(); // el plazo venció: confirmar el estado real con el servidor
+        return;
       }
+      this.maybeRefreshOnOpen();
     }, 1000);
+  }
+
+  /**
+   * Un PROGRAMADO llegó a su hora de apertura: re-consulta para pasar la franja
+   * de "Abre en" a la cuenta regresiva de cierre. El scheduler del backend corre
+   * cada 60s, así que se reintenta una vez más pasado ese margen. La clave por
+   * consolidado+fecha evita un bucle de refresh si el backend aún no lo abrió.
+   */
+  private openRefreshedFor = '';
+  private maybeRefreshOnOpen() {
+    const s = this.state();
+    if (!s || s.status !== 'PROGRAMADO' || this.remainingToOpenMs() !== 0) return;
+    const key = `${s.id}_${s.startAtMs}`;
+    if (this.openRefreshedFor === key) return;
+    this.openRefreshedFor = key;
+    this.refresh();
+    setTimeout(() => {
+      if (this.state()?.status === 'PROGRAMADO') this.refresh();
+    }, 70_000);
   }
 
   private stopTicking() {

@@ -2,7 +2,7 @@
 
 /* Toast */
 .toast {
-  position: fixed; top: 80px; left: 50%; transform: translateX(-50%);
+  position: fixed; top: calc(80px + var(--announce-h, 0px)); left: 50%; transform: translateX(-50%);
   z-index: 90; background: var(--ink); color: #fff;
   padding: 11px 18px; border-radius: 999px; font-size: 0.85rem; font-weight: 600;
   display: flex; align-items: center; gap: 8px;
@@ -125,7 +125,7 @@
 @media (min-width: 760px) {
   .pd-loading { grid-template-columns: 1fr 1fr; }
   .pd-main { grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr); }
-  .pd-gallery { position: sticky; top: 96px; }
+  .pd-gallery { position: sticky; top: calc(96px + var(--announce-h, 0px)); }
 }
 
 /* ===== Perfil olfativo (lista compacta entre nombre y precio) ===== */
@@ -162,3 +162,16 @@
   padding: 10px 14px; font-size: .84rem; color: #8a1122; margin: 12px 0;
 }
 .pd-add:disabled { background: var(--line); border-color: var(--line); color: var(--muted); cursor: not-allowed; font-size: .78rem; }
+
+/* ===== Celular (≤640px): stepper y variantes táctiles, etiquetas legibles ===== */
+@media (max-width: 640px) {
+  .pd-qty button { width: 44px; height: 44px; }
+  .pd-qty span { min-width: 36px; }
+  .pd-variant { min-height: 44px; justify-content: center; }
+  .psl-label { font-size: 0.75rem; }
+  .psl-row { grid-template-columns: 82px 1fr; }
+  .pd-crumbs { padding-block: 12px 2px; }
+}
+@media (max-width: 360px) {
+  .pd-mode { min-width: 100%; }
+}

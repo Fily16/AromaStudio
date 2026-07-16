@@ -262,3 +262,32 @@
 }
 .hero-slide.hero-loading::before { background: none; }
 @keyframes heroShimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+/* ===== Celular (≤640px): hero compacto, categorías 2-up, targets táctiles ===== */
+@media (max-width: 640px) {
+  /* El hero fijo de 408px ocupaba ~60% de la pantalla antes del primer producto */
+  .hero { min-height: min(320px, 58svh); }
+  .hero-content p { margin: 10px 0 16px; }
+  .hero-dots { bottom: 8px; gap: 12px; }
+  .hero-dots button {
+    width: 11px; height: 11px;
+    padding: 8px; box-sizing: content-box; background-clip: content-box;
+  }
+  .hero-dots button.on { width: 26px; }
+
+  .cat-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .cat-ov { padding: 12px; }
+  .cat-ov h3 { font-size: 1.05rem; }
+  .cat-ov p { font-size: 0.74rem; margin: 2px 0 4px; }
+  .cat-count { font-size: 0.72rem; }
+
+  .whl-steps { gap: 12px; }
+
+  .promo-pop-close { width: 40px; height: 40px; font-size: 1rem; }
+
+  /* El círculo del home se reemplaza por el pill global "Contáctanos" (abajo-izquierda) */
+  .wa-fab { display: none; }
+}
+@media (max-width: 380px) {
+  .hero-content h1 { font-size: 1.55rem; }
+}

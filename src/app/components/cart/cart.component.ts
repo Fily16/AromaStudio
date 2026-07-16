@@ -10,6 +10,7 @@ import { CdnImgPipe } from '../../shared/cdn-img.pipe';
 import { SHALOM_AGENCIES, SHALOM_DEPARTMENTS, ShalomAgency } from '../../data/shalom-agencies';
 import { downloadResellerExcel } from '../../shared/reseller-excel.util';
 import { downloadResellerPdf } from '../../shared/reseller-pdf.util';
+import { trackContact, waLink } from '../../shared/whatsapp.util';
 
 @Component({
   selector: 'app-cart',
@@ -335,7 +336,7 @@ export class CartComponent implements OnDestroy {
       msg += `${nl}*Entrega:* Lima (coordinar)${nl}`;
     }
     msg += `${nl}Quiero coordinar el pago. ¡Gracias! 🌸`;
-    window.open(`https://wa.me/51933134699?text=${encodeURIComponent(msg)}`, '_blank');
+    window.open(waLink(msg), '_blank');
   }
 
   finishHome() { this.router.navigate(['/']); }
@@ -351,14 +352,9 @@ export class CartComponent implements OnDestroy {
     }
     message += `\nTotal: S/ ${this.cart.totalPen().toFixed(2)}`;
 
-    if (typeof (window as any).ttq !== 'undefined') {
-      (window as any).ttq.track('Contact', { value: this.cart.totalPen(), currency: 'PEN' });
-    }
-    if (typeof (window as any).fbq !== 'undefined') {
-      (window as any).fbq('track', 'Contact', { value: this.cart.totalPen(), currency: 'PEN' });
-    }
+    trackContact({ value: this.cart.totalPen(), currency: 'PEN' });
 
-    const url = `https://wa.me/51933134699?text=${encodeURIComponent(message)}`;
+    const url = waLink(message);
     setTimeout(() => {
       window.open(url, '_blank');
       this.cart.clear();

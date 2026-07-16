@@ -37,7 +37,7 @@
 .pp-btn.ghost:hover { background: #e6e6ea; }
 
 .pp-toast {
-  position: fixed; top: 82px; left: 50%; transform: translateX(-50%);
+  position: fixed; top: calc(82px + var(--announce-h, 0px)); left: 50%; transform: translateX(-50%);
   background: #111; color: #fff; padding: 12px 20px; border-radius: 10px;
   font-size: .9rem; font-weight: 600; z-index: 200; box-shadow: 0 10px 30px rgba(0,0,0,.25);
 }

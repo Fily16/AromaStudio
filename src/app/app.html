@@ -1,5 +1,7 @@
-@if (showChrome()) { <as-header /> }
+@if (showChrome()) { <as-announcement-bar /> <as-header /> }
 <router-outlet />
 @if (showChrome()) { <as-footer /> }
 <!-- Aviso del consolidado: por encima de banners y promociones, en cualquier ruta pública. -->
 @if (showChrome()) { <app-countdown-modal /> }
+<!-- WhatsApp flotante (solo móvil, todas las rutas públicas). -->
+@if (showChrome()) { <as-whatsapp-fab /> }

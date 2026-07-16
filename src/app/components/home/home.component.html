@@ -4,7 +4,7 @@
     @for (b of banners(); track $index) {
       <div class="hero-slide" [class.active]="$index === bannerIndex()"
            [class.no-img]="!b.imageUrl"
-           [style.background-image]="b.imageUrl ? 'url(' + b.imageUrl + ')' : null"
+           [style.background-image]="heroBg(b)"
            (click)="goBanner(b)">
         <div class="as-container">
           <div class="hero-content">
@@ -151,7 +151,7 @@
       </div>
       <div class="whl-cta">
         <a class="as-btn as-btn-primary" routerLink="/catalogo">Ver catálogo</a>
-        <a class="as-btn as-btn-wa" href="https://wa.me/51933134699" target="_blank" rel="noopener">Escríbenos</a>
+        <a class="as-btn as-btn-wa" [href]="waHref" target="_blank" rel="noopener">Escríbenos</a>
       </div>
     </div>
   </div>

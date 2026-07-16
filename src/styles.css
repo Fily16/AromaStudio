@@ -468,3 +468,31 @@ input, select, textarea { font-family: inherit; }
 /* Fade-in suave de imágenes al cargar (evita el "pop" brusco) */
 img.fade-img { opacity: 0; transition: opacity .45s ease; }
 img.fade-img.ld { opacity: 1; }
+
+/* ========================================================================
+   Franja de anuncio del consolidado — token de altura compartido.
+   `has-announce` se activa en <html> desde App solo cuando hay algo que
+   anunciar; con la var en 0 todos los calc() valen exactamente lo de hoy.
+   ======================================================================== */
+:root { --announce-h: 0px; }
+html.has-announce { --announce-h: 38px; }
+@media (max-width: 640px) {
+  html.has-announce { --announce-h: 34px; }
+}
+html { scroll-padding-top: calc(84px + var(--announce-h)); }
+
+/* ========================================================================
+   Móvil (≤640px): grillas de producto a 2 columnas exactas.
+   El mínimo intrínseco de .as-grid (185px) está calibrado para tablet y
+   dejaba UNA sola columna en todo teléfono; a 2 columnas las tarjetas caen
+   bajo 190px y el container query del product-card las compacta solo.
+   ======================================================================== */
+@media (max-width: 640px) {
+  .as-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+}
+@media (max-width: 380px) {
+  .as-grid { gap: 8px; }
+}

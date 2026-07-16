@@ -1,5 +1,6 @@
 import { Component } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { WHATSAPP_DISPLAY, waLink } from '../../shared/whatsapp.util';
 
 /** Footer global de la tienda. */
 @Component({
@@ -12,9 +13,9 @@ import { RouterLink } from '@angular/router';
         <div class="ft-brand">
           <span class="brand">AromaStudio</span>
           <p>Perfumes árabes originales importados desde USA. Venta al por mayor y unitaria, con envíos a todo el Perú.</p>
-          <a class="wa" href="https://wa.me/51933134699" target="_blank" rel="noopener">
+          <a class="wa" [href]="waHref" target="_blank" rel="noopener">
             <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M12 2a10 10 0 0 0-8.6 15l-1.3 4.7 4.8-1.3A10 10 0 1 0 12 2Zm5.8 14.2c-.2.7-1.4 1.3-2 1.4-.5.1-1.1.1-1.8-.1-.4-.1-1-.3-1.7-.6-3-1.3-4.9-4.3-5-4.5-.2-.2-1.2-1.6-1.2-3s.7-2.1 1-2.4c.2-.3.5-.4.7-.4h.5c.2 0 .4 0 .6.5l.8 2c.1.1.1.3 0 .5l-.4.5-.3.3c-.1.1-.3.3-.1.6.1.3.7 1.1 1.5 1.8 1 .9 1.8 1.1 2.1 1.3.3.1.4.1.6-.1l.8-1c.2-.2.4-.2.6-.1l1.9.9c.3.1.5.2.5.4.1.1.1.6-.1 1.3Z"/></svg>
-            981 587 009
+            {{ waDisplay }}
           </a>
         </div>
 
@@ -68,8 +69,24 @@ import { RouterLink } from '@angular/router';
       padding-block: 18px;
       font-size: 0.78rem; color: var(--muted);
     }
+
+    /* Celular: 2 columnas compactas con la marca a lo ancho y enlaces táctiles */
+    @media (max-width: 640px) {
+      .ft-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 20px 14px;
+        padding-block: 28px;
+      }
+      .ft-brand { grid-column: 1 / -1; max-width: none; }
+      .ft-col { gap: 4px; }
+      .ft-col a, .ft-col span { padding-block: 6px; }
+      .wa { min-height: 44px; align-items: center; }
+      .ft-base { padding-bottom: calc(18px + env(safe-area-inset-bottom, 0px)); }
+    }
   `]
 })
 export class FooterComponent {
   year = new Date().getFullYear();
+  waHref = waLink();
+  waDisplay = WHATSAPP_DISPLAY;
 }

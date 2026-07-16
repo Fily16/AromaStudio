@@ -10,6 +10,7 @@ import { NoteIconComponent } from '../shared/note-icon.component';
 import { ScrollerComponent } from '../shared/scroller.component';
 import { CdnImgPipe } from '../../shared/cdn-img.pipe';
 import { parseNotes, noteLabel, familyLabel, OCCASION_LABEL, SEASON_LABEL, SEASON_ORDER } from '../shared/note-catalog';
+import { trackContact, waLink } from '../../shared/whatsapp.util';
 
 @Component({
   selector: 'app-product-detail',
@@ -228,7 +229,7 @@ export class ProductDetailComponent implements OnInit {
     const p = this.product();
     if (!p) return '';
     const message = `¡Hola! Me interesa:\n\n${p.brand} - ${p.name} ${p.ml}ml\nPrecio: S/ ${this.price()}\n\n¿Tienen disponibilidad?`;
-    return `https://wa.me/51933134699?text=${encodeURIComponent(message)}`;
+    return waLink(message);
   }
 
   goToCart() {
@@ -237,8 +238,7 @@ export class ProductDetailComponent implements OnInit {
 
   trackWhatsAppContact(event: Event) {
     event.preventDefault();
-    try { (window as any).ttq?.track('Contact', { content_type: 'product', content_name: 'WhatsApp Detalle' }); } catch {}
-    try { (window as any).fbq?.('track', 'Contact', { content_name: 'WhatsApp Detalle' }); } catch {}
-    window.open(this.getWhatsAppLink() || 'https://wa.me/51933134699', '_blank');
+    trackContact({ content_type: 'product', content_name: 'WhatsApp Detalle' });
+    window.open(this.getWhatsAppLink() || waLink(), '_blank');
   }
 }

@@ -144,6 +144,15 @@ import { cdnImage } from '../../shared/img.util';
       .pc-name { font-size: 0.86rem; }
       .pc-now { font-size: 1rem; }
       .pc-add { font-size: 0.78rem; padding: 9px; }
+      .pc-body { gap: 3px; }
+    }
+
+    /* Celular: botón táctil (≥44px) y letras de lectura a mínimo legible (las
+       tarjetas van 2 por fila y el container query de arriba las compacta). */
+    @media (max-width: 640px) {
+      .pc-body { padding: 10px 10px 6px; }
+      .pc-add { margin: 0 10px 12px; min-height: 44px; }
+      .pc-brand, .pc-stock, .pc-meta, .pc-save { font-size: 0.75rem; }
     }
   `]
 })

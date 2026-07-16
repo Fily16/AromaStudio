@@ -8,6 +8,8 @@ import { Product, Banner, Promotion } from '../../models/api.models';
 import { ProductCardComponent } from '../shared/product-card.component';
 import { ScrollerComponent } from '../shared/scroller.component';
 import { CdnImgPipe } from '../../shared/cdn-img.pipe';
+import { cdnImage } from '../../shared/img.util';
+import { openWhatsApp, waLink } from '../../shared/whatsapp.util';
 
 interface CategoryCard {
   key: 'men' | 'women' | 'unisex';
@@ -381,10 +383,21 @@ export class HomeComponent implements OnInit, OnDestroy {
     this.router.navigate(['/catalogo']);
   }
 
+  /**
+   * Fondo del hero: en celular los banners remotos pasan por el CDN a 800px
+   * (más livianos); en desktop se sirven tal cual (cero cambio visual). Para
+   * los banners locales por defecto cdnImage es no-op.
+   */
+  heroBg(b: Banner): string | null {
+    if (!b.imageUrl) return null;
+    const url = window.innerWidth <= 640 ? cdnImage(b.imageUrl, 800, 80) : b.imageUrl;
+    return `url(${url})`;
+  }
+
+  waHref = waLink();
+
   trackWhatsAppContact(event: Event) {
     event.preventDefault();
-    try { (window as any).ttq?.track('Contact', { content_type: 'product', content_name: 'WhatsApp FAB' }); } catch {}
-    try { (window as any).fbq?.('track', 'Contact', { content_name: 'WhatsApp FAB' }); } catch {}
-    setTimeout(() => { window.open('https://wa.me/51933134699', '_blank'); }, 300);
+    openWhatsApp(undefined, { content_type: 'product', content_name: 'WhatsApp FAB' });
   }
 }
