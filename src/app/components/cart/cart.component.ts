@@ -10,7 +10,7 @@ import { CdnImgPipe } from '../../shared/cdn-img.pipe';
 import { SHALOM_AGENCIES, SHALOM_DEPARTMENTS, ShalomAgency } from '../../data/shalom-agencies';
 import { downloadResellerExcel } from '../../shared/reseller-excel.util';
 import { downloadResellerPdf } from '../../shared/reseller-pdf.util';
-import { trackContact, waLink } from '../../shared/whatsapp.util';
+import { waLink } from '../../shared/whatsapp.util';
 
 @Component({
   selector: 'app-cart',
@@ -340,26 +340,6 @@ export class CartComponent implements OnDestroy {
   }
 
   finishHome() { this.router.navigate(['/']); }
-
-  orderViaWhatsApp() {
-    const items = this.cart.cartItems();
-    const catType = this.cart.catalogType() === 'STOCK' ? 'de entrega inmediata (stock)' : 'por encargo (consolidado)';
-    let message = `¡Hola! Quiero hacer un pedido ${catType}:\n\n`;
-
-    for (const item of items) {
-      const subtotal = (item.unitPricePen * item.quantity).toFixed(2);
-      message += `• ${item.product.brand} - ${item.product.name} ${item.product.ml}ml x${item.quantity} — S/ ${subtotal}\n`;
-    }
-    message += `\nTotal: S/ ${this.cart.totalPen().toFixed(2)}`;
-
-    trackContact({ value: this.cart.totalPen(), currency: 'PEN' });
-
-    const url = waLink(message);
-    setTimeout(() => {
-      window.open(url, '_blank');
-      this.cart.clear();
-    }, 300);
-  }
 
   goBack() {
     this.router.navigate(['/catalogo']);

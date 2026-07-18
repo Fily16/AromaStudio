@@ -10,7 +10,6 @@ import { NoteIconComponent } from '../shared/note-icon.component';
 import { ScrollerComponent } from '../shared/scroller.component';
 import { CdnImgPipe } from '../../shared/cdn-img.pipe';
 import { parseNotes, noteLabel, familyLabel, OCCASION_LABEL, SEASON_LABEL, SEASON_ORDER } from '../shared/note-catalog';
-import { trackContact, waLink } from '../../shared/whatsapp.util';
 
 @Component({
   selector: 'app-product-detail',
@@ -225,20 +224,7 @@ export class ProductDetailComponent implements OnInit {
     this.quantity.set(1);
   }
 
-  getWhatsAppLink(): string {
-    const p = this.product();
-    if (!p) return '';
-    const message = `¡Hola! Me interesa:\n\n${p.brand} - ${p.name} ${p.ml}ml\nPrecio: S/ ${this.price()}\n\n¿Tienen disponibilidad?`;
-    return waLink(message);
-  }
-
   goToCart() {
     this.router.navigate(['/cart']);
-  }
-
-  trackWhatsAppContact(event: Event) {
-    event.preventDefault();
-    trackContact({ content_type: 'product', content_name: 'WhatsApp Detalle' });
-    window.open(this.getWhatsAppLink() || waLink(), '_blank');
   }
 }

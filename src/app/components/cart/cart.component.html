@@ -140,9 +140,8 @@
                   [disabled]="consolidadoBlocked() || (!minReached() && cart.catalogType() !== 'STOCK')">
             Continuar pedido
           </button>
-          <button class="as-btn as-btn-wa as-btn-block" (click)="orderViaWhatsApp()">Pedir por WhatsApp</button>
           @if (!consolidadoBlocked() && !minReached() && cart.catalogType() !== 'STOCK') {
-            <p class="sum-note">Agrega {{ unitsLeft() }} más para finalizar, o pídelo directo por WhatsApp.</p>
+            <p class="sum-note">Agrega {{ unitsLeft() }} más para finalizar tu pedido.</p>
           }
           <p class="sum-secure">El pago y el envío se coordinan por WhatsApp. Productos 100% originales.</p>
         </aside>
