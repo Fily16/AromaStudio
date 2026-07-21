@@ -2,7 +2,7 @@ import { Component, computed, inject, signal, OnInit } from '@angular/core';
 import { DecimalPipe, DatePipe } from '@angular/common';
 import { ApiService } from '../../../services/api.service';
 import { Order, Consolidado, AllocationResponse, MissingItem, MissingStatus, Supplier,
-         Promotion, ProfitReport, OrderPromo, OrderItem } from '../../../models/api.models';
+         Promotion, ProfitReport, OrderPromo, OrderItem, FillReport } from '../../../models/api.models';
 import { CdnImgPipe } from '../../../shared/cdn-img.pipe';
 import { MediaGalleryComponent } from '../shared/media-gallery.component';
 import { MissingPanelComponent } from './missing-panel.component';
@@ -745,7 +745,49 @@ Cuéntanos qué prefieres. ¡Gracias por tu comprensión! 🙏`;
     // Carga también los faltantes para verlos junto a la nota "N sin stock" (Caso A/B).
     this.reloadMissing(id);
   }
-  closeAllocation() { this.allocation.set(null); this.missing.set([]); }
+  closeAllocation() { this.allocation.set(null); this.missing.set([]); this.fillReport.set(null); }
+
+  // ---- Completar Excel del proveedor (llena Quantity por UPC con la asignación) ----
+  filling = signal<number | null>(null);   // supplierId en proceso
+  fillReport = signal<FillReport | null>(null);
+
+  onFillFile(supplierId: number, supplierName: string, e: Event) {
+    const input = e.target as HTMLInputElement;
+    const file = input.files?.[0] || null;
+    input.value = ''; // permite volver a subir el mismo archivo
+    const id = this.selectedId();
+    if (!file || id == null) return;
+    this.filling.set(supplierId);
+    this.fillReport.set(null);
+    this.api.fillSupplierExcel(id, supplierId, file).subscribe({
+      next: (res) => {
+        this.filling.set(null);
+        this.downloadBase64(res.fileBase64, res.filename,
+          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        this.fillReport.set(res.report);
+        this.showMessage(`Excel de ${supplierName} completado (${res.report.updated} cantidades).`);
+      },
+      error: (err) => { this.filling.set(null); this.showMessage(err.error?.message || 'No se pudo completar el Excel'); }
+    });
+  }
+
+  exportNotFound(fr: FillReport) {
+    const rows = ['gtin,marca,nombre,cantidad,motivo'];
+    for (const m of fr.notFound) rows.push(`${m.gtin ?? ''},"${m.brand ?? ''}","${m.name ?? ''}",${m.quantity},no está en el Excel`);
+    for (const m of fr.noUpcLines) rows.push(`,"${m.brand ?? ''}","${m.name ?? ''}",${m.quantity},sin UPC`);
+    const b64 = btoa(unescape(encodeURIComponent(rows.join('\n'))));
+    this.downloadBase64(b64, `no-encontrados-${fr.supplierName}.csv`, 'text/csv;charset=utf-8');
+  }
+
+  private downloadBase64(b64: string, filename: string, mime: string) {
+    const bin = atob(b64);
+    const arr = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+    const url = URL.createObjectURL(new Blob([arr], { type: mime }));
+    const a = document.createElement('a');
+    a.href = url; a.download = filename; a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 2000);
+  }
 
   // --- Helpers ---
   statusLabel(s: string): string {

@@ -9,7 +9,7 @@ import {
   Supplier, ImportSummary, AllocationResponse, SuggestResult, OperationsSummary, MissingItem, MissingStatus,
   Promotion, ProfitReport, SupplierRequest, ColumnMapping, ImportPreview, PublishRequest,
   MatchCandidate, SupplierConstraint, PurchasePlan, MarginReportRow, ProductOffersView,
-  ConsolidadoPublic, MediaSummary, PhotoCandidate, PhotoRow
+  ConsolidadoPublic, MediaSummary, PhotoCandidate, PhotoRow, FillExcelResponse
 } from '../models/api.models';
 
 @Injectable({ providedIn: 'root' })
@@ -380,6 +380,15 @@ export class ApiService {
   archiveLegacyCatalog(): Observable<{ archived: number; message: string }> {
     return this.http.post<{ archived: number; message: string }>(
       `${this.url}/admin/catalog/archive-legacy`, {}, { headers: this.authHeaders() });
+  }
+
+  // "Completar Excel del proveedor": sube el Excel original, devuelve el mismo con las cantidades llenas
+  fillSupplierExcel(consolidadoId: number, supplierId: number, file: File): Observable<FillExcelResponse> {
+    const fd = new FormData();
+    fd.append('file', file);
+    return this.http.post<FillExcelResponse>(
+      `${this.url}/admin/consolidados/${consolidadoId}/suppliers/${supplierId}/fill-excel`, fd,
+      { headers: this.authHeaders() });
   }
 
   getAllocation(consolidadoId: number): Observable<AllocationResponse> {

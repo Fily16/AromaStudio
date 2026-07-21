@@ -254,6 +254,12 @@
           <span class="adm-st" [class.green]="s.reachedMin" [class.amber]="!s.reachedMin">
             US$ {{ s.subtotalUsd | number:'1.0-0' }}@if (s.minOrderUsd > 0) { / mín {{ s.minOrderUsd | number:'1.0-0' }} }
           </span>
+          <label class="adm-btn ghost sm ord-fill-btn" [class.busy]="filling() !== null"
+                 title="Sube el Excel de {{ s.name }} y te lo devuelvo con las cantidades llenas por UPC">
+            @if (filling() === s.supplierId) { ⏳ Procesando… } @else { ⬇ Completar Excel }
+            <input type="file" accept=".xlsx,.xls" hidden [disabled]="filling() !== null"
+                   (change)="onFillFile(s.supplierId, s.name, $event)">
+          </label>
         </div>
         <div class="ord-alloc-lines">
           @for (l of s.lines; track l.productId) {
@@ -292,6 +298,34 @@
             }
           }
         </div>
+      </div>
+    }
+
+    <!-- Reporte de "Completar Excel del proveedor" -->
+    @if (fillReport(); as fr) {
+      <div class="ord-fill-report">
+        <div class="ord-fill-head">
+          <b>Excel de {{ fr.supplierName }} completado</b>
+          <button class="adm-btn ghost sm" (click)="fillReport.set(null)">✕</button>
+        </div>
+        <div class="ord-fill-kpis">
+          <span class="ok">✓ {{ fr.updated }} cantidades escritas</span>
+          <span>🙈 {{ fr.hiddenRows }} filas ocultas</span>
+          @if (fr.notFound.length) { <span class="warn">⚠ {{ fr.notFound.length }} no encontradas</span> }
+          @if (fr.noUpcLines.length) { <span class="warn">⚠ {{ fr.noUpcLines.length }} sin UPC</span> }
+          @if (fr.duplicateUpcs.length) { <span class="warn">{{ fr.duplicateUpcs.length }} UPC duplicados</span> }
+        </div>
+        @if (fr.notFound.length || fr.noUpcLines.length) {
+          <button class="adm-btn sm" (click)="exportNotFound(fr)">⬇ Exportar no encontrados (CSV)</button>
+          <div class="ord-fill-list">
+            @for (m of fr.notFound; track m.gtin) {
+              <div>{{ m.brand }} {{ m.name }} · <span class="mono">UPC {{ m.gtin }}</span> · x{{ m.quantity }} — no está en el Excel del proveedor</div>
+            }
+            @for (m of fr.noUpcLines; track m.name) {
+              <div>{{ m.brand }} {{ m.name }} · x{{ m.quantity }} — sin UPC (no ubicable por código)</div>
+            }
+          </div>
+        }
       </div>
     }
 

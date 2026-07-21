@@ -454,6 +454,22 @@ export interface AltPrice {
   cheapest: boolean;
 }
 
+// Reporte de "Completar Excel del proveedor" (llenado de cantidades por UPC)
+export interface FillMissing { gtin: string | null; brand: string; name: string; quantity: number; }
+export interface FillReport {
+  supplierName: string;
+  sheetName: string;
+  totalRows: number;
+  found: number;
+  updated: number;
+  hiddenRows: number;
+  duplicateUpcs: string[];
+  notFound: FillMissing[];
+  noUpcLines: FillMissing[];
+  durationMs: number;
+}
+export interface FillExcelResponse { filename: string; fileBase64: string; report: FillReport; }
+
 export interface AllocationLine {
   productId: number;
   brand: string;

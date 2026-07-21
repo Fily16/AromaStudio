@@ -3,7 +3,9 @@ import { ApiService } from './api.service';
 import { ConsolidadoPublic } from '../models/api.models';
 
 /**
- * Estado del consolidado para toda la tienda: una sola carga al entrar, sin polling.
+ * Estado del consolidado para toda la tienda: carga al entrar + reconsulta periódica
+ * ligera (para captar cambios del admin: reabrir, extender, cerrar o abrir el siguiente,
+ * sin que el cliente tenga que recargar).
  *
  * El tiempo restante se calcula contra la hora del SERVIDOR (offset = serverNowMs −
  * Date.now()): si el visitante tiene el reloj desfasado o está en otra zona horaria,
@@ -25,7 +27,11 @@ export class ConsolidadoStateService {
   private offsetMs = 0;               // diferencia entre el reloj del servidor y el del visitante
   private nowMs = signal(Date.now());
   private timer: any = null;
+  private pollTimer: any = null;      // reconsulta periódica del estado (capta cambios del admin)
   private loaded = false;
+
+  /** Cada cuánto se re-consulta el estado (ms). El scheduler del backend corre cada 60s. */
+  private static readonly POLL_MS = 40_000;
 
   /** Milisegundos que faltan para el cierre; null si el consolidado no tiene plazo. */
   remainingMs = computed(() => {
@@ -92,6 +98,17 @@ export class ConsolidadoStateService {
       },
       error: () => { /* sin aviso: la tienda funciona igual */ }
     });
+    this.startAutoRefresh();
+  }
+
+  /**
+   * Reconsulta periódica: mientras la tienda esté abierta, cada POLL_MS re-pregunta el
+   * estado. Así una REAPERTURA del admin (o extensión / cierre / apertura del siguiente)
+   * llega al cliente sin recargar la página. El tick de 1s del countdown corre aparte.
+   */
+  private startAutoRefresh() {
+    if (this.pollTimer) return;
+    this.pollTimer = setInterval(() => this.refresh(), ConsolidadoStateService.POLL_MS);
   }
 
   private startTicking() {
