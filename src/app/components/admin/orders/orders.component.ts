@@ -87,6 +87,26 @@ export class OrdersComponent implements OnInit {
     return !!c && (c.status === 'ABIERTO' || c.status === 'PROGRAMADO');
   });
 
+  // Reapertura temporal de un consolidado cerrado (para un pedido rezagado)
+  showReopen = signal(false);
+  reopening = signal(false);
+  reopenTemporarily(minutes: number) {
+    const id = this.selectedId();
+    if (id == null) return;
+    this.reopening.set(true);
+    this.api.reopenConsolidado(id, minutes).subscribe({
+      next: () => {
+        this.reopening.set(false);
+        this.showReopen.set(false);
+        this.loadConsolidados();
+        this.refresh();
+        const label = minutes >= 60 ? `${minutes / 60} h` : `${minutes} min`;
+        this.showMessage(`Consolidado reabierto por ${label}. Se cierra solo al vencer.`);
+      },
+      error: (err) => { this.reopening.set(false); this.showMessage(err.error?.message || 'No se pudo reabrir'); }
+    });
+  }
+
   // --- Flujo de cierre con Excel + faltantes ---
   showCloseModal = signal(false);
   closeStep = signal<'upload' | 'result'>('upload');

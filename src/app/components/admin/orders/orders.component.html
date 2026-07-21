@@ -38,6 +38,21 @@
       } @else if (c.status === 'CERRADO') {
         <button class="adm-btn" (click)="viewAllocation()">Ver qué comprar</button>
         <button class="adm-btn ok" (click)="enableMerchandise()">Habilitar mercancía</button>
+        @if (!hasOpenOrScheduled()) {
+          @if (!showReopen()) {
+            <button class="adm-btn" (click)="showReopen.set(true)"
+                    title="Reabrir un rato para un pedido rezagado; se cierra solo al vencer">🔓 Reabrir un rato</button>
+          } @else {
+            <span style="display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap">
+              <span style="font-size:.82rem;color:var(--a-muted)">Reabrir por:</span>
+              <button class="adm-btn sm" [disabled]="reopening()" (click)="reopenTemporarily(30)">30 min</button>
+              <button class="adm-btn sm" [disabled]="reopening()" (click)="reopenTemporarily(60)">1 h</button>
+              <button class="adm-btn sm" [disabled]="reopening()" (click)="reopenTemporarily(120)">2 h</button>
+              <button class="adm-btn sm" [disabled]="reopening()" (click)="reopenTemporarily(360)">6 h</button>
+              <button class="adm-btn ghost sm" (click)="showReopen.set(false)">✕</button>
+            </span>
+          }
+        }
       }
     }
   </div>

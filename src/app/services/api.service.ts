@@ -173,6 +173,12 @@ export class ApiService {
       { headers: this.authHeaders() });
   }
 
+  // Reabre TEMPORALMENTE un consolidado cerrado por N minutos (el scheduler lo cierra solo)
+  reopenConsolidado(id: number, minutes: number): Observable<Consolidado> {
+    return this.http.post<Consolidado>(`${this.url}/admin/consolidados/${id}/reopen`, { minutes },
+      { headers: this.authHeaders() });
+  }
+
   // --- Galería de imágenes (banners de consolidados) ---
   /** URL pública de una imagen de la galería (cacheada de forma inmutable). */
   mediaUrl(id: number): string {
