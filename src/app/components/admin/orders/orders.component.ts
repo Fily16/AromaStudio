@@ -54,6 +54,18 @@ export class OrdersComponent implements OnInit {
       const n = new Set(s); n.has(productId) ? n.delete(productId) : n.add(productId); return n;
     });
   }
+  /** Mapa productId → imagen, tomado de los pedidos ya cargados (para mostrar la foto en la compra). */
+  private productImages = computed(() => {
+    const m = new Map<number, string>();
+    for (const o of this.orders()) {
+      for (const it of (o.items || [])) {
+        const p = it.product;
+        if (p?.id && p.imageUrl && !m.has(p.id)) m.set(p.id, p.imageUrl);
+      }
+    }
+    return m;
+  });
+  productImg(productId: number): string | null { return this.productImages().get(productId) || null; }
 
   // --- Consolidados v2: plazo, aviso e imagen ---
   showScheduleModal = signal(false);

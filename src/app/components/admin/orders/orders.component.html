@@ -243,9 +243,13 @@
         <div class="ord-alloc-lines">
           @for (l of s.lines; track l.productId) {
             <div class="ord-alloc-line" (click)="toggleAllocLine(l.productId)" style="cursor:pointer">
+              <span class="ord-alloc-thumb">
+                @if (productImg(l.productId); as img) { <img [src]="img | cdnImg:100" [alt]="l.name" loading="lazy"> }
+                @else { <span class="ord-alloc-noimg">{{ l.brand }}</span> }
+              </span>
               <span>{{ l.brand }} — {{ l.name }}@if (l.ml) { · {{ l.ml }}ml }
                 @if (l.movedToReachMin) { <span class="ord-moved" title="Movido para cumplir el mínimo del proveedor">↔ movido</span> }
-                <small class="ord-upc">UPC {{ l.gtin || 's/upc' }}</small>
+                <span class="ord-upc">UPC {{ l.gtin || 's/upc' }}</span>
               </span>
               <span>x{{ l.quantity }}</span>
               <span class="num">US$ {{ l.subtotalUsd | number:'1.2-2' }}</span>
