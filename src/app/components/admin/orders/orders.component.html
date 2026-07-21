@@ -243,8 +243,9 @@
         <div class="ord-alloc-lines">
           @for (l of s.lines; track l.productId) {
             <div class="ord-alloc-line" (click)="toggleAllocLine(l.productId)" style="cursor:pointer">
-              <span>{{ l.brand }} — {{ l.name }}
+              <span>{{ l.brand }} — {{ l.name }}@if (l.ml) { · {{ l.ml }}ml }
                 @if (l.movedToReachMin) { <span class="ord-moved" title="Movido para cumplir el mínimo del proveedor">↔ movido</span> }
+                <small class="ord-upc">UPC {{ l.gtin || 's/upc' }}</small>
               </span>
               <span>x{{ l.quantity }}</span>
               <span class="num">US$ {{ l.subtotalUsd | number:'1.2-2' }}</span>
@@ -274,6 +275,20 @@
         </div>
       </div>
     }
+
+    <!-- Productos sin stock en ningún proveedor: la lista de la nota, aquí mismo -->
+    @if (missing().length && !showCloseModal()) {
+      <div class="ord-alloc-missing">
+        <h3 style="font-size:.95rem;font-weight:700;margin:10px 0 2px">Productos sin stock en ningún proveedor ({{ missing().length }})</h3>
+        <app-missing-panel
+          [caseA]="caseA()" [caseB]="caseB()" [counts]="caseACounts()"
+          [cristfranceTotalPen]="cristfranceTotalPen()" [caseBReport]="caseBReport()"
+          (resolve)="setResolution($event.productId, $event.status)"
+          (notify)="whatsappUnavailable($event)">
+        </app-missing-panel>
+      </div>
+    }
+
     @for (n of a.notes; track $index) { <p class="ord-alloc-note">• {{ n }}</p> }
   </div>
 }
@@ -478,69 +493,12 @@
         @if (missing().length === 0) {
           <div class="adm-st green" style="margin-bottom:12px">✓ Todos los perfumes pedidos están disponibles en los proveedores.</div>
         } @else {
-          <!-- Caso A: se compra en CristFragance (precio ya calculado) -->
-          @if (caseA().length) {
-            <h4 style="font-weight:700;margin:6px 0 4px">
-              Comprar en CristFragance ({{ caseACounts().bought }}/{{ caseACounts().total }} comprados)
-            </h4>
-            <p style="color:var(--a-muted);font-size:.82rem;margin-bottom:10px">
-              No están en los Excel pero el sistema ya tiene su precio. Marca los que ya compraste (se guarda) o pásalos a "no se consigue".
-            </p>
-            <div class="ord-detail-items" style="max-height:32vh">
-              @for (mi of caseA(); track mi.productId) {
-                <div class="ord-miss">
-                  <label class="ord-miss-pick">
-                    <input type="checkbox" [checked]="mi.resolutionStatus === 'CRIST_BOUGHT'"
-                           (change)="toggleCristBought(mi, $any($event.target).checked)">
-                    <div>
-                      <b [style.text-decoration]="mi.resolutionStatus === 'CRIST_BOUGHT' ? 'line-through' : 'none'">{{ mi.brand }} {{ mi.name }}@if (mi.ml) { · {{ mi.ml }}ml }</b>
-                      <div style="font-size:.78rem;color:var(--a-muted)">
-                        x{{ missingQty(mi) }}@if (mi.registeredPricePen) { · S/ {{ mi.registeredPricePen | number:'1.2-2' }} c/u }
-                        · @for (o of mi.orders; track o.orderCode) { {{ o.clientName }} ({{ o.orderCode }} ×{{ o.quantity }}) }
-                      </div>
-                    </div>
-                  </label>
-                  <button class="adm-btn ghost sm" (click)="setResolution(mi.productId, 'UNAVAILABLE')"
-                          title="No se consigue ni en CristFragance">No se consigue</button>
-                </div>
-              }
-            </div>
-            <div class="ord-miss-total">Estimado CristFragance: <b>S/ {{ cristfranceTotalPen() | number:'1.2-2' }}</b></div>
-          }
-
-          <!-- Caso B: imposible de conseguir -> avisar al cliente -->
-          @if (caseB().length) {
-            <h4 style="font-weight:700;margin:16px 0 6px;color:var(--a-danger)">
-              Imposible de conseguir — avisar al cliente ({{ caseB().length }})
-            </h4>
-            <div class="ord-detail-items" style="max-height:20vh">
-              @for (mi of caseB(); track mi.productId) {
-                <div class="ord-miss">
-                  <div>
-                    <b>{{ mi.brand }} {{ mi.name }}</b>
-                    <div style="font-size:.78rem;color:var(--a-muted)">
-                      x{{ missingQty(mi) }} · @for (o of mi.orders; track o.orderCode) { {{ o.clientName }} ({{ o.orderCode }}) }
-                    </div>
-                  </div>
-                  <button class="adm-btn ghost sm" (click)="setResolution(mi.productId, 'CRIST_PENDING')"
-                          title="Sí se consigue en CristFragance">↩ CristFragance</button>
-                </div>
-              }
-            </div>
-            @if (caseBReport().length) {
-              <div class="ord-detail-items" style="max-height:26vh;margin-top:6px">
-                @for (e of caseBReport(); track e.order.id) {
-                  <div class="ord-client">
-                    <div>
-                      <b>{{ e.order.clientName }}</b> <span style="color:var(--a-muted)">· {{ e.order.orderCode }} · {{ e.order.clientPhone }}</span>
-                      <div style="font-size:.8rem;color:var(--a-muted)">No hay: {{ e.unavailableText }} · devolución S/ {{ e.deducted }}</div>
-                    </div>
-                    <button class="adm-btn ok sm" (click)="whatsappUnavailable(e)">Enviar WhatsApp</button>
-                  </div>
-                }
-              </div>
-            }
-          }
+          <app-missing-panel
+            [caseA]="caseA()" [caseB]="caseB()" [counts]="caseACounts()"
+            [cristfranceTotalPen]="cristfranceTotalPen()" [caseBReport]="caseBReport()"
+            (resolve)="setResolution($event.productId, $event.status)"
+            (notify)="whatsappUnavailable($event)">
+          </app-missing-panel>
         }
         <!-- Cerrado el lote, lo natural es abrir el siguiente: se ofrece aquí mismo. -->
         <div class="ord-next">

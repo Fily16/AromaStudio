@@ -50,6 +50,7 @@
 
 /* Línea de allocation: movido, caret y "por qué" */
 .ord-moved { font-size: .68rem; font-weight: 700; color: var(--a-warn); background: var(--a-warn-bg); border-radius: 4px; padding: 1px 6px; margin-left: 6px; }
+.ord-upc { display: block; font-family: ui-monospace, 'SF Mono', Menlo, monospace; font-size: .7rem; color: var(--a-faint); letter-spacing: .02em; margin-top: 1px; }
 .ord-caret { color: var(--a-faint); font-size: .7rem; text-align: center; }
 .ord-why { background: var(--a-surface-2); border: 1px dashed var(--a-line-strong); border-radius: 8px; padding: 8px 12px; margin: 2px 0 8px; }
 .ord-why-reason { font-size: .8rem; font-weight: 600; color: var(--a-accent-700); margin-bottom: 6px; }

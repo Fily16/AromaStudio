@@ -458,6 +458,7 @@ export interface AllocationLine {
   productId: number;
   brand: string;
   name: string;
+  gtin: string | null;
   ml: number | null;
   quantity: number;
   unitCostUsd: number;

@@ -5,6 +5,7 @@ import { Order, Consolidado, AllocationResponse, MissingItem, MissingStatus, Sup
          Promotion, ProfitReport, OrderPromo, OrderItem } from '../../../models/api.models';
 import { CdnImgPipe } from '../../../shared/cdn-img.pipe';
 import { MediaGalleryComponent } from '../shared/media-gallery.component';
+import { MissingPanelComponent } from './missing-panel.component';
 
 /**
  * Pedidos = núcleo del ERP. KPIs del consolidado (total, Lima, provincia, por vendedor,
@@ -14,7 +15,7 @@ import { MediaGalleryComponent } from '../shared/media-gallery.component';
 @Component({
   selector: 'app-orders',
   standalone: true,
-  imports: [DecimalPipe, DatePipe, CdnImgPipe, MediaGalleryComponent],
+  imports: [DecimalPipe, DatePipe, CdnImgPipe, MediaGalleryComponent, MissingPanelComponent],
   templateUrl: './orders.component.html',
   styleUrl: './orders.component.css'
 })
@@ -640,10 +641,6 @@ Cuéntanos qué prefieres. ¡Gracias por tu comprensión! 🙏`;
       error: () => { this.showMessage('No se pudo guardar el estado'); if (id != null) this.reloadMissing(id); }
     });
   }
-  /** Check "comprado en CristFragance": alterna pendiente ↔ comprado (Caso A). */
-  toggleCristBought(mi: MissingItem, checked: boolean) {
-    this.setResolution(mi.productId, checked ? 'CRIST_BOUGHT' : 'CRIST_PENDING');
-  }
   private reloadMissing(id: number) {
     this.api.getMissing(id).subscribe({ next: (m) => this.missing.set(m), error: () => {} });
   }
@@ -696,13 +693,6 @@ Cuéntanos qué prefieres. ¡Gracias por tu comprensión! 🙏`;
         ?? withMin.slice().sort((x, y) => y.minOrderUsd - x.minOrderUsd)[0];
   });
 
-  whatsappClient(client: { name: string; phone: string; items: { label: string; qty: number }[] }) {
-    const list = client.items.map(i => `${i.label} (x${i.qty})`).join(', ');
-    const msg = `Hola ${client.name}, lamentablemente en este lote no pudimos conseguir: ${list}. Coordinamos contigo el cambio o la devolución del monto. ¡Gracias por tu comprensión!`;
-    const phone = '51' + (client.phone || '').replace(/\D/g, '').slice(-9);
-    window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, '_blank');
-  }
-
   enableMerchandise() {
     const id = this.selectedId();
     if (id == null) return;
@@ -720,8 +710,10 @@ Cuéntanos qué prefieres. ¡Gracias por tu comprensión! 🙏`;
       next: (a) => this.allocation.set(a),
       error: () => this.showMessage('No se pudo calcular la asignación')
     });
+    // Carga también los faltantes para verlos junto a la nota "N sin stock" (Caso A/B).
+    this.reloadMissing(id);
   }
-  closeAllocation() { this.allocation.set(null); }
+  closeAllocation() { this.allocation.set(null); this.missing.set([]); }
 
   // --- Helpers ---
   statusLabel(s: string): string {
