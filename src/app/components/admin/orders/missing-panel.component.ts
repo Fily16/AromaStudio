@@ -80,9 +80,29 @@ export interface UnavailableEntry {
     }
   `,
   styles: [`
-    .mp-h { font-weight: 700; margin: 12px 0 4px; }
+    :host { display: block; }
+    .mp-h { font-weight: 700; font-size: .92rem; margin: 12px 0 4px; }
+    .mp-h:first-child { margin-top: 0; }
     .mp-sub { color: var(--a-muted); font-size: .82rem; margin-bottom: 10px; }
-    .mp-meta { font-size: .78rem; color: var(--a-muted); }
+    .mp-meta { font-size: .78rem; color: var(--a-muted); line-height: 1.35; word-break: break-word; }
+
+    /* Layout autocontenido (las clases .ord-* del padre no cruzan por el encapsulado de Angular) */
+    .ord-detail-items { overflow-y: auto; display: flex; flex-direction: column; gap: 4px; }
+    .ord-miss { display: flex; align-items: center; justify-content: space-between; gap: 10px;
+      padding: 8px 0; border-bottom: 1px solid var(--a-line); }
+    .ord-miss:last-child { border-bottom: none; }
+    .ord-miss > div { min-width: 0; }                 /* permite que el texto trunque/envuelva */
+    .ord-miss > button { flex: 0 0 auto; white-space: nowrap; align-self: flex-start; }
+    .ord-miss b { display: block; font-size: .86rem; word-break: break-word; }
+    .ord-miss-pick { display: flex; align-items: flex-start; gap: 9px; cursor: pointer; flex: 1; min-width: 0; }
+    .ord-miss-pick input { width: 16px; height: 16px; margin-top: 3px; flex: 0 0 auto; accent-color: var(--a-accent); }
+    .ord-miss-total { display: flex; justify-content: flex-end; gap: 8px; padding-top: 12px; font-size: .95rem; }
+    .ord-client { display: flex; align-items: center; justify-content: space-between; gap: 10px;
+      padding: 9px 0; border-bottom: 1px solid var(--a-line); }
+    .ord-client:last-child { border-bottom: none; }
+    .ord-client > div { min-width: 0; }
+    .ord-client > button { flex: 0 0 auto; }
+    .ord-client b { word-break: break-word; }
   `]
 })
 export class MissingPanelComponent {

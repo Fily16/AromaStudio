@@ -59,6 +59,10 @@
 .ord-why-table tr.chosen { background: var(--a-accent-050); font-weight: 700; }
 .ord-diff { font-size: .76rem; color: var(--a-warn); font-weight: 600; }
 
+/* Bloque de faltantes dentro del card de allocation: separado y contenido (no desborda) */
+.ord-alloc-missing { border-top: 1px solid var(--a-line); margin-top: 14px; padding-top: 4px; }
+.ord-alloc-missing h3 { margin: 0 0 2px; }
+
 /* Modales */
 .ord-modal-bg { position: fixed; inset: 0; background: rgba(15,20,30,.5); display: grid; place-items: center; z-index: 90; padding: 20px; }
 .ord-modal { background: #fff; border-radius: 12px; padding: 22px; width: 100%; max-width: 400px; box-shadow: 0 20px 50px rgba(0,0,0,.25); }
