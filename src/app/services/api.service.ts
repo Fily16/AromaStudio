@@ -6,7 +6,7 @@ import {
   Product, Order, Consolidado, RetailInventory, RetailSale,
   DashboardStats, AppConfig, PublicConfig, OrderRequest, LoginResponse,
   StockPurchaseRequest, BreakdownSection, FullBreakdownResponse,
-  Supplier, ImportSummary, AllocationResponse, SuggestResult, OperationsSummary, MissingItem,
+  Supplier, ImportSummary, AllocationResponse, SuggestResult, OperationsSummary, MissingItem, MissingStatus,
   Promotion, ProfitReport, SupplierRequest, ColumnMapping, ImportPreview, PublishRequest,
   MatchCandidate, SupplierConstraint, PurchasePlan, MarginReportRow, ProductOffersView,
   ConsolidadoPublic, MediaSummary, PhotoCandidate, PhotoRow
@@ -458,6 +458,12 @@ export class ApiService {
   getMissing(consolidadoId: number): Observable<MissingItem[]> {
     return this.http.get<MissingItem[]>(
       `${this.url}/admin/consolidados/${consolidadoId}/missing`, { headers: this.authHeaders() });
+  }
+
+  // ERP: marca la resolución de un faltante (CristFragance pendiente/comprado o imposible). Persiste.
+  setMissingResolution(consolidadoId: number, productId: number, status: MissingStatus): Observable<{ productId: number; status: string }> {
+    return this.http.put<{ productId: number; status: string }>(
+      `${this.url}/admin/consolidados/${consolidadoId}/missing/${productId}`, { status }, { headers: this.authHeaders() });
   }
 
   // ERP: desglose de precios por producto (costo puesto en Perú + consolidado + stock)

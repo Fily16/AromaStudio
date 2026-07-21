@@ -29,9 +29,34 @@
 .ord-alloc-sup { border: 1px solid var(--a-line); border-radius: 8px; margin-bottom: 10px; overflow: hidden; }
 .ord-alloc-sup-head { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; background: var(--a-surface-2); }
 .ord-alloc-lines { padding: 4px 14px 8px; }
-.ord-alloc-line { display: grid; grid-template-columns: 1fr auto 90px; gap: 10px; padding: 5px 0; font-size: .84rem; border-top: 1px solid var(--a-line); }
+.ord-alloc-line { display: grid; grid-template-columns: 1fr auto 90px 16px; gap: 10px; padding: 5px 0; font-size: .84rem; border-top: 1px solid var(--a-line); align-items: center; }
 .ord-alloc-line:first-child { border-top: none; }
 .ord-alloc-note { font-size: .82rem; color: var(--a-muted); margin-top: 8px; }
+
+/* Resumen ejecutivo de la compra */
+.ord-sum { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; margin-bottom: 12px; }
+.ord-sum-kpi { background: var(--a-surface-2); border: 1px solid var(--a-line); border-radius: 8px; padding: 8px 11px; }
+.ord-sum-kpi span { display: block; font-size: .7rem; color: var(--a-muted); text-transform: uppercase; letter-spacing: .03em; }
+.ord-sum-kpi b { font-size: 1.15rem; font-weight: 800; }
+.ord-sum-kpi b small { font-size: .72rem; font-weight: 600; color: var(--a-muted); }
+.ord-sum-kpi b.pos { color: var(--a-ok); }
+.ord-sum-kpi b.neg { color: var(--a-danger); }
+
+/* Panel de mínimo (Zimaxx) */
+.ord-min { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 10px 12px; border-radius: 8px; margin-bottom: 12px;
+  background: var(--a-warn-bg); border: 1px solid #f4dfb8; font-size: .85rem; }
+.ord-min.ok { background: var(--a-ok-bg); border-color: #bfe6d2; }
+.ord-min-impact { color: var(--a-muted); font-size: .8rem; }
+
+/* Línea de allocation: movido, caret y "por qué" */
+.ord-moved { font-size: .68rem; font-weight: 700; color: var(--a-warn); background: var(--a-warn-bg); border-radius: 4px; padding: 1px 6px; margin-left: 6px; }
+.ord-caret { color: var(--a-faint); font-size: .7rem; text-align: center; }
+.ord-why { background: var(--a-surface-2); border: 1px dashed var(--a-line-strong); border-radius: 8px; padding: 8px 12px; margin: 2px 0 8px; }
+.ord-why-reason { font-size: .8rem; font-weight: 600; color: var(--a-accent-700); margin-bottom: 6px; }
+.ord-why-table { width: 100%; font-size: .82rem; border-collapse: collapse; }
+.ord-why-table td { padding: 3px 6px; border-top: 1px solid var(--a-line); }
+.ord-why-table tr.chosen { background: var(--a-accent-050); font-weight: 700; }
+.ord-diff { font-size: .76rem; color: var(--a-warn); font-weight: 600; }
 
 /* Modales */
 .ord-modal-bg { position: fixed; inset: 0; background: rgba(15,20,30,.5); display: grid; place-items: center; z-index: 90; padding: 20px; }

@@ -106,11 +106,16 @@ export interface Order {
 }
 
 // Perfume faltante (sin proveedor) y a qué clientes corresponde
+export type MissingStatus = 'CRIST_PENDING' | 'CRIST_BOUGHT' | 'UNAVAILABLE';
+
 export interface MissingItem {
   productId: number;
   brand: string;
   name: string;
+  ml: number | null;
   priceUsd: number | null;
+  registeredPricePen: number | null;
+  resolutionStatus: MissingStatus;
   orders: { orderCode: string; clientName: string; clientPhone: string; quantity: number }[];
 }
 
@@ -441,6 +446,14 @@ export interface ImportPreview {
   rows: ImportPreviewLine[];
 }
 
+export interface AltPrice {
+  supplierId: number;
+  supplierName: string;
+  unitCostUsd: number;
+  chosen: boolean;
+  cheapest: boolean;
+}
+
 export interface AllocationLine {
   productId: number;
   brand: string;
@@ -451,6 +464,11 @@ export interface AllocationLine {
   subtotalUsd: number;
   movedToReachMin: boolean;
   penaltyUsd: number;
+  // Trazabilidad de la decisión (el backend surface datos que el algoritmo ya calculó)
+  chosenSupplierId: number | null;
+  cheapestSupplierId: number | null;
+  reason: string | null;
+  alternatives: AltPrice[];
 }
 
 export interface SupplierAllocation {

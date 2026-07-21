@@ -1,7 +1,7 @@
 import { Component, computed, inject, signal, OnInit } from '@angular/core';
 import { DecimalPipe, DatePipe } from '@angular/common';
 import { ApiService } from '../../../services/api.service';
-import { Order, Consolidado, AllocationResponse, MissingItem, Supplier,
+import { Order, Consolidado, AllocationResponse, MissingItem, MissingStatus, Supplier,
          Promotion, ProfitReport, OrderPromo, OrderItem } from '../../../models/api.models';
 import { CdnImgPipe } from '../../../shared/cdn-img.pipe';
 import { MediaGalleryComponent } from '../shared/media-gallery.component';
@@ -46,6 +46,13 @@ export class OrdersComponent implements OnInit {
 
   // Allocation (al cerrar)
   allocation = signal<AllocationResponse | null>(null);
+  // Líneas de allocation con el "por qué" expandido (por productId)
+  expandedAlloc = signal<Set<number>>(new Set());
+  toggleAllocLine(productId: number) {
+    this.expandedAlloc.update(s => {
+      const n = new Set(s); n.has(productId) ? n.delete(productId) : n.add(productId); return n;
+    });
+  }
 
   // --- Consolidados v2: plazo, aviso e imagen ---
   showScheduleModal = signal(false);
@@ -75,38 +82,45 @@ export class OrdersComponent implements OnInit {
   closeSuppliers = signal<Supplier[]>([]);            // proveedores ACTIVOS para subir su Excel al cerrar
   supplierFiles = signal<Map<number, File>>(new Map()); // supplierId -> Excel
   missing = signal<MissingItem[]>([]);
-  buyElsewhere = signal<Map<number, number>>(new Map()); // productId -> US$/unidad
 
-  buyElsewhereTotalUsd = computed(() => {
-    let total = 0;
-    for (const mi of this.missing()) {
-      if (!this.buyElsewhere().has(mi.productId)) continue;
-      const cost = this.buyElsewhere().get(mi.productId) || 0;
-      const qty = mi.orders.reduce((s, o) => s + (o.quantity || 0), 0);
-      total += cost * qty;
-    }
-    return total;
-  });
+  // Faltantes clasificados por estado PERSISTENTE (sobrevive recargas):
+  //  Caso A = se compra en CristFragance (precio ya calculado). Pendiente o ya comprado.
+  //  Caso B = imposible de conseguir -> se avisa al cliente.
+  caseA = computed(() => this.missing().filter(m => m.resolutionStatus !== 'UNAVAILABLE'));
+  caseB = computed(() => this.missing().filter(m => m.resolutionStatus === 'UNAVAILABLE'));
+  private caseBIds = computed(() => new Set(this.caseB().map(m => m.productId)));
 
-  // Clientes a avisar (faltantes que NO se comprarán en otro proveedor), agrupados
-  clientsToNotify = computed(() => {
-    const buckets = new Map<string, { name: string; phone: string; code: string; items: { label: string; qty: number }[] }>();
-    for (const mi of this.missing()) {
-      if (this.buyElsewhere().has(mi.productId)) continue;
-      for (const ord of mi.orders) {
-        const key = ord.orderCode || ord.clientPhone;
-        let b = buckets.get(key);
-        if (!b) { b = { name: ord.clientName, phone: ord.clientPhone, code: ord.orderCode, items: [] }; buckets.set(key, b); }
-        b.items.push({ label: `${mi.brand} ${mi.name}`, qty: ord.quantity || 1 });
-      }
-    }
-    return [...buckets.values()];
+  caseACounts = computed(() => {
+    const a = this.caseA();
+    return {
+      total: a.length,
+      bought: a.filter(m => m.resolutionStatus === 'CRIST_BOUGHT').length,
+      pending: a.filter(m => m.resolutionStatus === 'CRIST_PENDING').length,
+    };
   });
+  /** Costo estimado de lo que se comprará en CristFragance (precio registrado × unidades). */
+  cristfranceTotalPen = computed(() =>
+    this.caseA().reduce((t, m) => t + (m.registeredPricePen || 0) * this.missingQty(m), 0));
 
   // --- Revisar pedidos SEPARADOS: perfumes que ya no tenemos (ocultos por cambio de proveedor) ---
   showUnavailable = signal(false);
   toggleUnavailable() { this.showUnavailable.update(v => !v); }
-  unavailableReport = computed(() => {
+  // "Revisar separados": perfumes archivados / dados de baja tras cambiar de proveedor.
+  unavailableReport = computed(() =>
+    this.buildUnavailableReport(p => p.available === false || (p as any).archived === true));
+
+  // Caso B (faltantes imposibles): mismo informe por pedido, otro criterio -> reusa whatsappUnavailable.
+  caseBReport = computed(() => {
+    const ids = this.caseBIds();
+    return this.buildUnavailableReport(p => ids.has(p.id));
+  });
+
+  /**
+   * Agrupa por PEDIDO los ítems que un predicado marca como "no disponibles", con el nuevo
+   * total/separación y la devolución proporcional. Único constructor para ambos flujos
+   * ("Revisar separados" y "Caso B") — el mensaje de WhatsApp (whatsappUnavailable) es el mismo.
+   */
+  private buildUnavailableReport(isGone: (product: any) => boolean) {
     const out: {
       order: Order;
       unavailable: { label: string; qty: number }[];
@@ -124,8 +138,7 @@ export class OrdersComponent implements OnInit {
         const qty = it.quantity || 0;
         totalUnits += qty;
         const label = `${p.brand} ${p.name}`;
-        const gone = p.available === false || (p as any).archived === true;
-        if (gone) { un.push({ label, qty }); unavailUnits += qty; unavailValue += it.subtotalPen || 0; }
+        if (isGone(p)) { un.push({ label, qty }); unavailUnits += qty; unavailValue += it.subtotalPen || 0; }
         else { av.push({ label, qty }); }
       }
       if (un.length === 0) continue;
@@ -137,7 +150,7 @@ export class OrdersComponent implements OnInit {
         deducted, newDeposit: dep - deducted, newTotal: (o.totalPen || 0) - unavailValue });
     }
     return out;
-  });
+  }
   whatsappUnavailable(e: { order: Order; unavailable: { label: string; qty: number }[]; available: { label: string; qty: number }[]; deducted: number; newDeposit: number; newTotal: number }) {
     const o = e.order;
     const noHay = e.unavailable.map(i => `• ${i.label} (x${i.qty})`).join('\n');
@@ -568,7 +581,6 @@ Cuéntanos qué prefieres. ¡Gracias por tu comprensión! 🙏`;
     this.closeStep.set('upload');
     this.closeError.set('');
     this.supplierFiles.set(new Map());
-    this.buyElsewhere.set(new Map());
     this.api.getSuppliers().subscribe({
       next: (s) => this.closeSuppliers.set(s.filter(x => x.active)),
       error: () => this.closeSuppliers.set([])
@@ -617,17 +629,72 @@ Cuéntanos qué prefieres. ¡Gracias por tu comprensión! 🙏`;
     });
   }
 
-  toggleBuyElsewhere(productId: number) {
-    const next = new Map(this.buyElsewhere());
-    next.has(productId) ? next.delete(productId) : next.set(productId, 0);
-    this.buyElsewhere.set(next);
-  }
-  setBuyCost(productId: number, value: string) {
-    const next = new Map(this.buyElsewhere());
-    next.set(productId, +value || 0);
-    this.buyElsewhere.set(next);
-  }
   missingQty(mi: MissingItem): number { return mi.orders.reduce((s, o) => s + (o.quantity || 0), 0); }
+
+  /** Persiste el estado del faltante y actualiza la vista al instante (optimista). */
+  setResolution(productId: number, status: MissingStatus) {
+    const id = this.selectedId();
+    if (id == null) return;
+    this.missing.update(list => list.map(m => m.productId === productId ? { ...m, resolutionStatus: status } : m));
+    this.api.setMissingResolution(id, productId, status).subscribe({
+      error: () => { this.showMessage('No se pudo guardar el estado'); if (id != null) this.reloadMissing(id); }
+    });
+  }
+  /** Check "comprado en CristFragance": alterna pendiente ↔ comprado (Caso A). */
+  toggleCristBought(mi: MissingItem, checked: boolean) {
+    this.setResolution(mi.productId, checked ? 'CRIST_BOUGHT' : 'CRIST_PENDING');
+  }
+  private reloadMissing(id: number) {
+    this.api.getMissing(id).subscribe({ next: (m) => this.missing.set(m), error: () => {} });
+  }
+
+  // ---- Resumen ejecutivo de la compra (deriva de datos ya calculados; no toca el algoritmo) ----
+  purchaseSummary = computed(() => {
+    const a = this.allocation();
+    const supplierRows = (a?.suppliers || []).map(s => ({
+      name: s.name, perfumes: s.lines.length,
+      units: s.lines.reduce((u, l) => u + l.quantity, 0),
+      subtotalUsd: s.subtotalUsd, reachedMin: s.reachedMin, minOrderUsd: s.minOrderUsd,
+    }));
+    const supplierPerfumes = supplierRows.reduce((n, r) => n + r.perfumes, 0);
+    const supplierUnits = supplierRows.reduce((n, r) => n + r.units, 0);
+    // Ahorro = Σ(precio del proveedor más caro que lo tiene − precio elegido) × cantidad.
+    let savingsUsd = 0;
+    for (const s of (a?.suppliers || [])) {
+      for (const l of s.lines) {
+        if (!l.alternatives?.length) continue;
+        const maxAlt = Math.max(...l.alternatives.map(x => x.unitCostUsd));
+        savingsUsd += (maxAlt - l.unitCostUsd) * l.quantity;
+      }
+    }
+    const ca = this.caseACounts();
+    const cbUnits = this.caseB().reduce((u, m) => u + this.missingQty(m), 0);
+    return {
+      suppliers: supplierRows,
+      totalPerfumes: supplierPerfumes + this.missing().length,
+      totalUnits: supplierUnits + this.caseA().reduce((u, m) => u + this.missingQty(m), 0) + cbUnits,
+      supplierPerfumes, supplierUnits,
+      chosenTotalUsd: a?.chosenTotalUsd || 0,
+      baselineTotalUsd: a?.baselineTotalUsd || 0,
+      extraCostUsd: a?.extraCostUsd || 0,
+      savingsUsd: Math.round(savingsUsd * 100) / 100,
+      cristfrance: ca.total, cristfrancePending: ca.pending, cristfranceBought: ca.bought,
+      cristfranceTotalPen: this.cristfranceTotalPen(),
+      toNotify: this.caseB().length, notifyUnits: cbUnits,
+    };
+  });
+
+  /** Proveedor prioritario (Zimaxx) para el panel de mínimo. */
+  priorityGroup = computed(() => {
+    const a = this.allocation();
+    if (!a) return null;
+    // El grupo cuyo mínimo es el que el sistema fuerza (zimaxxGap/priority se exponen a nivel global).
+    const withMin = a.suppliers.filter(s => s.minOrderUsd > 0);
+    if (!withMin.length) return null;
+    // Prioriza el que aún no alcanza el mínimo; si todos lo alcanzan, el de mayor mínimo.
+    return withMin.find(s => !s.reachedMin)
+        ?? withMin.slice().sort((x, y) => y.minOrderUsd - x.minOrderUsd)[0];
+  });
 
   whatsappClient(client: { name: string; phone: string; items: { label: string; qty: number }[] }) {
     const list = client.items.map(i => `${i.label} (x${i.qty})`).join(', ');
