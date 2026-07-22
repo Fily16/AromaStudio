@@ -311,18 +311,15 @@
         <div class="ord-fill-kpis">
           <span class="ok">✓ {{ fr.updated }} cantidades escritas</span>
           <span>🙈 {{ fr.hiddenRows }} filas ocultas</span>
+          @if (fr.matchedByCode) { <span>🏷 {{ fr.matchedByCode }} por UPC</span> }
+          @if (fr.matchedByName) { <span>🔎 {{ fr.matchedByName }} por SKU/nombre</span> }
           @if (fr.notFound.length) { <span class="warn">⚠ {{ fr.notFound.length }} no encontradas</span> }
-          @if (fr.noUpcLines.length) { <span class="warn">⚠ {{ fr.noUpcLines.length }} sin UPC</span> }
-          @if (fr.duplicateUpcs.length) { <span class="warn">{{ fr.duplicateUpcs.length }} UPC duplicados</span> }
         </div>
-        @if (fr.notFound.length || fr.noUpcLines.length) {
+        @if (fr.notFound.length) {
           <button class="adm-btn sm" (click)="exportNotFound(fr)">⬇ Exportar no encontrados (CSV)</button>
           <div class="ord-fill-list">
             @for (m of fr.notFound; track m.gtin) {
-              <div>{{ m.brand }} {{ m.name }} · <span class="mono">UPC {{ m.gtin }}</span> · x{{ m.quantity }} — no está en el Excel del proveedor</div>
-            }
-            @for (m of fr.noUpcLines; track m.name) {
-              <div>{{ m.brand }} {{ m.name }} · x{{ m.quantity }} — sin UPC (no ubicable por código)</div>
+              <div>{{ m.brand }} {{ m.name }} · <span class="mono">UPC {{ m.gtin || '—' }}</span> · x{{ m.quantity }} — no está en el Excel del proveedor</div>
             }
           </div>
         }

@@ -774,7 +774,6 @@ Cuéntanos qué prefieres. ¡Gracias por tu comprensión! 🙏`;
   exportNotFound(fr: FillReport) {
     const rows = ['gtin,marca,nombre,cantidad,motivo'];
     for (const m of fr.notFound) rows.push(`${m.gtin ?? ''},"${m.brand ?? ''}","${m.name ?? ''}",${m.quantity},no está en el Excel`);
-    for (const m of fr.noUpcLines) rows.push(`,"${m.brand ?? ''}","${m.name ?? ''}",${m.quantity},sin UPC`);
     const b64 = btoa(unescape(encodeURIComponent(rows.join('\n'))));
     this.downloadBase64(b64, `no-encontrados-${fr.supplierName}.csv`, 'text/csv;charset=utf-8');
   }

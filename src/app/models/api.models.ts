@@ -462,10 +462,10 @@ export interface FillReport {
   totalRows: number;
   found: number;
   updated: number;
+  matchedByCode: number;   // ubicados por UPC / dígitos crudos
+  matchedByName: number;   // ubicados por SKU o nombre (fallback robusto)
   hiddenRows: number;
-  duplicateUpcs: string[];
-  notFound: FillMissing[];
-  noUpcLines: FillMissing[];
+  notFound: FillMissing[]; // pedidos pero ausentes del Excel (por ninguna clave)
   durationMs: number;
 }
 export interface FillExcelResponse { filename: string; fileBase64: string; report: FillReport; }
