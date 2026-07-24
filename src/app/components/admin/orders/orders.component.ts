@@ -2,7 +2,7 @@ import { Component, computed, inject, signal, OnInit } from '@angular/core';
 import { DecimalPipe, DatePipe } from '@angular/common';
 import { ApiService } from '../../../services/api.service';
 import { Order, Consolidado, AllocationResponse, MissingItem, MissingStatus, Supplier,
-         Promotion, ProfitReport, OrderPromo, OrderItem, FillReport } from '../../../models/api.models';
+         Promotion, ProfitReport, OrderPromo, OrderItem, FillReport, SingleSupplierPlan } from '../../../models/api.models';
 import { CdnImgPipe } from '../../../shared/cdn-img.pipe';
 import { MediaGalleryComponent } from '../shared/media-gallery.component';
 import { MissingPanelComponent } from './missing-panel.component';
@@ -745,13 +745,36 @@ Cuéntanos qué prefieres. ¡Gracias por tu comprensión! 🙏`;
     // Carga también los faltantes para verlos junto a la nota "N sin stock" (Caso A/B).
     this.reloadMissing(id);
   }
-  closeAllocation() { this.allocation.set(null); this.missing.set([]); this.fillReport.set(null); }
+  closeAllocation() {
+    this.allocation.set(null); this.missing.set([]); this.fillReport.set(null); this.singlePlan.set(null);
+  }
+
+  // ---- "Comprar solo en un proveedor": consolida todo en uno reusando el mismo motor ----
+  singlePlan = signal<SingleSupplierPlan | null>(null);
+  consolidating = signal<number | null>(null);   // supplierId en proceso
+
+  consolidateTo(supplierId: number, supplierName: string) {
+    const id = this.selectedId();
+    if (id == null) return;
+    this.consolidating.set(supplierId);
+    this.fillReport.set(null);
+    this.api.consolidateToSupplier(id, supplierId).subscribe({
+      next: (plan) => { this.consolidating.set(null); this.singlePlan.set(plan); },
+      error: () => { this.consolidating.set(null); this.showMessage(`No se pudo consolidar en ${supplierName}`); }
+    });
+  }
+  exitSingleMode() { this.singlePlan.set(null); this.fillReport.set(null); }
+
+  // IDs de los que NO se consiguen en el proveedor objetivo -> alimenta el mensaje al cliente.
+  private singleCouldNotBuyIds = computed(() => new Set((this.singlePlan()?.couldNotBuy || []).map(x => x.productId)));
+  // Mensaje "no disponible" por pedido REUSANDO el mismo constructor que Caso B / Revisar separados.
+  singlePlanReport = computed(() => this.buildUnavailableReport(p => this.singleCouldNotBuyIds().has(p.id)));
 
   // ---- Completar Excel del proveedor (llena Quantity por UPC con la asignación) ----
   filling = signal<number | null>(null);   // supplierId en proceso
   fillReport = signal<FillReport | null>(null);
 
-  onFillFile(supplierId: number, supplierName: string, e: Event) {
+  onFillFile(supplierId: number, supplierName: string, e: Event, consolidate = false) {
     const input = e.target as HTMLInputElement;
     const file = input.files?.[0] || null;
     input.value = ''; // permite volver a subir el mismo archivo
@@ -759,7 +782,7 @@ Cuéntanos qué prefieres. ¡Gracias por tu comprensión! 🙏`;
     if (!file || id == null) return;
     this.filling.set(supplierId);
     this.fillReport.set(null);
-    this.api.fillSupplierExcel(id, supplierId, file).subscribe({
+    this.api.fillSupplierExcel(id, supplierId, file, consolidate).subscribe({
       next: (res) => {
         this.filling.set(null);
         this.downloadBase64(res.fileBase64, res.filename,

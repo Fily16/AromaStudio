@@ -470,6 +470,22 @@ export interface FillReport {
 }
 export interface FillExcelResponse { filename: string; fileBase64: string; report: FillReport; }
 
+// "Comprar solo en un proveedor": consolidación de la asignación en un proveedor objetivo
+export interface SingleSupplierBuyLine {
+  productId: number; brand: string; name: string; gtin: string | null; ml: number | null;
+  quantity: number; unitCostUsd: number; subtotalUsd: number;
+  movedFromSupplierId: number | null; movedFromSupplierName: string | null;
+}
+export interface SingleSupplierCouldNotBuy {
+  productId: number; brand: string; name: string; gtin: string | null;
+  quantity: number; currentSupplierName: string; reason: string;
+}
+export interface SingleSupplierPlan {
+  consolidadoId: number; targetSupplierId: number; targetSupplierName: string;
+  buy: SingleSupplierBuyLine[]; couldNotBuy: SingleSupplierCouldNotBuy[];
+  buyPerfumes: number; buyUnits: number; buySubtotalUsd: number;
+}
+
 export interface AllocationLine {
   productId: number;
   brand: string;

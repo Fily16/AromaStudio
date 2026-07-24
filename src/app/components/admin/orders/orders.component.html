@@ -247,6 +247,19 @@
       </div>
     }
 
+    @if (a.suppliers.length >= 2 && !singlePlan()) {
+      <div class="ord-consolidate">
+        <span class="ord-consolidate-label">Consolidar todo en un proveedor:</span>
+        @for (s of a.suppliers; track s.supplierId) {
+          <button class="adm-btn sm" [disabled]="consolidating() !== null"
+                  (click)="consolidateTo(s.supplierId, s.name)">
+            @if (consolidating() === s.supplierId) { ⏳… } @else { 🎯 Solo {{ s.name }} }
+          </button>
+        }
+      </div>
+    }
+
+    @if (!singlePlan()) {
     @for (s of a.suppliers; track s.supplierId) {
       <div class="ord-alloc-sup">
         <div class="ord-alloc-sup-head">
@@ -298,6 +311,72 @@
             }
           }
         </div>
+      </div>
+    }
+    }
+
+    @if (singlePlan(); as sp) {
+      <div class="ord-single">
+        <div class="ord-single-head">
+          <b>🎯 Comprar solo en {{ sp.targetSupplierName }}</b>
+          <div class="ord-single-actions">
+            <label class="adm-btn ghost sm ord-fill-btn" [class.busy]="filling() !== null"
+                   title="Excel de {{ sp.targetSupplierName }} con TODO lo consolidado (incluye reasignados)">
+              @if (filling() === sp.targetSupplierId) { ⏳ Procesando… } @else { ⬇ Completar Excel (consolidado) }
+              <input type="file" accept=".xlsx,.xls" hidden [disabled]="filling() !== null"
+                     (change)="onFillFile(sp.targetSupplierId, sp.targetSupplierName, $event, true)">
+            </label>
+            <button class="adm-btn ghost sm" (click)="exitSingleMode()">↩ Asignación normal</button>
+          </div>
+        </div>
+
+        <!-- Grupo 1: se compran en el proveedor objetivo (incluye reasignados) -->
+        <div class="ord-single-group">
+          <div class="ord-single-gh">
+            <b>✅ Se compran en {{ sp.targetSupplierName }}</b>
+            <span class="adm-st green">{{ sp.buyPerfumes }} perfumes · {{ sp.buyUnits }} u · US$ {{ sp.buySubtotalUsd | number:'1.0-0' }}</span>
+          </div>
+          @for (b of sp.buy; track b.productId) {
+            <div class="ord-alloc-line">
+              <span class="ord-alloc-thumb">
+                @if (productImg(b.productId); as img) { <img [src]="img | cdnImg:100" [alt]="b.name" loading="lazy"> }
+                @else { <span class="ord-alloc-noimg">{{ b.brand }}</span> }
+              </span>
+              <span>{{ b.brand }} — {{ b.name }}@if (b.ml) { · {{ b.ml }}ml }
+                @if (b.movedFromSupplierName) { <span class="ord-moved" title="Estaba asignado a {{ b.movedFromSupplierName }}">↔ reasignado desde {{ b.movedFromSupplierName }}</span> }
+                <span class="ord-upc">UPC {{ b.gtin || 's/upc' }}</span>
+              </span>
+              <span>x{{ b.quantity }}</span>
+              <span class="num">US$ {{ b.subtotalUsd | number:'1.2-2' }}</span>
+            </div>
+          }
+        </div>
+
+        <!-- Grupo 3: no se consiguen en el proveedor objetivo -> avisar al cliente -->
+        @if (sp.couldNotBuy.length) {
+          <div class="ord-single-group">
+            <div class="ord-single-gh">
+              <b>🚫 No se consiguen en {{ sp.targetSupplierName }} ({{ sp.couldNotBuy.length }})</b>
+            </div>
+            @for (c of sp.couldNotBuy; track c.productId) {
+              <div class="ord-alloc-line">
+                <span>{{ c.brand }} — {{ c.name }} <span class="ord-upc">UPC {{ c.gtin || 's/upc' }}</span></span>
+                <span>x{{ c.quantity }}</span>
+                <span class="adm-st amber">solo en {{ c.currentSupplierName }}</span>
+              </div>
+            }
+            @if (singlePlanReport().length) {
+              <div class="ord-single-notify">
+                <span>Avisar a los clientes afectados:</span>
+                @for (r of singlePlanReport(); track r.order.orderCode) {
+                  <button class="adm-btn sm wa" (click)="whatsappUnavailable(r)">
+                    📲 {{ r.order.clientName }} ({{ r.order.orderCode }})
+                  </button>
+                }
+              </div>
+            }
+          </div>
+        }
       </div>
     }
 

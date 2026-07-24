@@ -9,7 +9,7 @@ import {
   Supplier, ImportSummary, AllocationResponse, SuggestResult, OperationsSummary, MissingItem, MissingStatus,
   Promotion, ProfitReport, SupplierRequest, ColumnMapping, ImportPreview, PublishRequest,
   MatchCandidate, SupplierConstraint, PurchasePlan, MarginReportRow, ProductOffersView,
-  ConsolidadoPublic, MediaSummary, PhotoCandidate, PhotoRow, FillExcelResponse
+  ConsolidadoPublic, MediaSummary, PhotoCandidate, PhotoRow, FillExcelResponse, SingleSupplierPlan
 } from '../models/api.models';
 
 @Injectable({ providedIn: 'root' })
@@ -382,18 +382,25 @@ export class ApiService {
       `${this.url}/admin/catalog/archive-legacy`, {}, { headers: this.authHeaders() });
   }
 
-  // "Completar Excel del proveedor": sube el Excel original, devuelve el mismo con las cantidades llenas
-  fillSupplierExcel(consolidadoId: number, supplierId: number, file: File): Observable<FillExcelResponse> {
+  // "Completar Excel del proveedor": sube el Excel original, devuelve el mismo con las cantidades llenas.
+  // consolidate=true -> incluye los reasignados (modo "Comprar solo en este proveedor").
+  fillSupplierExcel(consolidadoId: number, supplierId: number, file: File, consolidate = false): Observable<FillExcelResponse> {
     const fd = new FormData();
     fd.append('file', file);
     return this.http.post<FillExcelResponse>(
-      `${this.url}/admin/consolidados/${consolidadoId}/suppliers/${supplierId}/fill-excel`, fd,
+      `${this.url}/admin/consolidados/${consolidadoId}/suppliers/${supplierId}/fill-excel?consolidate=${consolidate}`, fd,
       { headers: this.authHeaders() });
   }
 
   getAllocation(consolidadoId: number): Observable<AllocationResponse> {
     return this.http.get<AllocationResponse>(
       `${this.url}/admin/consolidados/${consolidadoId}/allocation`, { headers: this.authHeaders() });
+  }
+
+  // "Comprar solo en un proveedor": consolida la asignación en un proveedor (reusa el mismo motor).
+  consolidateToSupplier(consolidadoId: number, supplierId: number): Observable<SingleSupplierPlan> {
+    return this.http.get<SingleSupplierPlan>(
+      `${this.url}/admin/consolidados/${consolidadoId}/allocation/only/${supplierId}`, { headers: this.authHeaders() });
   }
 
   // --- Plan de compra (optimizador v2): calcular DRAFT -> confirmar (costo real) ---
