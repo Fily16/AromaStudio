@@ -189,18 +189,21 @@ export class OrdersComponent implements OnInit {
     const noHay = e.unavailable.map(i => `• ${i.label} (x${i.qty})`).join('\n');
     const siHay = e.available.length ? e.available.map(i => `• ${i.label} (x${i.qty})`).join('\n') : '—';
     const msg =
-`Hola ${o.clientName} 👋 Sobre tu pedido ${o.orderCode}:
-Lamentablemente ya no contamos con:
+`Buenas noches ${o.clientName} 👋 (pedido ${o.orderCode})
+
+Les informamos que algunos perfumes de su pedido quedaron sin stock por parte del proveedor. Esperamos hasta hoy con la posibilidad de reposición, pero finalmente nos confirmó que demorará aproximadamente una semana más.
+
+❌ Sin stock:
 ${noHay}
 
-Tienes 2 opciones:
-1) Te devolvemos S/ ${e.deducted} (lo que separaste por esos perfumes).
-2) Lo descontamos de tu pedido: tu nuevo total sería S/ ${e.newTotal} y tu separación S/ ${e.newDeposit}.
-
-Lo que SÍ tenemos de tu pedido:
+✅ Disponibles de su pedido:
 ${siHay}
 
-Cuéntanos qué prefieres. ¡Gracias por tu comprensión! 🙏`;
+Como sabemos que no podemos hacerlos esperar tanto, les pedimos actualizar su pedido con los perfumes que sí están disponibles. La página ya fue actualizada con el stock confirmado por el proveedor.
+
+⏰ Podrán actualizar su pedido desde este momento hasta las 8:00 p. m. Recuerden ingresar su código de pedido y el número de teléfono con el que realizaron la compra.
+
+Lamentamos los inconvenientes y agradecemos mucho su comprensión. 🙏`;
     const phone = '51' + (o.clientPhone || '').replace(/\D/g, '').slice(-9);
     window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, '_blank');
   }

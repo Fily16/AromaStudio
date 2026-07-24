@@ -395,13 +395,10 @@
                         <span class="ord-nc-code">{{ r.order.orderCode }}</span>
                       </div>
                       <div class="ord-nc-chips">
+                        <span class="ord-nc-chip miss">Sin stock:</span>
                         @for (u of r.unavailable; track u.label) {
                           <span class="ord-nc-chip">{{ u.label }} <b>×{{ u.qty }}</b></span>
                         }
-                      </div>
-                      <div class="ord-nc-money">
-                        <span>Devolver <b>S/ {{ r.deducted }}</b></span>
-                        <span>o nuevo total <b>S/ {{ r.newTotal }}</b></span>
                       </div>
                       <button class="adm-btn sm wa" (click)="whatsappUnavailable(r)">📲 Enviar WhatsApp</button>
                     </div>

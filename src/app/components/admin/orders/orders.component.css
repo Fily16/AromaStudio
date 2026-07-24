@@ -292,8 +292,7 @@
 .ord-nc-chips { display: flex; flex-wrap: wrap; gap: 5px; }
 .ord-nc-chip { font-size: .74rem; background: #fff; border: 1px solid var(--a-line); border-radius: 6px; padding: 2px 7px; }
 .ord-nc-chip b { color: #b9701a; }
-.ord-nc-money { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: .76rem; color: var(--a-muted); }
-.ord-nc-money b { color: var(--a-text, #1a1a1a); }
+.ord-nc-chip.miss { background: transparent; border: none; padding: 2px 0; color: var(--a-muted); font-weight: 600; }
 .ord-nc-client .adm-btn.wa { margin-top: 2px; }
 
 @media (max-width: 640px) {
