@@ -252,3 +252,50 @@
 .ord-single-notify { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--a-line); }
 .ord-single-notify > span { color: var(--a-muted); font-size: .8rem; }
 .adm-btn.wa { background: #25d366; border-color: #1eb257; color: #fff; }
+
+/* --- Grupo "No se consiguen": tarjetas con foto + cantidad + avisos por cliente --- */
+.ord-nc-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 10px; margin: 8px 0 4px;
+}
+.ord-nc-card {
+  display: flex; align-items: center; gap: 10px;
+  background: #fff; border: 1px solid #f0dbb0; border-left: 3px solid #e8a33d;
+  border-radius: 10px; padding: 8px 10px;
+}
+.ord-nc-thumb {
+  flex: 0 0 auto; width: 48px; height: 48px; border-radius: 8px; overflow: hidden;
+  background: #f5f2ee; display: flex; align-items: center; justify-content: center;
+}
+.ord-nc-thumb img { width: 100%; height: 100%; object-fit: cover; }
+.ord-nc-thumb .ord-alloc-noimg { font-size: .62rem; color: var(--a-muted); text-align: center; padding: 2px; }
+.ord-nc-info { flex: 1 1 auto; min-width: 0; }
+.ord-nc-name { font-weight: 600; font-size: .86rem; line-height: 1.2; }
+.ord-nc-meta { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-top: 3px; }
+.ord-nc-ml { font-size: .72rem; font-weight: 600; color: #8a5a12; background: #fbeecd; border-radius: 5px; padding: 1px 6px; }
+.ord-nc-src { font-size: .72rem; color: var(--a-muted); margin-top: 3px; }
+.ord-nc-qty {
+  flex: 0 0 auto; align-self: center; font-weight: 800; font-size: 1.05rem; color: #b9701a;
+  background: #fbeecd; border-radius: 8px; padding: 6px 10px; min-width: 44px; text-align: center;
+}
+
+.ord-nc-notify { margin-top: 12px; padding-top: 10px; border-top: 1px dashed var(--a-line); }
+.ord-nc-notify-head { font-weight: 700; font-size: .84rem; margin-bottom: 8px; }
+.ord-nc-clients { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 10px; }
+.ord-nc-client {
+  display: flex; flex-direction: column; gap: 6px;
+  background: #f6fff9; border: 1px solid #cdeede; border-radius: 10px; padding: 10px 12px;
+}
+.ord-nc-client-top { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.ord-nc-client-top b { font-size: .88rem; }
+.ord-nc-code { font-size: .72rem; color: var(--a-muted); font-family: ui-monospace, monospace; }
+.ord-nc-chips { display: flex; flex-wrap: wrap; gap: 5px; }
+.ord-nc-chip { font-size: .74rem; background: #fff; border: 1px solid var(--a-line); border-radius: 6px; padding: 2px 7px; }
+.ord-nc-chip b { color: #b9701a; }
+.ord-nc-money { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: .76rem; color: var(--a-muted); }
+.ord-nc-money b { color: var(--a-text, #1a1a1a); }
+.ord-nc-client .adm-btn.wa { margin-top: 2px; }
+
+@media (max-width: 640px) {
+  .ord-nc-grid, .ord-nc-clients { grid-template-columns: 1fr; }
+}

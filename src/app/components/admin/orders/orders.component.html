@@ -354,25 +354,59 @@
 
         <!-- Grupo 3: no se consiguen en el proveedor objetivo -> avisar al cliente -->
         @if (sp.couldNotBuy.length) {
-          <div class="ord-single-group">
+          <div class="ord-single-group ord-nc">
             <div class="ord-single-gh">
-              <b>🚫 No se consiguen en {{ sp.targetSupplierName }} ({{ sp.couldNotBuy.length }})</b>
+              <b>🚫 No se consiguen en {{ sp.targetSupplierName }}</b>
+              @if (couldNotBuySummary(); as cs) {
+                <span class="adm-st amber">{{ cs.perfumes }} perfumes · {{ cs.units }} unidades</span>
+              }
             </div>
-            @for (c of sp.couldNotBuy; track c.productId) {
-              <div class="ord-alloc-line">
-                <span>{{ c.brand }} — {{ c.name }} <span class="ord-upc">UPC {{ c.gtin || 's/upc' }}</span></span>
-                <span>x{{ c.quantity }}</span>
-                <span class="adm-st amber">solo en {{ c.currentSupplierName }}</span>
-              </div>
-            }
+
+            <!-- Tarjetas de producto con foto + cantidad destacada -->
+            <div class="ord-nc-grid">
+              @for (c of sp.couldNotBuy; track c.productId) {
+                <div class="ord-nc-card">
+                  <span class="ord-nc-thumb">
+                    @if (productImg(c.productId); as img) { <img [src]="img | cdnImg:120" [alt]="c.name" loading="lazy"> }
+                    @else { <span class="ord-alloc-noimg">{{ c.brand }}</span> }
+                  </span>
+                  <div class="ord-nc-info">
+                    <div class="ord-nc-name">{{ c.brand }} — {{ c.name }}</div>
+                    <div class="ord-nc-meta">
+                      @if (c.ml) { <span class="ord-nc-ml">{{ c.ml }}ml</span> }
+                      <span class="ord-upc">UPC {{ c.gtin || 's/upc' }}</span>
+                    </div>
+                    <div class="ord-nc-src">Disponible solo en {{ c.currentSupplierName }}</div>
+                  </div>
+                  <span class="ord-nc-qty" title="Cantidad pedida de este perfume">×{{ c.quantity }}</span>
+                </div>
+              }
+            </div>
+
+            <!-- Avisos a clientes: una tarjeta por pedido afectado con el detalle -->
             @if (singlePlanReport().length) {
-              <div class="ord-single-notify">
-                <span>Avisar a los clientes afectados:</span>
-                @for (r of singlePlanReport(); track r.order.orderCode) {
-                  <button class="adm-btn sm wa" (click)="whatsappUnavailable(r)">
-                    📲 {{ r.order.clientName }} ({{ r.order.orderCode }})
-                  </button>
-                }
+              <div class="ord-nc-notify">
+                <div class="ord-nc-notify-head">📲 Avisar a {{ singlePlanReport().length }} cliente(s) afectado(s)</div>
+                <div class="ord-nc-clients">
+                  @for (r of singlePlanReport(); track r.order.orderCode) {
+                    <div class="ord-nc-client">
+                      <div class="ord-nc-client-top">
+                        <b>{{ r.order.clientName }}</b>
+                        <span class="ord-nc-code">{{ r.order.orderCode }}</span>
+                      </div>
+                      <div class="ord-nc-chips">
+                        @for (u of r.unavailable; track u.label) {
+                          <span class="ord-nc-chip">{{ u.label }} <b>×{{ u.qty }}</b></span>
+                        }
+                      </div>
+                      <div class="ord-nc-money">
+                        <span>Devolver <b>S/ {{ r.deducted }}</b></span>
+                        <span>o nuevo total <b>S/ {{ r.newTotal }}</b></span>
+                      </div>
+                      <button class="adm-btn sm wa" (click)="whatsappUnavailable(r)">📲 Enviar WhatsApp</button>
+                    </div>
+                  }
+                </div>
               </div>
             }
           </div>

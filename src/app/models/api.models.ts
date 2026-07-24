@@ -477,7 +477,7 @@ export interface SingleSupplierBuyLine {
   movedFromSupplierId: number | null; movedFromSupplierName: string | null;
 }
 export interface SingleSupplierCouldNotBuy {
-  productId: number; brand: string; name: string; gtin: string | null;
+  productId: number; brand: string; name: string; gtin: string | null; ml: number | null;
   quantity: number; currentSupplierName: string; reason: string;
 }
 export interface SingleSupplierPlan {

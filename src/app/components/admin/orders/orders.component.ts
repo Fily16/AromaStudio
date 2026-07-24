@@ -769,6 +769,11 @@ Cuéntanos qué prefieres. ¡Gracias por tu comprensión! 🙏`;
   private singleCouldNotBuyIds = computed(() => new Set((this.singlePlan()?.couldNotBuy || []).map(x => x.productId)));
   // Mensaje "no disponible" por pedido REUSANDO el mismo constructor que Caso B / Revisar separados.
   singlePlanReport = computed(() => this.buildUnavailableReport(p => this.singleCouldNotBuyIds().has(p.id)));
+  // Resumen del grupo "no se consiguen": perfumes distintos + unidades totales.
+  couldNotBuySummary = computed(() => {
+    const list = this.singlePlan()?.couldNotBuy || [];
+    return { perfumes: list.length, units: list.reduce((u, c) => u + c.quantity, 0) };
+  });
 
   // ---- Completar Excel del proveedor (llena Quantity por UPC con la asignación) ----
   filling = signal<number | null>(null);   // supplierId en proceso
