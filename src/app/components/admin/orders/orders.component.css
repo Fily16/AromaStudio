@@ -309,6 +309,17 @@
 .ord-blast-progress { height: 7px; background: #eee; border-radius: 99px; overflow: hidden; }
 .ord-blast-progress i { display: block; height: 100%; background: #25d366; transition: width .25s; }
 
+.ord-blast-filter { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+.ord-blast-filter > span { font-size: .8rem; color: var(--a-muted); font-weight: 600; }
+.ord-blast-tab {
+  display: inline-flex; align-items: center; gap: 6px; cursor: pointer;
+  background: #fff; border: 1px solid var(--a-line); border-radius: 99px;
+  padding: 5px 12px; font-size: .8rem; font-weight: 600; color: var(--a-muted);
+}
+.ord-blast-tab:hover { border-color: #b9701a; }
+.ord-blast-tab.on { background: #fff4e2; border-color: #eab676; color: #8a5a12; }
+.ord-blast-count { background: rgba(0,0,0,.07); border-radius: 99px; padding: 0 7px; font-size: .74rem; }
+
 .ord-blast-note {
   font-size: .8rem; color: var(--a-muted); background: #f7f9fc; border: 1px solid var(--a-line);
   border-radius: 8px; padding: 8px 10px; margin-bottom: 12px; line-height: 1.45;

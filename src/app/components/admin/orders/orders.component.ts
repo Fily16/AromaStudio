@@ -218,14 +218,27 @@ Lamentamos los inconvenientes y agradecemos mucho su comprensión. 🙏`;
   /** Pedidos ya avisados; se guarda en el navegador para no perder el avance si recargas. */
   refundSent = signal<Set<number>>(new Set());
 
-  /** A quiénes avisar: todos los que ya pagaron (separación o total) en el canal consolidado. */
-  refundTargets = computed(() => this.acceptedOrders().map(o => ({
+  /** Filtro de a quién avisar: solo los SEPARADO (por defecto) o todos los que pagaron algo. */
+  refundFilter = signal<'SEPARADO' | 'ALL'>('SEPARADO');
+
+  /** Base: todos los que ya pagaron (separación o total) en el canal consolidado. */
+  private refundBase = computed(() => this.acceptedOrders().map(o => ({
     order: o,
     paidPen: (o.paymentStatus === 'PAGADO' || o.paymentStatus === 'VERIFICADO')
       ? (o.totalPen || 0) : (o.depositAmountPen || 0),
     fullyPaid: o.paymentStatus === 'PAGADO' || o.paymentStatus === 'VERIFICADO',
     units: o.items.reduce((s, i) => s + (i.quantity || 0), 0),
   })));
+
+  refundTargets = computed(() => {
+    const f = this.refundFilter();
+    return this.refundBase().filter(t => f === 'ALL' || t.order.paymentStatus === 'SEPARADO');
+  });
+
+  refundCounts = computed(() => {
+    const base = this.refundBase();
+    return { separado: base.filter(t => t.order.paymentStatus === 'SEPARADO').length, all: base.length };
+  });
 
   refundProgress = computed(() => {
     const t = this.refundTargets(), sent = this.refundSent();
@@ -275,22 +288,23 @@ Lamentamos los inconvenientes y agradecemos mucho su comprensión. 🙏`;
       : `💵 Separación pagada: ${monto}`;
     return `Hola ${o.clientName} 👋 (pedido ${o.orderCode})
 
-Para mantener el orden y ser transparentes contigo, te informamos que uno de nuestros proveedores nos acaba de enviar su stock actualizado, mientras que el otro no mantiene una amplia disponibilidad de perfumes.
+Para mantener el orden y ser transparentes con ustedes, les informamos que uno de nuestros proveedores nos acaba de enviar su stock actualizado, mientras que el otro no mantiene una amplia disponibilidad de perfumes.
+
+⏳ ¿Por qué tomamos esta decisión?
+Esperamos hasta hoy por la reposición de esos perfumes, pero el proveedor recién nos confirmó que demorará aproximadamente una semana más. No queremos hacerlos esperar todo ese tiempo ni entregarles un pedido incompleto, por eso preferimos avisarles desde ahora.
 
 📦 Tu pedido:
 ${lista}
 
 ${linePago}
 
-Para evitar confusiones, primero realizaremos la devolución de ${monto}. Por favor, envíanos:
-• Número de teléfono (Yape/Plin):
-• Nombre del titular:
+Para evitar confusiones, primero realizaremos la devolución del monto de la separación (${monto}). Por favor, envíennos:
+- número de teléfono:
+- nombre del titular:
 
-La página YA está actualizada únicamente con los perfumes que cuentan con stock confirmado, es decir, ya no habrá más problemas por el tema de stock. La separación seguirá siendo de S/ 20 por perfume, con un mínimo de 3 unidades.
+Una vez finalizadas las devoluciones, les avisaremos para que puedan realizar nuevamente su pedido. La página se va a actualizar únicamente con los perfumes que cuentan con stock confirmado, es decir ya no habrá más problema por el tema de stock. La separación seguirá siendo de S/ 20 por perfume, con un mínimo de 3 unidades.
 
-⏰ Puedes volver a realizar tu pedido hasta MAÑANA a las 8:00 a. m.
-
-De esta manera podremos procesar todos los pedidos de forma ordenada y garantizar la disponibilidad de los productos. ¡Gracias por tu comprensión! 🙏`;
+De esta manera podremos procesar todos los pedidos de forma ordenada y garantizar la disponibilidad de los productos. ¡Gracias por su comprensión! 🙏`;
   }
 
   /** Abre el WhatsApp de ese cliente con el mensaje listo y lo marca como avisado. */

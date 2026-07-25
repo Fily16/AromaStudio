@@ -878,6 +878,18 @@
         </div>
       }
 
+      @if (refundCounts(); as rc) {
+        <div class="ord-blast-filter">
+          <span>Avisar a:</span>
+          <button class="ord-blast-tab" [class.on]="refundFilter() === 'SEPARADO'" (click)="refundFilter.set('SEPARADO')">
+            Solo separados <span class="ord-blast-count">{{ rc.separado }}</span>
+          </button>
+          <button class="ord-blast-tab" [class.on]="refundFilter() === 'ALL'" (click)="refundFilter.set('ALL')">
+            Todos los que pagaron <span class="ord-blast-count">{{ rc.all }}</span>
+          </button>
+        </div>
+      }
+
       <p class="ord-blast-note">
         WhatsApp no permite enviar a todos de golpe: el mensaje se abre <b>ya escrito</b> para cada cliente
         y solo le das <b>Enviar</b>. La lista recuerda a quién ya avisaste, aunque cierres o recargues.
