@@ -9,7 +9,8 @@ import {
   Supplier, ImportSummary, AllocationResponse, SuggestResult, OperationsSummary, MissingItem, MissingStatus,
   Promotion, ProfitReport, SupplierRequest, ColumnMapping, ImportPreview, PublishRequest,
   MatchCandidate, SupplierConstraint, PurchasePlan, MarginReportRow, ProductOffersView,
-  ConsolidadoPublic, MediaSummary, PhotoCandidate, PhotoRow, FillExcelResponse, SingleSupplierPlan
+  ConsolidadoPublic, MediaSummary, PhotoCandidate, PhotoRow, FillExcelResponse, SingleSupplierPlan,
+  OfferIndexRow
 } from '../models/api.models';
 
 @Injectable({ providedIn: 'root' })
@@ -471,6 +472,11 @@ export class ApiService {
   }
 
   // --- Ofertas por producto (vista multi-proveedor + costo que define el precio) ---
+  /** Índice de ofertas de todo el catálogo (1 request) para filtrar por proveedor / sold out. */
+  getOffersIndex(): Observable<OfferIndexRow[]> {
+    return this.http.get<OfferIndexRow[]>(`${this.url}/admin/offers-index`, { headers: this.authHeaders() });
+  }
+
   getProductOffers(productId: number): Observable<ProductOffersView> {
     return this.http.get<ProductOffersView>(`${this.url}/admin/products/${productId}/offers`,
       { headers: this.authHeaders() });

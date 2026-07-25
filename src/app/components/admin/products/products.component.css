@@ -25,6 +25,53 @@
 .pflag.basis { background: #e8f5e9; color: #2e7d32; margin-left: 6px; }
 .pflag.flash { background: #fff8e1; color: #f57f17; margin-left: 6px; }
 
+/* ===== Barra de filtros ===== */
+.prod-filters {
+  display: flex; flex-direction: column; gap: 8px;
+  background: var(--a-surface); border: 1px solid var(--a-line);
+  border-radius: 10px; padding: 10px 12px; margin-bottom: 16px;
+}
+.pf-row { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; }
+.pf-label {
+  font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .03em;
+  color: var(--a-muted); min-width: 116px;
+}
+.pf-count { font-size: .8rem; color: var(--a-muted); margin-left: auto; }
+.pf-count b { color: var(--a-text, #1a1a1a); }
+
+.pf-chip {
+  display: inline-flex; align-items: center; gap: 6px; cursor: pointer;
+  background: #fff; border: 1px solid var(--a-line); border-radius: 999px;
+  padding: 4px 11px; font-size: .78rem; font-weight: 600; color: var(--a-muted);
+  font-family: inherit; transition: background .12s, border-color .12s, color .12s;
+}
+.pf-chip:hover { border-color: #9aa8bd; color: var(--a-text, #1a1a1a); }
+.pf-chip.on { background: #eaf1ff; border-color: #9dbcf5; color: #1c4fa1; }
+.pf-n { background: rgba(0,0,0,.07); border-radius: 999px; padding: 0 6px; font-size: .7rem; }
+.pf-chip.on .pf-n { background: rgba(28,79,161,.14); }
+
+.pf-seg { display: inline-flex; border: 1px solid var(--a-line); border-radius: 8px; overflow: hidden; }
+.pf-seg button {
+  border: none; background: #fff; cursor: pointer; font-family: inherit;
+  padding: 5px 11px; font-size: .78rem; font-weight: 600; color: var(--a-muted);
+}
+.pf-seg button + button { border-left: 1px solid var(--a-line); }
+.pf-seg button.on { background: #eaf1ff; color: #1c4fa1; }
+
+/* Chips de proveedor dentro de la fila del producto */
+.prod-sups { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 4px; }
+.psup {
+  font-size: .66rem; font-weight: 700; padding: 2px 7px; border-radius: 999px;
+  background: #e8f5e9; color: #2e7d32; white-space: nowrap;
+}
+.psup.out { background: #f4f5f7; color: #8b93a1; }
+.psup.none { background: #fdecea; color: #c5221f; }
+
+@media (max-width: 640px) {
+  .pf-label { min-width: 100%; }
+  .pf-count { margin-left: 0; }
+}
+
 .offers-scrim { position: fixed; inset: 0; background: rgba(15,18,25,.45); z-index: 90; }
 .offers-modal {
   position: fixed; z-index: 91; top: 50%; left: 50%; transform: translate(-50%,-50%);

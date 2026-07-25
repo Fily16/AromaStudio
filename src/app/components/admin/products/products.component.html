@@ -26,10 +26,47 @@
   </div>
 </div>
 
-<p style="color:var(--a-muted);font-size:.84rem;margin-bottom:16px">
+<p style="color:var(--a-muted);font-size:.84rem;margin-bottom:12px">
   <b>Puesto en Perú</b> = costo + envío (${{ cfg().courier }}/kg) + caja (${{ cfg().repackPerBox }}/{{ cfg().perBox }}) × T/C {{ cfg().tc }}.
   <b>Consolidado</b> = puesto en Perú + S/20. <b>Stock</b> = + S/35. Redondeado hacia arriba.
 </p>
+
+<!-- ===== Filtros combinables (proveedor + banderas del catálogo) ===== -->
+<div class="prod-filters">
+  <div class="pf-row">
+    <span class="pf-label">Proveedor</span>
+    <select class="adm-select" style="width:auto" (change)="onSupplier($event)">
+      <option value="ALL">Todos los proveedores</option>
+      @for (s of suppliers(); track s.id) { <option [value]="s.id">{{ s.name }}</option> }
+      <option value="NONE">— Sin proveedor —</option>
+    </select>
+
+    @if (supplierFilter() !== 'ALL' && supplierFilter() !== 'NONE') {
+      <div class="pf-seg">
+        <button [class.on]="supplierStock() === 'ALL'" (click)="setSupplierStock('ALL')">Todos</button>
+        <button [class.on]="supplierStock() === 'IN'" (click)="setSupplierStock('IN')">✅ Disponibles</button>
+        <button [class.on]="supplierStock() === 'OUT'" (click)="setSupplierStock('OUT')">🚫 Sold out</button>
+      </div>
+    }
+
+    <span class="pf-count">Mostrando <b>{{ filtered().length }}</b> de {{ products().length }}</span>
+    @if (activeFilterCount()) {
+      <button class="adm-btn ghost sm" (click)="clearFilters()">✕ Limpiar filtros ({{ activeFilterCount() }})</button>
+    }
+  </div>
+
+  @for (g of filterGroups; track g.name) {
+    <div class="pf-row">
+      <span class="pf-label">{{ g.name }}</span>
+      @for (f of g.filters; track f.id) {
+        <button class="pf-chip" [class.on]="activeFilters().has(f.id)"
+                [title]="f.hint || f.label" (click)="toggleFilter(f.id)">
+          {{ f.label }} <span class="pf-n">{{ filterCounts()[f.id] }}</span>
+        </button>
+      }
+    </div>
+  }
+</div>
 
 <!-- Crear -->
 @if (showCreate()) {
@@ -82,6 +119,17 @@
                 <div style="font-size:.72rem;text-transform:uppercase;letter-spacing:.03em;color:var(--a-muted);font-weight:700">{{ p.brand }}</div>
                 <div>{{ p.name }} @if (p.ml) { · {{ p.ml }}ml }</div>
                 <div style="font-size:.74rem;color:var(--a-faint)">{{ p.sku }}</div>
+                @if (supplierChips(p.id); as chips) {
+                  <div class="prod-sups">
+                    @for (c of chips; track c.name) {
+                      <span class="psup" [class.out]="!c.inStock"
+                            [title]="c.inStock ? 'Con stock en ' + c.name : 'Sold out en ' + c.name">
+                        {{ c.inStock ? '✅' : '🚫' }} {{ c.name }}
+                      </span>
+                    }
+                    @if (!chips.length) { <span class="psup none" title="Ningún proveedor lo tiene cargado">sin proveedor</span> }
+                  </div>
+                }
                 @if (p.matchPending || p.gtinConflict) {
                   <div class="prod-flags">
                     @if (p.matchPending) {

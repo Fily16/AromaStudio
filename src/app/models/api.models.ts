@@ -470,6 +470,17 @@ export interface FillReport {
 }
 export interface FillExcelResponse { filename: string; fileBase64: string; report: FillReport; }
 
+// Índice compacto de ofertas de TODO el catálogo (1 request) para los filtros del admin
+export interface OfferIndexRow {
+  productId: number;
+  supplierId: number;
+  supplierName: string;
+  supplierActive: boolean;
+  inStock: boolean;
+  costUsd: number | null;
+  gtinStatus: string | null;
+}
+
 // "Comprar solo en un proveedor": consolidación de la asignación en un proveedor objetivo
 export interface SingleSupplierBuyLine {
   productId: number; brand: string; name: string; gtin: string | null; ml: number | null;
