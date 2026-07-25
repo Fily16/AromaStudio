@@ -304,6 +304,8 @@ Para evitar confusiones, primero realizaremos la devolución del monto de la sep
 
 Una vez finalizadas las devoluciones, les avisaremos para que puedan realizar nuevamente su pedido. La página se va a actualizar únicamente con los perfumes que cuentan con stock confirmado, es decir ya no habrá más problema por el tema de stock. La separación seguirá siendo de S/ 20 por perfume, con un mínimo de 3 unidades.
 
+⏰ Podrán volver a realizar su pedido hasta MAÑANA a las 9:00 a. m.
+
 De esta manera podremos procesar todos los pedidos de forma ordenada y garantizar la disponibilidad de los productos. ¡Gracias por su comprensión! 🙏`;
   }
 
