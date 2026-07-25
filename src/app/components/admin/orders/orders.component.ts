@@ -204,8 +204,104 @@ Como sabemos que no podemos hacerlos esperar tanto, les pedimos actualizar su pe
 ⏰ Podrán actualizar su pedido desde este momento hasta las 8:00 p. m. Recuerden ingresar su código de pedido y el número de teléfono con el que realizaron la compra.
 
 Lamentamos los inconvenientes y agradecemos mucho su comprensión. 🙏`;
-    const phone = '51' + (o.clientPhone || '').replace(/\D/g, '').slice(-9);
+    this.openClientWhatsapp(o.clientPhone, msg);
+  }
+
+  /** Abre WhatsApp con el número DEL CLIENTE (el util compartido es para el número del negocio). */
+  private openClientWhatsapp(clientPhone: string | null, msg: string) {
+    const phone = '51' + (clientPhone || '').replace(/\D/g, '').slice(-9);
     window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, '_blank');
+  }
+
+  // ===== Aviso masivo de devolución (imprevisto de stock: se devuelve la separación) =====
+  showRefundBlast = signal(false);
+  /** Pedidos ya avisados; se guarda en el navegador para no perder el avance si recargas. */
+  refundSent = signal<Set<number>>(new Set());
+
+  /** A quiénes avisar: todos los que ya pagaron (separación o total) en el canal consolidado. */
+  refundTargets = computed(() => this.acceptedOrders().map(o => ({
+    order: o,
+    paidPen: (o.paymentStatus === 'PAGADO' || o.paymentStatus === 'VERIFICADO')
+      ? (o.totalPen || 0) : (o.depositAmountPen || 0),
+    fullyPaid: o.paymentStatus === 'PAGADO' || o.paymentStatus === 'VERIFICADO',
+    units: o.items.reduce((s, i) => s + (i.quantity || 0), 0),
+  })));
+
+  refundProgress = computed(() => {
+    const t = this.refundTargets(), sent = this.refundSent();
+    const done = t.filter(x => sent.has(x.order.id)).length;
+    return { total: t.length, sent: done, pending: t.length - done,
+             totalPen: t.reduce((s, x) => s + x.paidPen, 0) };
+  });
+
+  private refundKey() { return `refundBlast:${this.selectedId()}`; }
+
+  openRefundBlast() {
+    try {
+      const raw = localStorage.getItem(this.refundKey());
+      this.refundSent.set(new Set<number>(raw ? JSON.parse(raw) : []));
+    } catch { this.refundSent.set(new Set()); }
+    this.showRefundBlast.set(true);
+  }
+
+  private persistRefundSent(s: Set<number>) {
+    try { localStorage.setItem(this.refundKey(), JSON.stringify([...s])); } catch { /* modo privado */ }
+  }
+
+  toggleRefundSent(orderId: number) {
+    this.refundSent.update(s => {
+      const n = new Set(s);
+      if (n.has(orderId)) n.delete(orderId); else n.add(orderId);
+      this.persistRefundSent(n);
+      return n;
+    });
+  }
+
+  resetRefundSent() {
+    if (!confirm('¿Reiniciar el control de "enviados"? Solo limpia las marcas de esta lista; no borra los WhatsApp ya enviados.')) return;
+    this.refundSent.set(new Set());
+    this.persistRefundSent(new Set());
+  }
+
+  /** Mensaje personalizado: su lista de perfumes + lo que pagó + qué debe hacer y hasta cuándo. */
+  refundMessage(t: { order: Order; paidPen: number; fullyPaid: boolean }): string {
+    const o = t.order;
+    const lista = o.items
+      .map(i => `• ${(i.product?.brand || '')} ${(i.product?.name || '')}`.trim() + ` (x${i.quantity})`)
+      .join('\n') || '—';
+    const monto = `S/ ${t.paidPen}`;
+    const linePago = t.fullyPaid
+      ? `💵 Monto pagado: ${monto} (pago completo)`
+      : `💵 Separación pagada: ${monto}`;
+    return `Hola ${o.clientName} 👋 (pedido ${o.orderCode})
+
+Para mantener el orden y ser transparentes contigo, te informamos que uno de nuestros proveedores nos acaba de enviar su stock actualizado, mientras que el otro no mantiene una amplia disponibilidad de perfumes.
+
+📦 Tu pedido:
+${lista}
+
+${linePago}
+
+Para evitar confusiones, primero realizaremos la devolución de ${monto}. Por favor, envíanos:
+• Número de teléfono (Yape/Plin):
+• Nombre del titular:
+
+La página YA está actualizada únicamente con los perfumes que cuentan con stock confirmado, es decir, ya no habrá más problemas por el tema de stock. La separación seguirá siendo de S/ 20 por perfume, con un mínimo de 3 unidades.
+
+⏰ Puedes volver a realizar tu pedido hasta MAÑANA a las 8:00 a. m.
+
+De esta manera podremos procesar todos los pedidos de forma ordenada y garantizar la disponibilidad de los productos. ¡Gracias por tu comprensión! 🙏`;
+  }
+
+  /** Abre el WhatsApp de ese cliente con el mensaje listo y lo marca como avisado. */
+  whatsappRefund(t: { order: Order; paidPen: number; fullyPaid: boolean }) {
+    this.openClientWhatsapp(t.order.clientPhone, this.refundMessage(t));
+    this.refundSent.update(s => {
+      const n = new Set(s);
+      n.add(t.order.id);
+      this.persistRefundSent(n);
+      return n;
+    });
   }
 
   // Detalle de pedido (fila expandible) + desglose final

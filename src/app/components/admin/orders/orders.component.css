@@ -298,3 +298,40 @@
 @media (max-width: 640px) {
   .ord-nc-grid, .ord-nc-clients { grid-template-columns: 1fr; }
 }
+
+/* ===== Aviso masivo de devolución ===== */
+.ord-blast-btn { background: #fff4e2; border-color: #eab676; color: #8a5a12; font-weight: 600; }
+.ord-blast-btn:hover { background: #ffe9c9; }
+
+.ord-blast-bar { margin-bottom: 10px; }
+.ord-blast-kpis { display: flex; gap: 14px; flex-wrap: wrap; font-size: .84rem; margin-bottom: 6px; }
+.ord-blast-kpis .pend { color: #b9701a; }
+.ord-blast-progress { height: 7px; background: #eee; border-radius: 99px; overflow: hidden; }
+.ord-blast-progress i { display: block; height: 100%; background: #25d366; transition: width .25s; }
+
+.ord-blast-note {
+  font-size: .8rem; color: var(--a-muted); background: #f7f9fc; border: 1px solid var(--a-line);
+  border-radius: 8px; padding: 8px 10px; margin-bottom: 12px; line-height: 1.45;
+}
+
+.ord-blast-list { display: flex; flex-direction: column; gap: 8px; max-height: 55vh; overflow-y: auto; padding-right: 4px; }
+.ord-blast-row {
+  display: flex; align-items: flex-start; gap: 10px;
+  border: 1px solid var(--a-line); border-radius: 10px; padding: 9px 11px; background: #fff;
+}
+.ord-blast-row.done { background: #f4fbf6; border-color: #cdeede; opacity: .78; }
+.ord-blast-check { flex: 0 0 auto; padding-top: 2px; }
+.ord-blast-check input { width: 17px; height: 17px; cursor: pointer; }
+.ord-blast-info { flex: 1 1 auto; min-width: 0; }
+.ord-blast-top { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.ord-blast-top b { font-size: .88rem; }
+.ord-blast-items { display: flex; flex-wrap: wrap; gap: 4px; margin: 5px 0 4px; }
+.ord-blast-meta { font-size: .74rem; color: var(--a-muted); }
+.ord-blast-right { flex: 0 0 auto; display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
+.ord-blast-amount { font-weight: 800; font-size: .95rem; color: #b9701a; white-space: nowrap; }
+.ord-blast-empty { color: var(--a-muted); font-size: .85rem; padding: 14px 0; text-align: center; }
+
+@media (max-width: 640px) {
+  .ord-blast-row { flex-wrap: wrap; }
+  .ord-blast-right { flex-direction: row; align-items: center; width: 100%; justify-content: space-between; }
+}

@@ -55,6 +55,12 @@
         }
       }
     }
+    @if (acceptedOrders().length) {
+      <button class="adm-btn ord-blast-btn" (click)="openRefundBlast()"
+              title="Avisar a TODOS los clientes que pagaron: se les devuelve la separación y vuelven a pedir">
+        📢 Aviso de devolución ({{ acceptedOrders().length }})
+      </button>
+    }
   </div>
 </div>
 
@@ -848,6 +854,72 @@
           </button>
         </div>
       }
+    </div>
+  </div>
+}
+
+<!-- Aviso masivo de devolución: se envía uno por uno (WhatsApp no permite envíos masivos) -->
+@if (showRefundBlast()) {
+  <div class="ord-modal-bg" (click)="showRefundBlast.set(false)">
+    <div class="ord-modal ord-modal-lg" (click)="$event.stopPropagation()">
+      <div class="ord-detail-head">
+        <h3>📢 Aviso de devolución a clientes</h3>
+        <button class="adm-btn ghost sm" (click)="showRefundBlast.set(false)">✕</button>
+      </div>
+
+      @if (refundProgress(); as rp) {
+        <div class="ord-blast-bar">
+          <div class="ord-blast-kpis">
+            <span><b>{{ rp.sent }}</b> / {{ rp.total }} avisados</span>
+            <span class="pend">Faltan <b>{{ rp.pending }}</b></span>
+            <span>A devolver: <b>S/ {{ rp.totalPen }}</b></span>
+          </div>
+          <div class="ord-blast-progress"><i [style.width.%]="rp.total ? (rp.sent * 100 / rp.total) : 0"></i></div>
+        </div>
+      }
+
+      <p class="ord-blast-note">
+        WhatsApp no permite enviar a todos de golpe: el mensaje se abre <b>ya escrito</b> para cada cliente
+        y solo le das <b>Enviar</b>. La lista recuerda a quién ya avisaste, aunque cierres o recargues.
+      </p>
+
+      <div class="ord-blast-list">
+        @for (t of refundTargets(); track t.order.id) {
+          <div class="ord-blast-row" [class.done]="refundSent().has(t.order.id)">
+            <label class="ord-blast-check" title="Marcar / desmarcar como avisado">
+              <input type="checkbox" [checked]="refundSent().has(t.order.id)"
+                     (change)="toggleRefundSent(t.order.id)">
+            </label>
+            <div class="ord-blast-info">
+              <div class="ord-blast-top">
+                <b>{{ t.order.clientName }}</b>
+                <span class="ord-nc-code">{{ t.order.orderCode }}</span>
+                @if (t.fullyPaid) { <span class="adm-st blue">pago completo</span> }
+              </div>
+              <div class="ord-blast-items">
+                @for (it of t.order.items; track it.id) {
+                  <span class="ord-nc-chip">{{ it.product.brand }} {{ it.product.name }} <b>×{{ it.quantity }}</b></span>
+                }
+              </div>
+              <div class="ord-blast-meta">📱 {{ t.order.clientPhone }} · {{ t.units }} unidades</div>
+            </div>
+            <div class="ord-blast-right">
+              <span class="ord-blast-amount" title="Monto a devolver">S/ {{ t.paidPen }}</span>
+              <button class="adm-btn sm wa" (click)="whatsappRefund(t)">
+                {{ refundSent().has(t.order.id) ? '↻ Reenviar' : '📲 Enviar' }}
+              </button>
+            </div>
+          </div>
+        }
+        @if (!refundTargets().length) {
+          <p class="ord-blast-empty">No hay clientes con pedidos pagados en este consolidado.</p>
+        }
+      </div>
+
+      <div class="ord-modal-actions">
+        <button class="adm-btn ghost sm" (click)="resetRefundSent()">↺ Reiniciar marcas</button>
+        <button class="adm-btn primary" (click)="showRefundBlast.set(false)">Listo</button>
+      </div>
     </div>
   </div>
 }
