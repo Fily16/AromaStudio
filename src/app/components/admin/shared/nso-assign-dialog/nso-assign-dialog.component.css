@@ -1,0 +1,60 @@
+/* Diálogo «Asignar / cambiar / quitar código NSO» (usa los tokens --a-* del shell admin). */
+.nad-back {
+  position: fixed; inset: 0; z-index: 95; background: rgba(15,18,28,.5);
+  display: flex; align-items: center; justify-content: center; padding: 16px;
+}
+.nad-modal {
+  width: min(620px, 100%); max-height: calc(100dvh - 32px); overflow: auto;
+  background: var(--a-surface, #fff); color: var(--a-ink, #1f2430);
+  border-radius: 14px; padding: 20px; box-shadow: 0 20px 50px rgba(0,0,0,.3);
+  display: flex; flex-direction: column; gap: 10px; text-align: left;
+}
+.nad-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.nad-head h3 { font-size: 1rem; font-weight: 700; margin: 0; }
+.nad-muted { color: var(--a-muted, #6b7280); }
+.nad-small { font-size: .8rem; }
+.nad-err { color: var(--a-danger, #b3261e); font-size: .82rem; font-weight: 600; margin: 4px 0 0; }
+.nad-state { display: flex; align-items: center; gap: 8px; }
+
+.nad-current {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;
+  border: 1px solid #bfe6d2; background: var(--a-ok-bg, #e6f5ee); border-radius: var(--a-r-sm, 8px); padding: 10px 12px;
+}
+.nad-current-info { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+
+.nad-alert {
+  display: flex; flex-direction: column; gap: 4px; font-size: .88rem; line-height: 1.45;
+  background: var(--a-warn-bg, #fdf2dc); color: #6d4604;
+  border: 1px solid #f1dcaa; border-radius: var(--a-r-sm, 8px); padding: 10px 12px;
+}
+.nad-grid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+.nad-inline { display: flex; gap: 8px; }
+.nad-inline .adm-input { flex: 1; min-height: 42px; }
+.nad-divider { display: flex; align-items: center; gap: 10px; color: var(--a-faint, #9aa1ad); font-size: .78rem; margin: 6px 0; }
+.nad-divider::before, .nad-divider::after { content: ''; flex: 1; height: 1px; background: var(--a-line, #e5e7eb); }
+
+.nad-code {
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: .8rem; font-weight: 700;
+  background: #eef0f3; color: var(--a-ink, #1f2430); padding: 1px 6px; border-radius: 4px; align-self: flex-start;
+}
+.nad-pick { list-style: none; display: flex; flex-direction: column; gap: 6px; margin: 0; padding: 0; }
+.nad-pick li {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  border: 1px solid var(--a-line, #e5e7eb); border-radius: var(--a-r-sm, 8px); padding: 8px 12px;
+}
+.nad-pick li div { display: flex; flex-direction: column; gap: 2px; min-width: 0; word-break: break-word; }
+.nad-actions { display: flex; justify-content: flex-end; gap: 10px; flex-wrap: wrap; }
+
+/* Móvil (≤640px): hoja inferior, botones ≥44px */
+@media (max-width: 640px) {
+  .nad-back { align-items: flex-end; padding: 0; }
+  .nad-modal {
+    width: 100%; border-radius: 16px 16px 0 0; max-height: 92dvh;
+    padding: 18px 16px calc(18px + env(safe-area-inset-bottom));
+  }
+  .nad-act { min-height: 44px; }
+  .nad-grid { grid-template-columns: 1fr; }
+  .nad-inline { flex-direction: column; }
+  .nad-pick li { flex-direction: column; align-items: stretch; }
+  .nad-current { flex-direction: column; align-items: stretch; }
+}

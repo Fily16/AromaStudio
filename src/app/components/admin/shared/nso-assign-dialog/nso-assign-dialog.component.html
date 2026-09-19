@@ -1,0 +1,152 @@
+<div class="nad-back" (click)="close()">
+  <div
+    class="nad-modal"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="nad-title"
+    (click)="$event.stopPropagation()"
+  >
+    <div class="nad-head">
+      <h3 id="nad-title">{{ hasCode() ? 'Cambiar código NSO' : 'Asignar código NSO' }}</h3>
+      <button class="adm-btn ghost nad-act" (click)="close()" [disabled]="busy()" aria-label="Cerrar">✕</button>
+    </div>
+    <p class="nad-muted">
+      Para <b>{{ productName() }}</b>
+    </p>
+
+    <!-- Estado actual -->
+    @if (current().code; as curCode) {
+      <div class="nad-current">
+        <div class="nad-current-info">
+          <span class="nad-muted nad-small">Código actual</span>
+          <code class="nad-code">{{ curCode }}</code>
+          @if (currentOtherCountry()) {
+            <span class="adm-st blue">NSO de otro país</span>
+          }
+        </div>
+        <button class="adm-btn sm danger nad-act" (click)="unassign()" [disabled]="busy()">
+          {{ removing() ? 'Quitando…' : 'Quitar NSO' }}
+        </button>
+      </div>
+    } @else {
+      <p class="nad-small nad-state">
+        Ahora: <span [class]="'adm-st ' + currentInfo().color">{{ currentInfo().label }}</span>
+      </p>
+    }
+
+    @if (createCode(); as newCode) {
+      <!-- El código no existe en la lista: ofrecer agregarlo -->
+      <div class="nad-alert">
+        <b>El código {{ newCode }} no está en tu lista.</b>
+        <span>¿Lo agregamos? Escribe cómo figura en el NSO.</span>
+      </div>
+      <div class="nad-grid">
+        <div class="adm-field">
+          <label for="nad-brand">Marca *</label>
+          <input id="nad-brand" class="adm-input" [value]="createForm().brand" (input)="setCreate('brand', $event)" />
+        </div>
+        <div class="adm-field">
+          <label for="nad-declared">Nombre en aduanas *</label>
+          <input
+            id="nad-declared"
+            class="adm-input"
+            placeholder="Como figura en el NSO"
+            [value]="createForm().declaredName"
+            (input)="setCreate('declaredName', $event)"
+          />
+        </div>
+        <div class="adm-field">
+          <label for="nad-tit">Titular (opcional)</label>
+          <input id="nad-tit" class="adm-input" [value]="createForm().titular" (input)="setCreate('titular', $event)" />
+        </div>
+        <div class="adm-field">
+          <label for="nad-ruc">RUC (opcional)</label>
+          <input
+            id="nad-ruc"
+            class="adm-input"
+            inputmode="numeric"
+            [value]="createForm().ruc"
+            (input)="setCreate('ruc', $event)"
+          />
+        </div>
+      </div>
+      @if (error()) {
+        <p class="nad-err" role="alert">{{ error() }}</p>
+      }
+      <div class="nad-actions">
+        <button class="adm-btn nad-act" (click)="cancelCreate()" [disabled]="busy()">← Volver</button>
+        <button class="adm-btn primary nad-act" (click)="createAndAssign()" [disabled]="busy()">
+          {{ saving() ? 'Guardando…' : 'Agregar y asignar' }}
+        </button>
+      </div>
+    } @else {
+      <!-- Escribir el código -->
+      <div class="adm-field">
+        <label for="nad-code">{{ hasCode() ? 'Escribe el código nuevo' : 'Escribe el código' }}</label>
+        <div class="nad-inline">
+          <input
+            #codeInput
+            id="nad-code"
+            class="adm-input"
+            placeholder="NSOC70523-25PE"
+            [value]="code()"
+            (input)="onCode($event)"
+            (keydown.enter)="submit()"
+            autocomplete="off"
+          />
+          <button class="adm-btn primary nad-act" (click)="submit()" [disabled]="!codeOk() || busy()">
+            {{ saving() ? 'Guardando…' : 'Asignar' }}
+          </button>
+        </div>
+        @if (code() && !codeOk()) {
+          <small class="nad-err">Formato: NSOC + 5 o 6 números - año - país (ej. NSOC70523-25PE)</small>
+        } @else if (codeOk() && codeNormalized() !== code()) {
+          <small class="nad-muted">Se guardará como {{ codeNormalized() }}</small>
+        }
+      </div>
+
+      <div class="nad-divider"><span>o búscalo en tu lista</span></div>
+
+      <div class="adm-field">
+        <label for="nad-search">Buscar en tu lista NSO</label>
+        <input
+          id="nad-search"
+          class="adm-input"
+          type="search"
+          placeholder="Marca, nombre o código…"
+          [value]="search()"
+          (input)="onSearch($event)"
+        />
+      </div>
+      @if (searching()) {
+        <p class="nad-muted nad-small">Buscando…</p>
+      } @else if (search().trim().length >= 2 && results().length === 0) {
+        <p class="nad-muted nad-small">No encontramos coincidencias. Si tienes el código, escríbelo arriba.</p>
+      }
+      <ul class="nad-pick">
+        @for (rec of results(); track rec.code) {
+          <li>
+            <div>
+              <code class="nad-code">{{ rec.code }}</code>
+              <b>{{ rec.declaredName || '(sin nombre)' }}</b>
+              <span class="nad-muted nad-small">{{ rec.brand }}{{ rec.titular ? ' · ' + rec.titular : '' }}</span>
+              @if (!rec.active) {
+                <span class="adm-st gray">Desactivado</span>
+              }
+            </div>
+            @if (rec.code === current().code) {
+              <span class="adm-st green">Es el actual</span>
+            } @else {
+              <button class="adm-btn sm ok nad-act" (click)="submit(rec.code)" [disabled]="busy() || !rec.active">
+                Usar este
+              </button>
+            }
+          </li>
+        }
+      </ul>
+      @if (error()) {
+        <p class="nad-err" role="alert">{{ error() }}</p>
+      }
+    }
+  </div>
+</div>

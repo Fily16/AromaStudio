@@ -1,4 +1,4 @@
-@if (message()) { <div class="ord-toast">{{ message() }}</div> }
+@if (message()) { <div class="ord-toast" role="status">{{ message() }}</div> }
 
 <div class="ord-head">
   <h2 class="adm-section-title" style="margin:0">Productos <span style="color:var(--a-faint);font-weight:500">({{ filtered().length }})</span></h2>
@@ -15,11 +15,11 @@
       <input type="checkbox" [checked]="xlWithImages()" (change)="xlWithImages.set($any($event.target).checked)"> con fotos
     </label>
     <button class="adm-btn" (click)="downloadPriceList()" [disabled]="xlGenerating()"
-            title="Excel de precios de reventa (+S/30 por perfume) para tus clientes">
+            title="Excel de precios de reventa (+S/30 por perfume) para tus clientes. Solo perfumes que se ven en la tienda.">
       {{ xlGenerating() ? ('Generando… ' + xlDone() + '/' + xlTotal()) : '📄 Excel (+S/30)' }}
     </button>
     <button class="adm-btn" (click)="downloadPdf()" [disabled]="xlGenerating()"
-            title="PDF decorado tipo catálogo (fotos grandes + precios)">
+            title="PDF decorado tipo catálogo (fotos grandes + precios). Solo perfumes que se ven en la tienda.">
       {{ xlGenerating() ? ('Generando… ' + xlDone() + '/' + xlTotal()) : '📕 PDF catálogo' }}
     </button>
     <button class="adm-btn primary" (click)="toggleCreate()">+ Nuevo</button>
@@ -56,15 +56,18 @@
   </div>
 
   @for (g of filterGroups; track g.name) {
-    <div class="pf-row">
-      <span class="pf-label">{{ g.name }}</span>
-      @for (f of g.filters; track f.id) {
-        <button class="pf-chip" [class.on]="activeFilters().has(f.id)"
-                [title]="f.hint || f.label" (click)="toggleFilter(f.id)">
-          {{ f.label }} <span class="pf-n">{{ filterCounts()[f.id] }}</span>
-        </button>
-      }
-    </div>
+    <!-- El grupo NSO aparece cuando ya se sabe el estado de cada perfume (si no, todo diría «Sin verificar») -->
+    @if (g.name !== 'NSO' || nso.indexLoaded()) {
+      <div class="pf-row">
+        <span class="pf-label">{{ g.name }}</span>
+        @for (f of g.filters; track f.id) {
+          <button class="pf-chip" [class.on]="activeFilters().has(f.id)"
+                  [title]="f.hint || f.label" (click)="toggleFilter(f.id)">
+            {{ f.label }} <span class="pf-n">{{ filterCounts()[f.id] }}</span>
+          </button>
+        }
+      </div>
+    }
   }
 </div>
 
@@ -84,10 +87,56 @@
           <option value="unisex">Unisex</option><option value="men">Hombre</option><option value="women">Mujer</option>
         </select>
       </div>
+      <div class="adm-field">
+        <label for="new-nso">Código NSO (opcional)</label>
+        <input id="new-nso" class="adm-input" placeholder="NSOC70523-25PE" autocomplete="off"
+               [value]="newNsoCode()" (input)="onNewNsoCode($event)" [disabled]="!!newNsoMissing()">
+        @if (newNsoCode() && !newNsoCodeOk()) {
+          <small class="prod-nso-err">Formato: NSOC + 5 o 6 números - año - país</small>
+        } @else if (newNsoCodeOk() && newNsoCodeNormalized() !== newNsoCode()) {
+          <small class="prod-nso-hint">Se guardará como {{ newNsoCodeNormalized() }}</small>
+        } @else if (!newNsoCode()) {
+          <small class="prod-nso-hint">Si lo dejas vacío, se busca solo en tu lista NSO.</small>
+        }
+      </div>
     </div>
-    <div style="display:flex;gap:10px;margin-top:14px">
-      <button class="adm-btn" (click)="toggleCreate()">Cancelar</button>
-      <button class="adm-btn primary" (click)="create()">Crear producto</button>
+
+    @if (newNsoMissing(); as missingCode) {
+      <div class="prod-nso-missing">
+        <b>El código {{ missingCode }} no está en tu lista NSO.</b>
+        <span>¿Lo agregamos? Escribe cómo figura en el NSO y se crea el perfume con ese código.</span>
+        <div class="prod-form">
+          <div class="adm-field" style="grid-column:span 2">
+            <label for="new-nso-declared">Nombre en aduanas *</label>
+            <input id="new-nso-declared" class="adm-input" placeholder="Como figura en el NSO"
+                   [value]="newNsoDeclared()" (input)="setNewNso('declared',$event)">
+          </div>
+          <div class="adm-field">
+            <label for="new-nso-tit">Titular (opcional)</label>
+            <input id="new-nso-tit" class="adm-input" [value]="newNsoTitular()" (input)="setNewNso('titular',$event)">
+          </div>
+          <div class="adm-field">
+            <label for="new-nso-ruc">RUC (opcional)</label>
+            <input id="new-nso-ruc" class="adm-input" inputmode="numeric" [value]="newNsoRuc()" (input)="setNewNso('ruc',$event)">
+          </div>
+        </div>
+      </div>
+    }
+
+    @if (createError()) { <p class="prod-nso-err" role="alert" style="margin-top:10px">{{ createError() }}</p> }
+
+    <div style="display:flex;gap:10px;margin-top:14px;flex-wrap:wrap">
+      <button class="adm-btn" (click)="toggleCreate()" [disabled]="creating()">Cancelar</button>
+      @if (newNsoMissing()) {
+        <button class="adm-btn" (click)="cancelNewNsoMissing()" [disabled]="creating()">← Cambiar el código</button>
+        <button class="adm-btn primary" (click)="create(true)" [disabled]="creating()">
+          {{ creating() ? 'Creando…' : 'Agregar código y crear perfume' }}
+        </button>
+      } @else {
+        <button class="adm-btn primary" (click)="create()" [disabled]="creating() || (!!newNsoCode() && !newNsoCodeOk())">
+          {{ creating() ? 'Creando…' : 'Crear producto' }}
+        </button>
+      }
     </div>
   </div>
 }
@@ -149,13 +198,28 @@
           <td class="num">@if (p.stockPricePen) { S/ {{ p.stockPricePen | number:'1.0-0' }} } @else { <span style="color:var(--a-faint)">—</span> }</td>
           <td class="num">@if (stockQty(p.id)) { <b>{{ stockQty(p.id) }}</b> } @else { <span style="color:var(--a-faint)">0</span> }</td>
           <td>
-            <button class="adm-st" [class.green]="p.available" [class.gray]="!p.available" (click)="toggleAvailable(p)" style="border:none;cursor:pointer">
-              {{ p.available ? 'Activo' : 'Oculto' }}
-            </button>
+            <div class="prod-state">
+              <button class="adm-st" [class.green]="p.available" [class.gray]="!p.available" (click)="toggleAvailable(p)" style="border:none;cursor:pointer">
+                {{ p.available ? 'Activo' : 'Oculto' }}
+              </button>
+              @if (nso.indexLoaded()) {
+                <span [class]="'adm-st ' + nsoInfo(p.id).color" [title]="nsoTitle(p.id)">{{ nsoInfo(p.id).label }}</span>
+                @if (nsoOtherCountry(p.id)) {
+                  <span class="pflag other" title="NSO emitido en otro país de la CAN: cuenta, pero revísalo">NSO de otro país</span>
+                }
+                @if (nsoMaybeExpired(p.id)) {
+                  <span class="pflag review" title="Un NSO dura 7 años: confirma que siga vigente">¿vigente?</span>
+                }
+                @if (p.available && nso.isHidden(p.id)) {
+                  <span class="pflag conflict" title="El filtro NSO está activo: este perfume no se muestra en la tienda ni se puede comprar">oculto por NSO</span>
+                }
+              }
+            </div>
           </td>
           <td>
             <div class="ord-actions">
               <button class="adm-btn sm" (click)="showOffers(p)" title="Proveedores que venden este perfume y qué costo define el precio">🏭</button>
+              <button class="adm-btn sm" (click)="openNso(p)" title="Asignar, cambiar o quitar el código NSO de este perfume">NSO</button>
               <button class="adm-btn sm" (click)="startEdit(p)">Editar</button>
               <button class="adm-btn danger sm" (click)="deleteProduct(p.id)">Eliminar</button>
             </div>
@@ -252,4 +316,9 @@
       }
     }
   </div>
+}
+
+<!-- Diálogo compartido: asignar / cambiar / quitar código NSO -->
+@if (nsoTarget(); as nt) {
+  <app-nso-assign-dialog [product]="nt" (closed)="nsoTarget.set(null)" (changed)="onNsoChanged($event)" />
 }

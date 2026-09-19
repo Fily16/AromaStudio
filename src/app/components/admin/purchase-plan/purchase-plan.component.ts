@@ -1,7 +1,11 @@
 import { Component, inject, signal, OnInit } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
+import { RouterLink } from '@angular/router';
 import { ApiService } from '../../../services/api.service';
 import { AllocationResponse, PurchasePlan, MarginReportRow, MarginWarning } from '../../../models/api.models';
+import { NsoStatusInfo, nsoStatusInfo } from '../../../shared/nso-labels';
+import { nsoBlockedSummary } from '../orders/nso-blocked.util';
+import { unavailableIdsFrom } from '../../../shared/unavailable-items.util';
 
 /**
  * Plan de compra del consolidado activo: el optimizador decide a qué proveedor
@@ -14,7 +18,7 @@ import { AllocationResponse, PurchasePlan, MarginReportRow, MarginWarning } from
 @Component({
   selector: 'app-admin-purchase-plan',
   standalone: true,
-  imports: [DecimalPipe],
+  imports: [DecimalPipe, RouterLink],
   template: `
     <div class="pp-head">
       <h2 class="adm-section-title">Plan de compra</h2>
@@ -32,6 +36,15 @@ import { AllocationResponse, PurchasePlan, MarginReportRow, MarginWarning } from
 
     @if (msg()) { <p class="pp-ok">{{ msg() }}</p> }
     @if (err()) { <p class="pp-err">{{ err() }}</p> }
+    <!-- El borrador quedó viejo (perfumes que ya no se pueden comprar): hay que volver a calcularlo -->
+    @if (planStale()) {
+      <div class="pp-stale adm-card adm-card-pad" role="alert">
+        <span>Este borrador ya no sirve: vuelve a calcular el plan para dejar fuera esos perfumes.</span>
+        <button class="adm-btn primary sm" (click)="compute()" [disabled]="computing() || consolidadoId() == null">
+          {{ computing() ? 'Calculando…' : '↻ Recalcular plan' }}
+        </button>
+      </div>
+    }
 
     <!-- Plan vigente -->
     @if (currentPlan(); as plan) {
@@ -160,6 +173,26 @@ import { AllocationResponse, PurchasePlan, MarginReportRow, MarginWarning } from
         </div>
       }
 
+      <!-- Perfumes pedidos sin NSO: el plan no los compra -->
+      @if (r.nsoBlocked?.length) {
+        <div class="pp-nsobox adm-card adm-card-pad">
+          <b>⛔ No se puede importar ({{ r.nsoBlocked!.length }}) · {{ blockedUnits(r) }} unidades</b>
+          <p class="pp-hint" style="margin-top:4px">
+            No tienen NSO confirmado: este plan no los compra. Para avisar a los clientes, ve a
+            <a routerLink="/admin">Pedidos</a> → «Ver qué comprar» (con el consolidado cerrado). Si consigues su NSO,
+            revísalo en <a routerLink="/admin/nso">NSO</a> y vuelve a calcular.
+          </p>
+          <ul>
+            @for (b of r.nsoBlocked!; track b.productId) {
+              <li>
+                {{ b.brand }} {{ b.name }}@if (b.ml) { · {{ b.ml }}ml } × {{ b.quantity }}
+                <span [class]="'adm-st ' + nsoInfo(b.status).color" [title]="nsoInfo(b.status).hint">{{ nsoInfo(b.status).label }}</span>
+              </li>
+            }
+          </ul>
+        </div>
+      }
+
       @if (r.notes.length) {
         <ul class="pp-notes">@for (n of r.notes; track n) { <li>{{ n }}</li> }</ul>
       }
@@ -167,11 +200,11 @@ import { AllocationResponse, PurchasePlan, MarginReportRow, MarginWarning } from
       <!-- Confirmación -->
       @if (r.planId != null) {
         <div class="pp-confirm">
-          <button class="adm-btn primary" (click)="confirm(false)" [disabled]="confirming()">
+          <button class="adm-btn primary" (click)="confirm(false)" [disabled]="confirming() || planStale()">
             {{ confirming() ? 'Confirmando…' : '✓ Confirmar plan (usar estos costos reales)' }}
           </button>
           @if (needsForce()) {
-            <button class="adm-btn danger" (click)="confirm(true)" [disabled]="confirming()">
+            <button class="adm-btn danger" (click)="confirm(true)" [disabled]="confirming() || planStale()">
               Confirmar IGUAL con margen bajo
             </button>
           }
@@ -238,6 +271,10 @@ import { AllocationResponse, PurchasePlan, MarginReportRow, MarginWarning } from
     .pp-warnbox { border-left:4px solid #f9a825; margin:14px 0; }
     .pp-warnbox ul, .pp-lostbox ul { margin:8px 0 0 18px; font-size:.85rem; }
     .pp-lostbox { border-left:4px solid #e15252; margin:14px 0; }
+    .pp-nsobox { border-left:4px solid #e15252; margin:14px 0; background:#fff7f8; }
+    .pp-nsobox ul { margin:8px 0 0 18px; font-size:.85rem; display:flex; flex-direction:column; gap:4px; }
+    .pp-nsobox .adm-st { font-size:.68rem; padding:2px 7px; margin-left:4px; }
+    .pp-nsobox a { color:var(--a-accent-700); font-weight:600; text-decoration:underline; }
     .pp-supplier { padding:14px 16px; margin-bottom:14px; }
     .pp-sup-head { display:flex; align-items:center; gap:12px; margin-bottom:10px; flex-wrap:wrap; }
     .pp-sup-total { font-weight:700; }
@@ -248,6 +285,8 @@ import { AllocationResponse, PurchasePlan, MarginReportRow, MarginWarning } from
     .pp-fill-item { border:1px solid var(--a-line); border-radius:999px; padding:4px 12px; font-size:.8rem; background:var(--a-surface); }
     .pp-notes { margin:14px 0 0 18px; color:var(--a-muted); font-size:.82rem; }
     .pp-confirm { display:flex; gap:12px; margin-top:20px; flex-wrap:wrap; }
+    .pp-stale { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;
+      border-left:4px solid #e15252; background:#fff7f8; margin:0 0 16px; font-size:.88rem; }
     .adm-table tr.below td { background:#fff8e1; }
     .adm-table td.neg { color:#c62828; font-weight:700; }
   `]
@@ -263,8 +302,13 @@ export class PurchasePlanComponent implements OnInit {
   confirming = signal(false);
   marginLoading = signal(false);
   needsForce = signal(false);
+  /** Confirmar respondió 400 con perfumes que ya no se pueden comprar: el borrador está viejo. */
+  planStale = signal(false);
   msg = signal('');
   err = signal('');
+
+  nsoInfo(status: string | null | undefined): NsoStatusInfo { return nsoStatusInfo(status); }
+  blockedUnits(r: AllocationResponse): number { return nsoBlockedSummary(r.nsoBlocked).units; }
 
   ngOnInit() {
     this.api.getActiveConsolidado().subscribe({
@@ -286,7 +330,7 @@ export class PurchasePlanComponent implements OnInit {
   compute() {
     const cid = this.consolidadoId();
     if (cid == null) return;
-    this.computing.set(true); this.msg.set(''); this.err.set(''); this.needsForce.set(false);
+    this.computing.set(true); this.msg.set(''); this.err.set(''); this.needsForce.set(false); this.planStale.set(false);
     this.api.computePurchasePlan(cid).subscribe({
       next: (r) => {
         this.computing.set(false);
@@ -313,7 +357,13 @@ export class PurchasePlanComponent implements OnInit {
       },
       error: (e) => {
         this.confirming.set(false);
-        if (e.status === 409) {
+        if (e.status === 400 && unavailableIdsFrom(e).length) {
+          // Borrador calculado antes de ocultar perfumes (filtro NSO): no se recorta en silencio,
+          // se muestra el mensaje del backend y se ofrece volver a calcular.
+          this.needsForce.set(false);
+          this.planStale.set(true);
+          this.err.set(e.error?.message || 'Este plan incluye perfumes que ya no se pueden comprar.');
+        } else if (e.status === 409) {
           // Guardia de margen: el backend detalla qué líneas quedan bajo el piso.
           const warnings: MarginWarning[] = e.error?.marginWarnings ?? [];
           this.needsForce.set(true);

@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, of } from 'rxjs';
 import { environment } from '../../environments/environment';
 import {
   Product, Order, Consolidado, RetailInventory, RetailSale,
@@ -10,7 +10,10 @@ import {
   Promotion, ProfitReport, SupplierRequest, ColumnMapping, ImportPreview, PublishRequest,
   MatchCandidate, SupplierConstraint, PurchasePlan, MarginReportRow, ProductOffersView,
   ConsolidadoPublic, MediaSummary, PhotoCandidate, PhotoRow, FillExcelResponse, SingleSupplierPlan,
-  OfferIndexRow
+  OfferIndexRow, NsoSummary, NsoIndexRow, NsoReviewItem, NsoBrandGroup, NsoProductRow,
+  NsoCatalogPage, NsoUploadSummary, NsoEvent, NsoStatus, NsoAcceptResult, NsoStatusResult,
+  NsoAssignRequest, NsoCreateRecordRequest, NsoCodeActiveResult, NsoCreateRecordResult,
+  CreateProductWithNsoRequest, CreateProductWithNsoResult
 } from '../models/api.models';
 
 @Injectable({ providedIn: 'root' })
@@ -37,8 +40,9 @@ export class ApiService {
     return this.http.get<Product>(`${this.url}/products/${id}`);
   }
 
+  // Costos de proveedor de un producto: solo admin (se movió desde /products/{id}/pricing)
   getProductPricing(id: number): Observable<any> {
-    return this.http.get(`${this.url}/products/${id}/pricing`);
+    return this.http.get(`${this.url}/admin/products/${id}/pricing`, { headers: this.authHeaders() });
   }
 
   // Buscador: sugerencias (nombre/marca/SKU/UPC)
@@ -64,6 +68,26 @@ export class ApiService {
   }
 
   // --- Products (admin) ---
+  /**
+   * Catálogo completo para las pantallas admin, SIN el filtro NSO de la tienda.
+   * Usar este en vez de getProducts() en el panel: con token vencido el público cae como anónimo.
+   */
+  getAdminProducts(includeArchived = false): Observable<Product[]> {
+    return this.http.get<Product[]>(`${this.url}/admin/products`, {
+      params: { includeArchived: String(includeArchived) }, headers: this.authHeaders()
+    });
+  }
+
+  /**
+   * Alta manual de un perfume CON su NSO opcional en una sola operación (POST /admin/products).
+   * El código se valida ANTES de crear nada: 400 formato inválido, 404 {message, canCreate:true}
+   * si el código no está en la lista (reintentar con nso.createIfMissing + declaredName),
+   * 409 SKU repetido o código desactivado. Sin NSO, el backend re-verifica el perfume nuevo.
+   */
+  createProductWithNso(body: CreateProductWithNsoRequest): Observable<CreateProductWithNsoResult> {
+    return this.http.post<CreateProductWithNsoResult>(`${this.url}/admin/products`, body, { headers: this.authHeaders() });
+  }
+
   createProduct(product: Partial<Product>): Observable<Product> {
     return this.http.post<Product>(`${this.url}/products`, product, { headers: this.authHeaders() });
   }
@@ -114,8 +138,9 @@ export class ApiService {
   }
 
   // ERP: lanzar perfumes a stock de tienda (precio = costo landed + S/35)
-  launchToStock(items: { productId: number; quantity: number }[]): Observable<{ received: number; launched: number }> {
-    return this.http.post<{ received: number; launched: number }>(`${this.url}/admin/retail/launch`, items, { headers: this.authHeaders() });
+  // `blocked`: perfumes omitidos por no tener NSO (solo con el filtro de la tienda activo)
+  launchToStock(items: { productId: number; quantity: number }[]): Observable<{ received: number; launched: number; blocked?: { productId: number; name: string }[] }> {
+    return this.http.post<{ received: number; launched: number; blocked?: { productId: number; name: string }[] }>(`${this.url}/admin/retail/launch`, items, { headers: this.authHeaders() });
   }
 
   verifyDeposit(orderId: number, yapeReference: string): Observable<Order> {
@@ -214,6 +239,14 @@ export class ApiService {
   // --- Retail (public) ---
   getRetailStock(): Observable<Record<number, number>> {
     return this.http.get<Record<number, number>>(`${this.url}/retail/stock`);
+  }
+
+  /**
+   * Mismo stock pero CON token, para el panel: con el filtro NSO activo el público omite los
+   * perfumes ocultos, y el admin necesita ver todo su stock físico.
+   */
+  getAdminRetailStock(): Observable<Record<number, number>> {
+    return this.http.get<Record<number, number>>(`${this.url}/retail/stock`, { headers: this.authHeaders() });
   }
 
   // --- Retail (admin) ---
@@ -540,5 +573,109 @@ export class ApiService {
     return this.http.get<ProfitReport>(`${this.url}/admin/profit-report`, {
       params: { granularity }, headers: this.authHeaders()
     });
+  }
+
+  // --- NSO (Notificación Sanitaria): solo admin, /admin/nso/** ---
+  /** Sube la lista NSO (.xlsx o .csv). Sin Content-Type: el navegador pone el boundary del multipart. */
+  uploadNsoCatalog(file: File): Observable<NsoUploadSummary> {
+    const fd = new FormData();
+    fd.append('file', file);
+    return this.http.post<NsoUploadSummary>(`${this.url}/admin/nso/catalog/upload`, fd,
+      { headers: this.authHeaders() });
+  }
+  getNsoSummary(): Observable<NsoSummary> {
+    return this.http.get<NsoSummary>(`${this.url}/admin/nso/summary`, { headers: this.authHeaders() });
+  }
+  /** Enciende/apaga "mostrar en la tienda solo perfumes con NSO". Devuelve el resumen actualizado (409 si no hay lista). */
+  setNsoGate(enabled: boolean): Observable<NsoSummary> {
+    return this.http.put<NsoSummary>(`${this.url}/admin/nso/gate`, { enabled }, { headers: this.authHeaders() });
+  }
+  /**
+   * Ajustes NSO (PUT /admin/nso/settings). Hoy el panel solo cambia acceptCanCodes (¿cuentan los NSO
+   * de Colombia, Bolivia y Ecuador?). Devuelve el resumen actualizado; 400 {message} si el valor no sirve.
+   */
+  setNsoSettings(body: { acceptCanCodes?: boolean }): Observable<NsoSummary> {
+    return this.http.put<NsoSummary>(`${this.url}/admin/nso/settings`, body, { headers: this.authHeaders() });
+  }
+  /** "Volver a verificar todo" en segundo plano (202). El progreso se lee en summary.rematch; 409 si ya corre. */
+  startNsoRematch(): Observable<{ started: boolean }> {
+    return this.http.post<{ started: boolean }>(`${this.url}/admin/nso/rematch`, {}, { headers: this.authHeaders() });
+  }
+  /**
+   * Re-verifica solo esos productos (síncrono). Con la lista vacía NO llama al backend:
+   * allí una lista vacía significa "verificar TODO en segundo plano".
+   */
+  rematchNsoProducts(productIds: number[]): Observable<{ processed: number }> {
+    if (!productIds?.length) return of({ processed: 0 });
+    return this.http.post<{ processed: number }>(`${this.url}/admin/nso/rematch`, { productIds },
+      { headers: this.authHeaders() });
+  }
+  /** Índice compacto de estados NSO (solo productos con fila; los demás = SIN_VERIFICAR). */
+  getNsoIndex(): Observable<NsoIndexRow[]> {
+    return this.http.get<NsoIndexRow[]>(`${this.url}/admin/nso/index`, { headers: this.authHeaders() });
+  }
+  getNsoPendingCount(): Observable<{ pending: number }> {
+    return this.http.get<{ pending: number }>(`${this.url}/admin/nso/candidates/count`, { headers: this.authHeaders() });
+  }
+  getNsoReview(): Observable<NsoReviewItem[]> {
+    return this.http.get<NsoReviewItem[]>(`${this.url}/admin/nso/review`, { headers: this.authHeaders() });
+  }
+  acceptNsoCandidate(candidateId: number): Observable<NsoAcceptResult> {
+    return this.http.post<NsoAcceptResult>(`${this.url}/admin/nso/candidates/${candidateId}/accept`, {},
+      { headers: this.authHeaders() });
+  }
+  /** "Ninguno de estos": rechaza todas las opciones del producto (no se vuelven a proponer). */
+  rejectAllNso(productId: number): Observable<NsoStatusResult> {
+    return this.http.post<NsoStatusResult>(`${this.url}/admin/nso/products/${productId}/reject-all`, {},
+      { headers: this.authHeaders() });
+  }
+  /** Asigna un código a mano. 404 {message, canCreate:true} si el código no está en la lista. */
+  assignNso(productId: number, body: NsoAssignRequest): Observable<NsoStatusResult> {
+    return this.http.post<NsoStatusResult>(`${this.url}/admin/nso/products/${productId}/assign`, body,
+      { headers: this.authHeaders() });
+  }
+  unassignNso(productId: number): Observable<NsoStatusResult> {
+    return this.http.post<NsoStatusResult>(`${this.url}/admin/nso/products/${productId}/unassign`, {},
+      { headers: this.authHeaders() });
+  }
+  getNsoBrandGroups(): Observable<NsoBrandGroup[]> {
+    return this.http.get<NsoBrandGroup[]>(`${this.url}/admin/nso/brand-groups`, { headers: this.authHeaders() });
+  }
+  getNsoProducts(status: NsoStatus): Observable<NsoProductRow[]> {
+    return this.http.get<NsoProductRow[]>(`${this.url}/admin/nso/products`,
+      { params: { status }, headers: this.authHeaders() });
+  }
+  getNsoCatalog(filters?: { q?: string; brand?: string; page?: number; size?: number }): Observable<NsoCatalogPage> {
+    const p: any = {};
+    if (filters?.q) p.q = filters.q;
+    if (filters?.brand) p.brand = filters.brand;
+    p.page = String(filters?.page ?? 0);
+    p.size = String(filters?.size ?? 50);
+    return this.http.get<NsoCatalogPage>(`${this.url}/admin/nso/catalog`, { params: p, headers: this.authHeaders() });
+  }
+  /**
+   * Agrega un código a mano y re-verifica al instante los perfumes de esa marca.
+   * Devuelve {record, rematched, linkedProducts}. 400 formato inválido, 409 si ya existe.
+   */
+  createNsoRecord(body: NsoCreateRecordRequest): Observable<NsoCreateRecordResult> {
+    return this.http.post<NsoCreateRecordResult>(`${this.url}/admin/nso/catalog`, body, { headers: this.authHeaders() });
+  }
+  /** Activa/desactiva un código. confirm=false solo previsualiza los perfumes afectados. */
+  setNsoCodeActive(code: string, active: boolean, confirm: boolean): Observable<NsoCodeActiveResult> {
+    return this.http.put<NsoCodeActiveResult>(
+      `${this.url}/admin/nso/catalog/${encodeURIComponent(code)}/active`, { active, confirm },
+      { headers: this.authHeaders() });
+  }
+  /** "Esta marca es la misma que…": enseña que la marca del proveedor = una marca de la lista NSO. */
+  addNsoBrandAlias(supplierBrand: string, catalogBrandKey: string): Observable<{ ok: boolean; rematched: number }> {
+    return this.http.post<{ ok: boolean; rematched: number }>(`${this.url}/admin/nso/brand-aliases`,
+      { supplierBrand, catalogBrandKey }, { headers: this.authHeaders() });
+  }
+  getNsoEvents(filters?: { productId?: number; type?: string; limit?: number }): Observable<NsoEvent[]> {
+    const p: any = {};
+    if (filters?.productId != null) p.productId = String(filters.productId);
+    if (filters?.type) p.type = filters.type;
+    p.limit = String(filters?.limit ?? 200);
+    return this.http.get<NsoEvent[]>(`${this.url}/admin/nso/events`, { params: p, headers: this.authHeaders() });
   }
 }

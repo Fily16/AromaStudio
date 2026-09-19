@@ -1,14 +1,18 @@
 import { Component, computed, inject, signal, OnInit } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
 import { ApiService } from '../../../services/api.service';
+import { NsoStateService } from '../../../services/nso-state.service';
 import { Product, Promotion } from '../../../models/api.models';
 import { CdnImgPipe } from '../../../shared/cdn-img.pipe';
+import { splitHiddenByNso } from '../../../shared/nso-labels';
 
 interface DraftItem { productId: number | null; name: string; imageUrl: string | null; }
 
 /**
  * Gestión de Promociones (packs) dentro de "Stock de tienda".
  * Crear = imagen + 1..N perfumes (del catálogo o exclusivos de la promo) + precio + stock + vigencia + ganancia.
+ * Con el filtro NSO activo solo se ofrecen perfumes con NSO; el backend rechaza (400) una promo con
+ * perfumes del catálogo sin NSO. Los exclusivos (sin producto del catálogo) se verifican a mano.
  */
 @Component({
   selector: 'app-promotions-admin',
@@ -19,11 +23,36 @@ interface DraftItem { productId: number | null; name: string; imageUrl: string |
 })
 export class PromotionsAdminComponent implements OnInit {
   private api = inject(ApiService);
+  nso = inject(NsoStateService);
 
   promotions = signal<Promotion[]>([]);
   products = signal<Product[]>([]);
   loading = signal(true);
   message = signal('');
+  /** Error del backend al guardar (p. ej. 400 con perfumes sin NSO): queda visible en el formulario. */
+  formError = signal('');
+  productsError = signal('');
+
+  /** El estado NSO ya permite decidir qué ocultar. */
+  nsoReady = computed(() => !!this.nso.summary() && (!this.nso.gateEffective() || this.nso.indexLoaded()));
+  nsoWaiting = computed(() => !this.nsoReady() && !this.nso.loadError());
+  /** Falló la carga NSO: se muestra todo con aviso (el backend igual rechaza los bloqueados). */
+  nsoFailed = computed(() => !this.nsoReady() && !!this.nso.loadError());
+  private catalog = computed(() => {
+    const all = this.products();
+    if (!this.nsoReady()) return { visible: all, hiddenCount: 0 };
+    return splitHiddenByNso(all, (id) => this.nso.isHidden(id));
+  });
+  hiddenCount = computed(() => this.catalog().hiddenCount);
+
+  /** Perfume del catálogo que no se puede usar en promos por el filtro NSO (false mientras no se sabe). */
+  isHiddenNow(productId: number | null | undefined): boolean {
+    return productId != null && this.nsoReady() && this.nso.isHidden(productId);
+  }
+  /** La promo tiene algún perfume sin NSO: con el filtro activo la tienda no la muestra. */
+  promoHasHidden(p: Promotion): boolean {
+    return (p.items ?? []).some(i => this.isHiddenNow(i.productId));
+  }
 
   // Editor
   showForm = signal(false);
@@ -46,9 +75,12 @@ export class PromotionsAdminComponent implements OnInit {
   hasCustomItem = computed(() => this.fItems().some(i => i.productId == null));
   catalogIds = computed(() => this.fItems().filter(i => i.productId != null).map(i => i.productId as number));
 
+  /** Hay un perfume del catálogo sin NSO en el borrador (hay que quitarlo para guardar). */
+  draftHasHidden = computed(() => this.fItems().some(i => this.isHiddenNow(i.productId)));
+
   filteredProducts = computed(() => {
     const q = this.pQuery().toLowerCase().trim();
-    let list = this.products();
+    let list = this.catalog().visible;
     if (q) {
       const tokens = q.split(/\s+/);
       list = list.filter(p => tokens.every(t => `${p.name} ${p.brand} ${p.sku ?? ''}`.toLowerCase().includes(t)));
@@ -56,15 +88,24 @@ export class PromotionsAdminComponent implements OnInit {
     return list.slice(0, 40);
   });
 
-  ngOnInit() { this.load(); }
+  ngOnInit() {
+    // Una vez por sesión (la pestaña «Stock de tienda» ya lo refresca al entrar); si falló, reintenta.
+    this.nso.load();
+    this.load();
+  }
 
   load() {
     this.loading.set(true);
     this.api.getPromotions().subscribe({
       next: (list) => { this.promotions.set(list); this.loading.set(false); },
-      error: () => this.loading.set(false)
+      error: (e) => { this.loading.set(false); this.toast(e?.error?.message || 'No se pudieron cargar las promociones.'); }
     });
-    this.api.getProducts({ onlyAvailable: false }).subscribe({ next: (p) => this.products.set(p), error: () => {} });
+    this.productsError.set('');
+    // Catálogo admin (sin el filtro de la tienda): el filtro NSO se aplica aquí mismo.
+    this.api.getAdminProducts().subscribe({
+      next: (p) => this.products.set(p),
+      error: (e) => this.productsError.set(e?.error?.message || 'No se pudo cargar el catálogo de perfumes.')
+    });
   }
 
   onImageFile(e: Event) {
@@ -93,6 +134,7 @@ export class PromotionsAdminComponent implements OnInit {
     this.fName.set(''); this.fImageData.set(''); this.fPrice.set(0); this.fStock.set(1);
     this.fValidUntil.set(''); this.fActive.set(true); this.fProfit.set(''); this.fItems.set([]);
     this.pQuery.set(''); this.customName.set(''); this.customImg.set('');
+    this.formError.set('');
     this.showForm.set(true);
   }
 
@@ -103,10 +145,11 @@ export class PromotionsAdminComponent implements OnInit {
     this.fValidUntil.set(p.validUntil || ''); this.fActive.set(p.active);
     this.fProfit.set(p.profitPen != null ? String(p.profitPen) : '');
     this.fItems.set(p.items.map(i => ({ productId: i.productId, name: i.name, imageUrl: i.imageUrl })));
+    this.formError.set('');
     this.showForm.set(true);
   }
 
-  cancelForm() { this.showForm.set(false); }
+  cancelForm() { this.showForm.set(false); this.formError.set(''); }
 
   addCatalogItem(p: Product) {
     if (this.fItems().some(i => i.productId === p.id)) return;
@@ -156,9 +199,11 @@ export class PromotionsAdminComponent implements OnInit {
     const obs = this.editingId() != null
       ? this.api.updatePromotion(this.editingId()!, req)
       : this.api.createPromotion(req);
+    this.formError.set('');
     obs.subscribe({
       next: () => { this.showForm.set(false); this.load(); this.toast('Promoción guardada'); },
-      error: (e) => this.toast('Error: ' + (e.error?.message || 'no se pudo guardar'))
+      // El 400 del backend (p. ej. «X no tiene NSO: no se puede poner en una promoción») queda visible en el formulario.
+      error: (e) => this.formError.set(e?.error?.message || 'No se pudo guardar la promoción. Intenta de nuevo.')
     });
   }
 
@@ -175,8 +220,11 @@ export class PromotionsAdminComponent implements OnInit {
       name: p.name, imageUrl: p.imageUrl, imageData: p.imageData, pricePen: p.pricePen, stockQty: p.stockQty,
       validUntil: p.validUntil, active: !p.active, profitPen: p.profitPen,
       items: p.items.map(i => ({ productId: i.productId, name: i.name, imageUrl: i.imageUrl }))
-    }).subscribe({ next: () => this.load(), error: () => this.toast('No se pudo actualizar') });
+    }).subscribe({
+      next: () => this.load(),
+      error: (e) => this.toast(e?.error?.message || 'No se pudo actualizar', 7000)
+    });
   }
 
-  private toast(m: string) { this.message.set(m); setTimeout(() => this.message.set(''), 3500); }
+  private toast(m: string, ms = 3500) { this.message.set(m); setTimeout(() => this.message.set(''), ms); }
 }

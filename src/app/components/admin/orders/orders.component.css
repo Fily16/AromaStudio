@@ -299,6 +299,26 @@
   .ord-nc-grid, .ord-nc-clients { grid-template-columns: 1fr; }
 }
 
+/* --- Grupo "No se puede importar" (perfumes sin NSO) + chip en los ítems de pedidos --- */
+.ord-nso {
+  border: 1px solid #f3c7cd; border-left: 4px solid var(--a-danger, #e15252);
+  border-radius: 12px; background: #fff7f8; padding: 10px 14px 12px; margin: 14px 0;
+}
+.ord-nso .ord-single-gh { border-bottom-color: #f3d5da; }
+.ord-nso-why { font-size: .84rem; color: var(--a-ink); margin: 8px 0 4px; line-height: 1.45; }
+.ord-nso-why a { color: var(--a-accent-700); font-weight: 600; text-decoration: underline; }
+.ord-nso-hint { font-size: .78rem; color: var(--a-muted); margin: 0 0 8px; line-height: 1.4; }
+.ord-nso-card { border-color: #f3c7cd; border-left-color: var(--a-danger, #e15252); }
+.ord-nso-card .ord-nc-qty { color: #b4232f; background: #fde3e6; }
+.ord-nso-card .ord-nc-meta .adm-st { font-size: .68rem; padding: 2px 7px; }
+.ord-nc-client.ord-nso-sent { background: #f1f5f2; border-color: #d5e6db; opacity: .8; }
+.ord-nso-chip {
+  display: inline-block; margin-left: 6px; vertical-align: middle;
+  font-size: .66rem; font-weight: 700; letter-spacing: .02em; white-space: nowrap;
+  color: var(--a-danger, #c62828); background: var(--a-danger-bg, #fdeaea);
+  border: 1px solid #f3c7cd; border-radius: 999px; padding: 1px 7px;
+}
+
 /* ===== Aviso masivo de devolución ===== */
 .ord-blast-btn { background: #fff4e2; border-color: #eab676; color: #8a5a12; font-weight: 600; }
 .ord-blast-btn:hover { background: #ffe9c9; }

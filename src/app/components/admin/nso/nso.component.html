@@ -1,0 +1,914 @@
+<!-- Mensajes flotantes (estilo propio en nso.component.css) -->
+@if (message()) {
+  <div class="nso-toast" role="status">{{ message() }}</div>
+}
+@if (error()) {
+  <div class="nso-toast err" role="alert">
+    <span>{{ error() }}</span>
+    <button class="nso-toast-x" (click)="error.set('')" aria-label="Cerrar">×</button>
+  </div>
+}
+
+<div class="nso-head">
+  <div>
+    <h2 class="adm-section-title">NSO · Notificación Sanitaria</h2>
+    <p class="nso-sub">
+      Aquí ves qué perfumes tienen su NSO de DIGEMID. Solo lo ves tú: tus clientes no ven nada de esto.
+    </p>
+  </div>
+  @if (summary(); as s) {
+    <span class="adm-st" [class.green]="s.gateEffective" [class.gray]="!s.gateEffective">
+      {{ s.gateEffective ? 'Tienda: solo perfumes con NSO' : 'Tienda: muestra todo' }}
+    </span>
+  }
+</div>
+
+<!-- Pestañas (definidas como datos en el .ts) -->
+<nav class="nso-tabs" aria-label="Secciones NSO">
+  @for (t of tabs; track t.id) {
+    <button class="nso-tab" [class.on]="tab() === t.id" (click)="setTab(t.id)">
+      <span>{{ t.label }}</span>
+      @if (tabCount(t); as n) {
+        <span [class]="'nso-tab-count ' + (t.status ? info(t.status).color : 'gray')">{{
+          n | number: '1.0-0'
+        }}</span>
+      }
+    </button>
+  }
+</nav>
+
+@if (summaryError()) {
+  <div class="adm-card adm-card-pad nso-alert red">
+    <b>{{ summaryError() }}</b>
+    <button class="adm-btn sm" (click)="loadSummary()">Reintentar</button>
+  </div>
+}
+
+<!-- =============================== RESUMEN =============================== -->
+@if (tab() === 'resumen') {
+  @if (summaryLoading() && !summary()) {
+    <p class="nso-empty">Cargando…</p>
+  }
+
+  @if (summary(); as s) {
+    @if (!catalogLoaded()) {
+      <div class="adm-card adm-card-pad nso-alert blue">
+        <b>Empieza aquí: todavía no subiste tu lista de NSO.</b>
+        <span>Sin la lista no podemos saber qué perfumes tienen NSO. Súbela en la caja de abajo.</span>
+      </div>
+    }
+
+    <!-- 4 tarjetas grandes -->
+    <div class="nso-cards">
+      @for (c of cards; track c.info.status) {
+        <button [class]="'nso-card ' + c.info.color" (click)="setTab(c.tab)">
+          <span class="nso-card-num">{{ count(c.info.status) | number: '1.0-0' }}</span>
+          <span class="nso-card-title">{{ c.info.label }}</span>
+          <span class="nso-card-hint">{{ c.info.hint }}</span>
+          <span class="nso-card-cta">{{ c.cta }} →</span>
+        </button>
+      }
+    </div>
+    <div class="adm-card nso-card-mini">
+      <span class="adm-st gray">{{ info('SIN_VERIFICAR').label }}</span>
+      <b>{{ count('SIN_VERIFICAR') | number: '1.0-0' }}</b>
+      <span>{{ info('SIN_VERIFICAR').hint }} {{ info('SIN_VERIFICAR').action }}</span>
+    </div>
+
+    <div class="nso-grid2">
+      <!-- Subir lista NSO -->
+      <section class="adm-card adm-card-pad nso-upload">
+        <h3>Sube tu lista de NSO</h3>
+        <p class="nso-muted">Archivo Excel (.xlsx) o CSV (.csv) con los códigos NSO, la marca y el producto.</p>
+
+        <label
+          class="nso-drop"
+          [class.over]="dragOver()"
+          (dragover)="onDragOver($event)"
+          (dragleave)="dragOver.set(false)"
+          (drop)="onDrop($event)"
+        >
+          <input #fileInput type="file" accept=".xlsx,.csv" (change)="onFilePicked($event)" />
+          @if (uploadFile(); as f) {
+            <b>{{ f.name }}</b>
+            <span class="nso-muted">Listo para subir</span>
+          } @else {
+            <b>Toca para elegir el archivo</b>
+            <span class="nso-muted">o arrástralo aquí</span>
+          }
+        </label>
+
+        <button
+          class="adm-btn primary nso-big"
+          (click)="upload(fileInput)"
+          [disabled]="!uploadFile() || uploading()"
+        >
+          {{ uploading() ? 'Subiendo…' : 'Subir lista' }}
+        </button>
+
+        @if (s.lastUpload; as lu) {
+          <p class="nso-muted nso-small">
+            Última lista: <b>{{ lu.filename || 'sin nombre' }}</b> · {{ fmtDate(lu.at) }}
+            @if (lu.by) {
+              · por {{ lu.by }}
+            }
+          </p>
+        }
+        <p class="nso-muted nso-small">
+          Tienes {{ s.catalogRecords | number: '1.0-0' }} códigos en tu lista ({{
+            s.catalogActiveRecords | number: '1.0-0'
+          }}
+          activos).
+        </p>
+
+        @if (uploadResult(); as r) {
+          <div class="nso-result">
+            <b>✓ Lista cargada: {{ r.recordsRead | number: '1.0-0' }} códigos leídos</b>
+            <ul>
+              <li>{{ r.inserted | number: '1.0-0' }} nuevos</li>
+              <li>{{ r.updated | number: '1.0-0' }} actualizados</li>
+              <li>{{ r.unchanged | number: '1.0-0' }} sin cambios</li>
+              @if (r.missingFromFile > 0) {
+                <li>
+                  {{ r.missingFromFile | number: '1.0-0' }} códigos que ya tenías no vienen en este archivo
+                  (no se borran).
+                </li>
+              }
+            </ul>
+            @if (r.invalidRows.length > 0) {
+              <details class="nso-details">
+                <summary>{{ r.invalidRows.length }} filas con error (toca para verlas)</summary>
+                <ul>
+                  @for (row of r.invalidRows; track $index) {
+                    <li>
+                      <b>Fila {{ row.row }}:</b> {{ row.reason }}
+                      @if (row.raw) {
+                        <code>{{ row.raw }}</code>
+                      }
+                    </li>
+                  }
+                </ul>
+              </details>
+            }
+            @if (r.rematchStarted) {
+              <p class="nso-muted nso-small">Ahora estamos comparando tus perfumes con la lista nueva.</p>
+            }
+          </div>
+        }
+      </section>
+
+      <!-- Cómo funciona -->
+      <section class="adm-card adm-card-pad">
+        <h3>Cómo funciona</h3>
+        <ol class="nso-steps">
+          @for (st of steps; track $index) {
+            <li>
+              <span class="nso-step-n">{{ $index + 1 }}</span>
+              <div>
+                <b>{{ st.title }}</b>
+                <span>{{ st.text }}</span>
+              </div>
+            </li>
+          }
+        </ol>
+      </section>
+    </div>
+
+    <!-- Volver a verificar todo -->
+    <section class="adm-card adm-card-pad nso-rematch">
+      <div class="nso-row-between">
+        <div>
+          <h3>Volver a verificar todo</h3>
+          <p class="nso-muted">
+            Compara otra vez todos tus perfumes con tu lista. Tus decisiones anteriores se respetan.
+          </p>
+        </div>
+        <button
+          class="adm-btn nso-big"
+          (click)="rematchAll()"
+          [disabled]="!catalogLoaded() || rematchRunning() || rematchStarting()"
+        >
+          {{ rematchRunning() ? 'Verificando…' : rematchStarting() ? 'Empezando…' : '↻ Volver a verificar todo' }}
+        </button>
+      </div>
+      @if (rematch(); as rm) {
+        @if (rm.running) {
+          <div class="nso-progress" role="progressbar" [attr.aria-valuenow]="rematchPct()" aria-valuemin="0" aria-valuemax="100">
+            <div class="nso-progress-bar" [style.width.%]="rematchPct()"></div>
+          </div>
+          <p class="nso-muted nso-small">
+            {{ rm.processed | number: '1.0-0' }} de {{ rm.total | number: '1.0-0' }} perfumes ({{ rematchPct() }}%).
+            Puedes seguir usando el panel.
+          </p>
+        } @else if (rm.error) {
+          <p class="nso-err-text">La última verificación se detuvo: {{ rm.error }}</p>
+        } @else if (rm.finishedAt) {
+          <p class="nso-muted nso-small">Última verificación: {{ fmtDate(rm.finishedAt) }}</p>
+        }
+      }
+    </section>
+
+    <!-- Filtro de la tienda -->
+    <section class="adm-card adm-card-pad nso-gate" [class.on]="s.gateEnabled">
+      <div class="nso-gate-row">
+        <div class="nso-gate-text">
+          <h3>Mostrar en la tienda solo perfumes con NSO</h3>
+          @if (s.gateEnabled) {
+            <p>
+              <b>Encendido.</b> Tu tienda solo muestra perfumes con NSO. Los demás quedan ocultos (no se
+              borran) y no se pueden volver a comprar.
+            </p>
+          } @else {
+            <p><b>Apagado.</b> Tu tienda muestra todos los perfumes, como siempre.</p>
+          }
+          @if (catalogLoaded()) {
+            <p class="nso-muted nso-small">
+              Si está encendido: se ven {{ s.publicIfActivated | number: '1.0-0' }} de
+              {{ s.publicNow | number: '1.0-0' }} perfumes ({{ hiddenIfActivated() | number: '1.0-0' }} ocultos).
+            </p>
+          } @else {
+            <p class="nso-muted nso-small">
+              Para usar este botón primero sube tu lista de NSO: sin lista no sabemos qué ocultar.
+            </p>
+          }
+          @if (s.gateEnabled && !s.gateEffective) {
+            <p class="nso-err-text">
+              El botón está encendido pero no hay códigos activos, así que tu tienda sigue mostrando todo.
+            </p>
+          }
+          @if (!s.gateEnabled && catalogLoaded() && rematchRunning()) {
+            <p class="nso-err-text nso-gate-wait">
+              Espera a que termine la verificación para activar el filtro: los perfumes que aún no se
+              revisan quedarían ocultos.
+            </p>
+          }
+        </div>
+        <button
+          class="nso-switch"
+          role="switch"
+          [attr.aria-checked]="s.gateEnabled"
+          [class.on]="s.gateEnabled"
+          (click)="toggleGate()"
+          [disabled]="gateBusy() || (!s.gateEnabled && (!catalogLoaded() || rematchRunning()))"
+          aria-label="Mostrar en la tienda solo perfumes con NSO"
+        >
+          <span class="nso-switch-knob"></span>
+          <span class="nso-switch-label">{{ gateBusy() ? '…' : s.gateEnabled ? 'Sí' : 'No' }}</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- NSO de otros países de la Comunidad Andina -->
+    <section class="adm-card adm-card-pad nso-gate nso-can">
+      <div class="nso-gate-row">
+        <div class="nso-gate-text">
+          <h3>Aceptar NSO de otros países de la Comunidad Andina (Colombia, Bolivia, Ecuador)</h3>
+          <p class="nso-muted nso-small">
+            Si está en «Sí», un perfume con NSO de esos países cuenta igual que uno de Perú (lo marcamos
+            «NSO de otro país»).
+          </p>
+        </div>
+        <button
+          class="nso-switch"
+          role="switch"
+          [attr.aria-checked]="nso.acceptCanCodes()"
+          [class.on]="nso.acceptCanCodes()"
+          (click)="toggleAcceptCan()"
+          [disabled]="settingsBusy()"
+          aria-label="Aceptar NSO de otros países de la Comunidad Andina"
+        >
+          <span class="nso-switch-knob"></span>
+          <span class="nso-switch-label">{{ settingsBusy() ? '…' : nso.acceptCanCodes() ? 'Sí' : 'No' }}</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- Códigos que ya no están en la última lista -->
+    @if (s.codesNotInLastUpload.length > 0) {
+      <section class="adm-card adm-card-pad nso-alert amber nso-missing">
+        <b>{{ s.codesNotInLastUpload.length }} códigos ya no están en tu última lista</b>
+        <span>
+          Siguen activos. Si ya no son válidos, desactívalos en «Catálogo» y sus perfumes dejarán de contar
+          como «Con NSO».
+        </span>
+        <ul>
+          @for (m of s.codesNotInLastUpload.slice(0, 20); track m.code) {
+            <li>
+              <code>{{ m.code }}</code>
+              <span>{{ m.brand }} · {{ m.declaredName }}</span>
+              <span class="nso-muted">
+                {{ m.linkedProducts }} {{ m.linkedProducts === 1 ? 'perfume' : 'perfumes' }}
+              </span>
+              <button class="adm-btn sm" (click)="goToCatalogCode(m.code)">Ver en catálogo</button>
+            </li>
+          }
+        </ul>
+        @if (s.codesNotInLastUpload.length > 20) {
+          <span class="nso-muted">… y {{ s.codesNotInLastUpload.length - 20 }} más.</span>
+        }
+      </section>
+    }
+  }
+}
+
+<!-- ============================= POR REVISAR ============================= -->
+@if (tab() === 'revisar') {
+  <p class="nso-intro">
+    Para cada perfume encontramos NSO parecidos. Mira el nombre en aduanas y elige
+    <b>«Es este»</b> si es el mismo perfume, o <b>«Ninguno de estos»</b> si no lo es.
+  </p>
+
+  @if (reviewLoading() && reviewItems().length === 0) {
+    <p class="nso-empty">Cargando…</p>
+  } @else if (reviewItems().length === 0) {
+    <div class="adm-card adm-card-pad nso-empty-card">
+      <b>🎉 Nada por revisar.</b>
+      <span>Cuando importes proveedores o subas tu lista, los perfumes dudosos aparecerán aquí.</span>
+    </div>
+  }
+
+  @for (item of reviewItems().slice(0, listLimit()); track item.product.id) {
+    <article class="adm-card nso-rev" [class.busy]="busyProductId() === item.product.id">
+      <div class="nso-rev-prod">
+        @if (item.product.imageUrl) {
+          <img [src]="item.product.imageUrl | cdnImg: 160" alt="" loading="lazy" />
+        } @else {
+          <div class="nso-noimg">sin foto</div>
+        }
+        <div class="nso-rev-info">
+          <span class="nso-brand">{{ item.product.brand }}</span>
+          <b class="nso-name">{{ item.product.name }}</b>
+          <span class="nso-muted nso-small">
+            @if (item.product.ml) {
+              {{ item.product.ml }} ml ·
+            }
+            @if (item.product.pricePen != null) {
+              S/ {{ item.product.pricePen | number: '1.0-0' }} ·
+            }
+            código de barras {{ item.product.gtin || '—' }}
+          </span>
+          @if (item.product.offers.length > 0) {
+            <div class="nso-offers">
+              <span class="nso-muted nso-small">Así lo llaman tus proveedores:</span>
+              @for (o of item.product.offers.slice(0, 4); track $index) {
+                <span class="nso-offer">
+                  <b>{{ o.supplierName }}</b> {{ o.rawTitle || '—' }}
+                  @if (!o.inStock) {
+                    <em>(agotado)</em>
+                  }
+                </span>
+              }
+              @if (item.product.offers.length > 4) {
+                <span class="nso-muted nso-small">+{{ item.product.offers.length - 4 }} más</span>
+              }
+            </div>
+          }
+          @if (item.reasons.length > 0) {
+            <ul class="nso-reasons">
+              @for (r of item.reasons; track $index) {
+                <li>{{ r }}</li>
+              }
+            </ul>
+          }
+        </div>
+      </div>
+
+      <div class="nso-options">
+        @for (c of item.candidates; track c.id; let i = $index) {
+          <div class="nso-opt">
+            <span class="nso-opt-tag">Opción {{ i + 1 }}</span>
+            <span class="nso-muted nso-small">Nombre en aduanas</span>
+            <b class="nso-opt-name">{{ c.declaredName || '(sin nombre)' }}</b>
+            <span class="nso-small">{{ c.brand }}</span>
+            <span class="nso-small">
+              Titular: <b>{{ c.titular || 'desconocido' }}</b>
+              @if (c.ruc) {
+                · RUC {{ c.ruc }}
+              }
+            </span>
+            <code class="nso-code">{{ c.nsoCode }}</code>
+            <div class="nso-chips">
+              @if (c.country) {
+                <span class="nso-chip">{{ country(c.country) }}{{ c.nsoYear ? ' · ' + c.nsoYear : '' }}</span>
+              }
+              @if (otherCountry(c.country)) {
+                <span class="adm-st blue">NSO de otro país</span>
+              }
+              @if (expired(c.nsoYear)) {
+                <span class="adm-st amber" title="Un NSO dura 7 años: confirma que siga vigente">¿vigente?</span>
+              }
+              @if (c.origin === 'RESEARCH') {
+                <span class="adm-st gray">De tu investigación</span>
+              }
+              @if (c.score != null) {
+                <span class="nso-chip">Parecido {{ pct(c.score) }}%</span>
+              }
+            </div>
+            @if (c.reasons.length > 0) {
+              <ul class="nso-reasons">
+                @for (r of c.reasons; track $index) {
+                  <li>{{ r }}</li>
+                }
+              </ul>
+            }
+            <button
+              class="adm-btn ok nso-opt-btn"
+              (click)="acceptCandidate(item, c)"
+              [disabled]="busyProductId() !== null"
+            >
+              ✓ Es este
+            </button>
+          </div>
+        }
+      </div>
+
+      <div class="nso-rev-actions">
+        <button class="adm-btn" (click)="rejectAll(item)" [disabled]="busyProductId() !== null">
+          ✗ Ninguno de estos
+        </button>
+        <button class="adm-btn" (click)="openAssign(item.product, 'EN_REVISION')" [disabled]="busyProductId() !== null">
+          🔎 Buscar otro código
+        </button>
+      </div>
+    </article>
+  }
+  @if (reviewItems().length > listLimit()) {
+    <button class="adm-btn nso-more" (click)="showMore()">
+      Ver más ({{ reviewItems().length - listLimit() }} restantes)
+    </button>
+  }
+}
+
+<!-- ========================= LA MARCA TIENE NSO ========================= -->
+@if (tab() === 'marca') {
+  <div class="adm-card adm-card-pad nso-alert blue">
+    <b>¿Qué es «acogerse»?</b>
+    <span>
+      Otro importador ya tiene NSO de esta marca. Por la Decisión 833 de la CAN puedes pedir acogerte a su
+      NSO: contacta al titular (con su RUC), pídele su autorización y tramítalo en DIGEMID. Cuando tengas el
+      código, usa «Asignar código».
+    </span>
+  </div>
+
+  <div class="adm-filters">
+    <input
+      class="adm-input grow nso-search"
+      type="search"
+      placeholder="Buscar marca, perfume o titular…"
+      [value]="listFilter()"
+      (input)="onListFilter($event)"
+    />
+  </div>
+
+  @if (brandLoading() && brandGroups().length === 0) {
+    <p class="nso-empty">Cargando…</p>
+  } @else if (brandGroups().length === 0) {
+    <div class="adm-card adm-card-pad nso-empty-card">
+      <b>No hay perfumes en este grupo.</b>
+      <span>Aquí aparecen los perfumes cuya marca tiene NSO, pero no ese perfume en particular.</span>
+    </div>
+  } @else if (filteredBrandGroups().length === 0) {
+    <div class="adm-card adm-card-pad nso-empty-card">
+      <b>No encontramos «{{ listFilter().trim() }}» en esta lista.</b>
+      <span>Prueba con otra palabra o borra la búsqueda.</span>
+      <button class="adm-btn sm nso-clear-search" (click)="clearListFilter()">Borrar búsqueda</button>
+    </div>
+  }
+
+  @for (g of filteredBrandGroups().slice(0, listLimit()); track g.brandKey) {
+    <article class="adm-card adm-card-pad nso-group">
+      <div class="nso-row-between">
+        <h3>{{ g.brandName }}</h3>
+        <span class="adm-st blue">{{ g.products.length }} {{ g.products.length === 1 ? 'perfume' : 'perfumes' }}</span>
+      </div>
+
+      <div class="nso-titulares">
+        <span class="nso-muted nso-small">Quién tiene NSO de esta marca:</span>
+        @for (t of g.titulares; track $index) {
+          <div class="nso-titular">
+            <div>
+              <b>{{ t.titular || 'Titular desconocido (Aduanet)' }}</b>
+              <span class="nso-muted nso-small">
+                @if (t.ruc) {
+                  RUC {{ t.ruc }} ·
+                }
+                {{ t.codes.length }} {{ t.codes.length === 1 ? 'código' : 'códigos' }}
+              </span>
+            </div>
+            @if (t.ruc) {
+              <button class="adm-btn sm nso-copy" (click)="copyRuc(t.ruc)">Copiar RUC</button>
+            }
+          </div>
+        }
+        @if (g.genericRecords > 0) {
+          <span class="nso-muted nso-small">
+            {{ g.genericRecords }} registros solo dicen «agua de perfume» (sin nombre del perfume).
+          </span>
+        }
+        @if (g.unknownTitularCodes > 0) {
+          <span class="nso-muted nso-small">
+            {{ g.unknownTitularCodes }} códigos vistos en Aduanet sin titular conocido.
+          </span>
+        }
+      </div>
+
+      <ul class="nso-plist">
+        @for (p of g.products; track p.id) {
+          <li class="nso-prow">
+            @if (p.imageUrl) {
+              <img [src]="p.imageUrl | cdnImg: 96" alt="" loading="lazy" />
+            } @else {
+              <div class="nso-noimg sm">sin foto</div>
+            }
+            <div class="nso-prow-info">
+              <b>{{ p.name }}</b>
+              <span class="nso-muted nso-small">
+                {{ p.ml ? p.ml + ' ml' : '' }}
+                @if (p.pricePen != null) {
+                  · S/ {{ p.pricePen | number: '1.0-0' }}
+                }
+                @if (p.suppliers.length) {
+                  · {{ p.suppliers.join(', ') }}
+                }
+              </span>
+            </div>
+            <button class="adm-btn sm nso-act" (click)="openAssign(p, 'MARCA_CON_NSO')">Asignar código</button>
+          </li>
+        }
+      </ul>
+    </article>
+  }
+  @if (filteredBrandGroups().length > listLimit()) {
+    <button class="adm-btn nso-more" (click)="showMore()">
+      Ver más ({{ filteredBrandGroups().length - listLimit() }} marcas restantes)
+    </button>
+  }
+}
+
+<!-- =============================== SIN NSO =============================== -->
+@if (tab() === 'sin') {
+  <p class="nso-intro">
+    No encontramos NSO de estas marcas en tu lista. A veces es solo que la marca está escrita distinto
+    (por ejemplo «YSL» y «Yves Saint Laurent»): usa <b>«Esta marca es la misma que…»</b>.
+  </p>
+
+  <div class="adm-filters">
+    <input
+      class="adm-input grow nso-search"
+      type="search"
+      placeholder="Buscar marca o perfume…"
+      [value]="listFilter()"
+      (input)="onListFilter($event)"
+    />
+  </div>
+
+  @if (sinLoading() && sinRows().length === 0) {
+    <p class="nso-empty">Cargando…</p>
+  } @else if (sinRows().length === 0) {
+    <div class="adm-card adm-card-pad nso-empty-card">
+      <b>No hay perfumes sin NSO.</b>
+      <span>¡Bien! Todos tus perfumes tienen NSO o una marca con NSO.</span>
+    </div>
+  } @else if (filteredSin().length === 0) {
+    <div class="adm-card adm-card-pad nso-empty-card">
+      <b>No encontramos «{{ listFilter().trim() }}» en esta lista.</b>
+      <span>Prueba con otra palabra o borra la búsqueda.</span>
+      <button class="adm-btn sm nso-clear-search" (click)="clearListFilter()">Borrar búsqueda</button>
+    </div>
+  }
+
+  <ul class="nso-plist cards">
+    @for (r of filteredSin().slice(0, listLimit()); track r.id) {
+      <li class="adm-card nso-prow">
+        @if (r.imageUrl) {
+          <img [src]="r.imageUrl | cdnImg: 96" alt="" loading="lazy" />
+        } @else {
+          <div class="nso-noimg sm">sin foto</div>
+        }
+        <div class="nso-prow-info">
+          <span class="nso-brand">{{ r.brand }}</span>
+          <b>{{ r.name }}</b>
+          <span class="nso-muted nso-small">
+            {{ r.ml ? r.ml + ' ml' : '' }}
+            @if (r.suppliers.length) {
+              · {{ r.suppliers.join(', ') }}
+            }
+          </span>
+          @if (r.reasons.length) {
+            <ul class="nso-reasons">
+              @for (x of r.reasons.slice(0, 2); track $index) {
+                <li>{{ x }}</li>
+              }
+            </ul>
+          }
+          @if (r.suggestedBrand) {
+            <span class="nso-small">¿Será la marca <b>«{{ r.suggestedBrand }}»</b> de tu lista?</span>
+          }
+        </div>
+        <div class="nso-prow-actions">
+          <button class="adm-btn sm nso-act" (click)="openAlias(r)">Esta marca es la misma que…</button>
+          <button class="adm-btn sm nso-act" (click)="openAssign(r)">Asignar código</button>
+        </div>
+      </li>
+    }
+  </ul>
+  @if (filteredSin().length > listLimit()) {
+    <button class="adm-btn nso-more" (click)="showMore()">
+      Ver más ({{ filteredSin().length - listLimit() }} restantes)
+    </button>
+  }
+}
+
+<!-- =============================== CON NSO =============================== -->
+@if (tab() === 'con') {
+  <p class="nso-intro">
+    Estos perfumes tienen NSO: se pueden mostrar en tu tienda e importar. Si alguno está mal, usa
+    <b>«Quitar»</b> y se volverá a verificar.
+  </p>
+
+  <div class="adm-filters">
+    <input
+      class="adm-input grow nso-search"
+      type="search"
+      placeholder="Buscar marca, perfume o código…"
+      [value]="listFilter()"
+      (input)="onListFilter($event)"
+    />
+  </div>
+
+  @if (conLoading() && conRows().length === 0) {
+    <p class="nso-empty">Cargando…</p>
+  } @else if (conRows().length === 0) {
+    <div class="adm-card adm-card-pad nso-empty-card">
+      <b>Todavía no hay perfumes con NSO.</b>
+      <span>Sube tu lista y revisa los dudosos en «Por revisar».</span>
+    </div>
+  } @else if (filteredCon().length === 0) {
+    <div class="adm-card adm-card-pad nso-empty-card">
+      <b>No encontramos «{{ listFilter().trim() }}» en esta lista.</b>
+      <span>Prueba con otra palabra o borra la búsqueda.</span>
+      <button class="adm-btn sm nso-clear-search" (click)="clearListFilter()">Borrar búsqueda</button>
+    </div>
+  }
+
+  <ul class="nso-plist cards">
+    @for (r of filteredCon().slice(0, listLimit()); track r.id) {
+      <li class="adm-card nso-prow" [class.busy]="busyProductId() === r.id">
+        @if (r.imageUrl) {
+          <img [src]="r.imageUrl | cdnImg: 96" alt="" loading="lazy" />
+        } @else {
+          <div class="nso-noimg sm">sin foto</div>
+        }
+        <div class="nso-prow-info">
+          <span class="nso-brand">{{ r.brand }}</span>
+          <b>{{ r.name }}{{ r.ml ? ' · ' + r.ml + ' ml' : '' }}</b>
+          <span class="nso-small">
+            <code class="nso-code">{{ r.nsoCode }}</code>
+            @if (r.declaredName) {
+              <span class="nso-muted"> «{{ r.declaredName }}»</span>
+            }
+          </span>
+          <div class="nso-chips">
+            @if (matchedBy(r.matchedBy)) {
+              <span class="adm-st green">{{ matchedBy(r.matchedBy) }}</span>
+            }
+            @if (otherCountry(r.country)) {
+              <span class="adm-st blue" [title]="country(r.country)">NSO de otro país</span>
+            }
+            @if (r.possiblyExpired) {
+              <span class="adm-st amber" title="Un NSO dura 7 años: confirma que siga vigente">¿vigente?</span>
+            }
+            @if (r.archived || !r.available) {
+              <span class="adm-st gray">No publicado</span>
+            }
+          </div>
+          @if (r.decidedBy || r.decidedAt) {
+            <span class="nso-muted nso-small">
+              Decidido{{ r.decidedBy ? ' por ' + r.decidedBy : '' }}{{ r.decidedAt ? ' · ' + fmtDate(r.decidedAt) : '' }}
+            </span>
+          }
+        </div>
+        <div class="nso-prow-actions">
+          <button class="adm-btn sm nso-act" (click)="openAssign(r)" [disabled]="busyProductId() !== null">
+            Cambiar código
+          </button>
+          <button class="adm-btn sm danger nso-act" (click)="unassign(r)" [disabled]="busyProductId() !== null">
+            Quitar
+          </button>
+        </div>
+      </li>
+    }
+  </ul>
+  @if (filteredCon().length > listLimit()) {
+    <button class="adm-btn nso-more" (click)="showMore()">
+      Ver más ({{ filteredCon().length - listLimit() }} restantes)
+    </button>
+  }
+}
+
+<!-- =============================== CATÁLOGO ============================== -->
+@if (tab() === 'catalogo') {
+  <p class="nso-intro">
+    Tu lista de códigos NSO. Desactiva los que ya no sirvan (los perfumes que lo usan dejan de contar como
+    «Con NSO») o agrega uno a mano.
+  </p>
+
+  <div class="adm-filters">
+    <input
+      class="adm-input grow nso-search"
+      type="search"
+      placeholder="Buscar código, marca, perfume o titular…"
+      [value]="catQ()"
+      (input)="onCatSearch($event)"
+    />
+    <button class="adm-btn primary nso-act" (click)="toggleAddCode()">
+      {{ showAddCode() ? 'Cancelar' : '+ Agregar código a mano' }}
+    </button>
+  </div>
+
+  @if (showAddCode()) {
+    <section class="adm-card adm-card-pad nso-form">
+      <h3>Agregar código a mano</h3>
+      <div class="nso-form-grid">
+        <div class="adm-field">
+          <label for="nr-code">Código NSO *</label>
+          <input
+            id="nr-code"
+            class="adm-input"
+            placeholder="NSOC70523-25PE"
+            [value]="newRec().code"
+            (input)="setNewRec('code', $event)"
+            autocomplete="off"
+          />
+          @if (newRec().code && !newRecCodeOk()) {
+            <small class="nso-err-text">Formato: NSOC + 5 o 6 números - año - país (ej. NSOC70523-25PE)</small>
+          }
+        </div>
+        <div class="adm-field">
+          <label for="nr-brand">Marca *</label>
+          <input id="nr-brand" class="adm-input" [value]="newRec().brand" (input)="setNewRec('brand', $event)" />
+        </div>
+        <div class="adm-field">
+          <label for="nr-name">Nombre en el NSO *</label>
+          <input
+            id="nr-name"
+            class="adm-input"
+            [value]="newRec().declaredName"
+            (input)="setNewRec('declaredName', $event)"
+          />
+        </div>
+        <div class="adm-field">
+          <label for="nr-tit">Titular (opcional)</label>
+          <input id="nr-tit" class="adm-input" [value]="newRec().titular" (input)="setNewRec('titular', $event)" />
+        </div>
+        <div class="adm-field">
+          <label for="nr-ruc">RUC (opcional)</label>
+          <input
+            id="nr-ruc"
+            class="adm-input"
+            inputmode="numeric"
+            [value]="newRec().ruc"
+            (input)="setNewRec('ruc', $event)"
+          />
+        </div>
+      </div>
+      @if (newRecError()) {
+        <p class="nso-err-text">{{ newRecError() }}</p>
+      }
+      <button class="adm-btn primary nso-big" (click)="saveNewRecord()" [disabled]="newRecBusy()">
+        {{ newRecBusy() ? 'Guardando…' : 'Guardar código' }}
+      </button>
+    </section>
+  }
+
+  @if (catLoading() && !catData()) {
+    <p class="nso-empty">Cargando…</p>
+  }
+
+  @if (catData(); as d) {
+    @if (d.items.length === 0) {
+      <div class="adm-card adm-card-pad nso-empty-card">
+        <b>{{ catQ() ? 'No encontramos ese código.' : 'Tu lista está vacía.' }}</b>
+        <span>{{ catQ() ? 'Prueba con otra palabra.' : 'Súbela en «Resumen».' }}</span>
+      </div>
+    }
+
+    <ul class="nso-rec-list" [class.loading]="catLoading()">
+      @for (rec of d.items; track rec.code) {
+        <li class="adm-card nso-rec" [class.off]="!rec.active">
+          <div class="nso-rec-main">
+            <code class="nso-code">{{ rec.code }}</code>
+            <b>{{ rec.declaredName || '(sin nombre)' }}</b>
+            <span class="nso-small">{{ rec.brand }}</span>
+            <span class="nso-muted nso-small">
+              Titular: {{ rec.titular || 'desconocido' }}{{ rec.ruc ? ' · RUC ' + rec.ruc : '' }}
+            </span>
+          </div>
+          <div class="nso-chips">
+            <span class="adm-st" [class.green]="rec.active" [class.gray]="!rec.active">
+              {{ rec.active ? 'Activo' : 'Desactivado' }}
+            </span>
+            @if (rec.country) {
+              <span class="nso-chip">{{ country(rec.country) }}{{ rec.nsoYear ? ' · ' + rec.nsoYear : '' }}</span>
+            }
+            @if (otherCountry(rec.country)) {
+              <span class="adm-st blue">NSO de otro país</span>
+            }
+            @if (rec.possiblyExpired) {
+              <span class="adm-st amber" title="Un NSO dura 7 años: confirma que siga vigente">¿vigente?</span>
+            }
+            @if (!rec.inLastUpload && rec.source !== 'MANUAL') {
+              <span class="adm-st amber">No vino en tu última lista</span>
+            }
+            @if (rec.source === 'MANUAL') {
+              <span class="adm-st gray">Agregado a mano</span>
+            }
+            <span class="nso-chip">
+              {{ rec.linkedProducts }} {{ rec.linkedProducts === 1 ? 'perfume' : 'perfumes' }}
+            </span>
+          </div>
+          <div class="nso-rec-actions">
+            <button
+              class="adm-btn sm nso-act"
+              [class.danger]="rec.active"
+              (click)="toggleCodeActive(rec)"
+              [disabled]="codeBusy() !== null"
+            >
+              {{ codeBusy() === rec.code ? 'Revisando…' : rec.active ? 'Desactivar' : 'Activar' }}
+            </button>
+          </div>
+        </li>
+      }
+    </ul>
+
+    @if (d.total > 0) {
+      <div class="nso-pager">
+        <button class="adm-btn nso-act" (click)="catGo(-1)" [disabled]="catPage() === 0 || catLoading()">
+          ← Anterior
+        </button>
+        <span>
+          Página {{ catPage() + 1 }} de {{ catTotalPages() }} · {{ d.total | number: '1.0-0' }} códigos
+        </span>
+        <button
+          class="adm-btn nso-act"
+          (click)="catGo(1)"
+          [disabled]="catPage() + 1 >= catTotalPages() || catLoading()"
+        >
+          Siguiente →
+        </button>
+      </div>
+    }
+  }
+}
+
+<!-- ============ DIÁLOGO COMPARTIDO: ASIGNAR / CAMBIAR / QUITAR CÓDIGO ============ -->
+@if (assignTarget(); as t) {
+  <app-nso-assign-dialog [product]="t" (closed)="assignTarget.set(null)" (changed)="onAssignChanged($event)" />
+}
+
+<!-- =================== MODAL: ESTA MARCA ES LA MISMA QUE… =================== -->
+@if (aliasTarget(); as a) {
+  <div class="nso-modal-back" (click)="closeModals()">
+    <div
+      class="nso-modal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="nso-alias-title"
+      (click)="$event.stopPropagation()"
+    >
+      <div class="nso-row-between">
+        <h3 id="nso-alias-title">¿Con qué marca de tu lista es la misma?</h3>
+        <button class="adm-btn ghost nso-act" (click)="closeModals()" aria-label="Cerrar">✕</button>
+      </div>
+      <p class="nso-muted">
+        Tu proveedor la escribe <b>«{{ a.brand }}»</b>. Busca cómo aparece en tu lista NSO y elígela.
+      </p>
+      <div class="adm-field">
+        <label for="al-search">Buscar marca</label>
+        <input
+          id="al-search"
+          class="adm-input"
+          type="search"
+          placeholder="Ej. Yves Saint Laurent"
+          [value]="aliasSearch()"
+          (input)="onAliasSearch($event)"
+        />
+      </div>
+      @if (aliasSearching()) {
+        <p class="nso-muted nso-small">Buscando…</p>
+      } @else if (aliasSearch().trim().length >= 2 && aliasResults().length === 0) {
+        <p class="nso-muted nso-small">No encontramos esa marca en tu lista.</p>
+      }
+      <ul class="nso-pick">
+        @for (b of aliasResults(); track b) {
+          <li>
+            <b>{{ b }}</b>
+            <button class="adm-btn sm ok nso-act" (click)="chooseAlias(b)" [disabled]="aliasBusy()">
+              {{ aliasBusy() ? 'Guardando…' : 'Es esta' }}
+            </button>
+          </li>
+        }
+      </ul>
+    </div>
+  </div>
+}

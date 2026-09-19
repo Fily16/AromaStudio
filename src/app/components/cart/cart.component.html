@@ -36,6 +36,7 @@
         </svg>
       </div>
       <h2>Tu carrito está vacío</h2>
+      @if (removedNotice()) { <p class="cart-removed" role="alert">{{ removedNotice() }}</p> }
       <p>Explora el catálogo y agrega tus perfumes favoritos.</p>
       <a class="as-btn as-btn-primary" routerLink="/catalogo">Ver catálogo</a>
     </div>
@@ -46,6 +47,12 @@
       <!-- ===================== FASE BOLSA ===================== -->
       @if (phase() === 'bag') {
       <h1 class="cart-title">Tu pedido</h1>
+      @if (removedNotice()) {
+        <p class="cart-removed" role="alert">
+          {{ removedNotice() }}
+          <button type="button" class="cart-removed-x" (click)="removedNotice.set('')" aria-label="Cerrar aviso">✕</button>
+        </p>
+      }
 
       <div class="cart-layout">
         <!-- Items -->

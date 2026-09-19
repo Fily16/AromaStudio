@@ -32,6 +32,18 @@ export class ProductDetailComponent implements OnInit {
   loading = signal(true);
   quantity = signal(1);
   cartToast = signal('');
+  /** El perfume ya no está a la venta (404): se muestra un aviso amable en vez de redirigir. */
+  notFound = signal(false);
+  /** No se pudo cargar por otro motivo (sin conexión, servidor caído): se ofrece reintentar. */
+  loadFailed = signal(false);
+  private currentId: number | null = null;
+
+  /** Sugerencias cuando el perfume ya no está: destacados y novedades con precio. */
+  suggestions = computed(() => {
+    const withPrice = this.allProducts().filter(o => o.wholesalePricePen && o.wholesalePricePen > 0);
+    const score = (o: Product) => (o.isHighlighted ? 2 : 0) + (o.isNew ? 1 : 0);
+    return [...withPrice].sort((a, b) => score(b) - score(a)).slice(0, 10);
+  });
 
   /** Variantes de tamaño: mismo nombre y marca, distinto ml. */
   variants = computed(() => {
@@ -120,8 +132,19 @@ export class ProductDetailComponent implements OnInit {
     // Reacciona a cambios de :id (al navegar entre recomendados sin recargar)
     this.route.paramMap.subscribe(pm => {
       const id = Number(pm.get('id'));
-      if (id) this.loadProduct(id);
+      if (id) {
+        this.loadProduct(id);
+      } else {
+        this.product.set(null);
+        this.loading.set(false);
+        this.loadFailed.set(false);
+        this.notFound.set(true);
+      }
     });
+  }
+
+  retry() {
+    if (this.currentId != null) this.loadProduct(this.currentId);
   }
 
   isInStock(id: number): boolean {
@@ -129,12 +152,16 @@ export class ProductDetailComponent implements OnInit {
   }
 
   private loadProduct(id: number) {
+    this.currentId = id;
     this.loading.set(true);
+    this.notFound.set(false);
+    this.loadFailed.set(false);
     this.quantity.set(1);
     window.scrollTo({ top: 0, behavior: 'smooth' });
 
     this.api.getProduct(id).subscribe({
       next: (product) => {
+        if (this.currentId !== id) return; // llegó tarde: el cliente ya navegó a otro perfume
         this.product.set(product);
         this.loading.set(false);
 
@@ -157,15 +184,19 @@ export class ProductDetailComponent implements OnInit {
           });
         } catch {}
       },
-      error: () => {
+      error: (err) => {
+        if (this.currentId !== id) return;
+        // Ya no se vende (404) -> aviso amable con salida al catálogo; otro error -> reintentar.
+        this.product.set(null);
         this.loading.set(false);
-        this.router.navigate(['/catalogo']);
+        if (err?.status === 404) this.notFound.set(true);
+        else this.loadFailed.set(true);
       }
     });
 
     this.related.set([]);
     this.api.getRelated(id, 10).subscribe({
-      next: (items) => this.related.set(items),
+      next: (items) => { if (this.currentId === id) this.related.set(items); },
       error: () => this.related.set([])
     });
   }

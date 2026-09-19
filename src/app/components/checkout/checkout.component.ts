@@ -5,6 +5,7 @@ import { DecimalPipe } from '@angular/common';
 import { CartService } from '../../services/cart.service';
 import { ApiService } from '../../services/api.service';
 import { SHALOM_AGENCIES, SHALOM_DEPARTMENTS, ShalomAgency } from '../../data/shalom-agencies';
+import { unavailableIdsFrom } from '../../shared/unavailable-items.util';
 
 @Component({
   selector: 'app-checkout',
@@ -184,6 +185,9 @@ export class CheckoutComponent implements OnInit {
         this.loading.set(false);
       },
       error: (err) => {
+        // Perfumes que ya no se venden: se quitan del carrito y se muestra el mensaje del backend tal cual.
+        const unavailable = unavailableIdsFrom(err);
+        if (unavailable.length) this.cart.removeUnavailable(unavailable);
         this.error.set(err.error?.message || 'Error al crear el pedido. Intenta de nuevo.');
         this.loading.set(false);
       }

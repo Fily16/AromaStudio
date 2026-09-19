@@ -1,10 +1,20 @@
 import { Component, inject, signal, computed, OnInit } from '@angular/core';
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { ApiService } from '../../../services/api.service';
-import { Product, ProductOffersView, OfferIndexRow } from '../../../models/api.models';
+import { NsoStateService } from '../../../services/nso-state.service';
+import {
+  Product, ProductOffersView, OfferIndexRow, CreateProductWithNsoRequest, NsoNewProductCode
+} from '../../../models/api.models';
 import { CdnImgPipe } from '../../../shared/cdn-img.pipe';
 import { downloadResellerExcel } from '../../../shared/reseller-excel.util';
 import { downloadResellerPdf } from '../../../shared/reseller-pdf.util';
+import {
+  NSO_STATUS_INFO, NSO_STATUS_ORDER, NsoStatusInfo, countryName, countryOfNsoCode, isOtherCanCountry,
+  isValidNsoCode, matchedByLabel, normalizeNsoCode, nsoStatusInfo
+} from '../../../shared/nso-labels';
+import {
+  NsoAssignChange, NsoAssignDialogComponent, NsoAssignProduct
+} from '../shared/nso-assign-dialog/nso-assign-dialog.component';
 
 /** Contexto por producto para evaluar filtros (ofertas del catálogo + stock de tienda). */
 interface FilterCtx { offers: OfferIndexRow[]; stock: number; }
@@ -30,12 +40,14 @@ interface QuickFilter {
 @Component({
   selector: 'app-products',
   standalone: true,
-  imports: [DecimalPipe, DatePipe, CdnImgPipe],
+  imports: [DecimalPipe, DatePipe, CdnImgPipe, NsoAssignDialogComponent],
   templateUrl: './products.component.html',
   styleUrl: './products.component.css'
 })
 export class ProductsComponent implements OnInit {
   private api = inject(ApiService);
+  /** Estado NSO por producto (índice en 1 request): filtros, pastilla y export. */
+  nso = inject(NsoStateService);
 
   products = signal<Product[]>([]);
   pricing = signal<Record<number, { landedPen: number; consolidadoPen: number; stockPen: number }>>({});
@@ -94,10 +106,19 @@ export class ProductsComponent implements OnInit {
     { id: 'review', group: 'Catálogo', label: 'En revisión', test: p => !!p.matchPending },
     { id: 'gtin-conflict', group: 'Catálogo', label: 'Conflicto de UPC', test: p => !!p.gtinConflict },
     { id: 'with-stock', group: 'Catálogo', label: 'Con stock en tienda', test: (_p, c) => c.stock > 0 },
+
+    // NSO: uno por estado (Con NSO, Por revisar, La marca tiene NSO, Sin NSO, Sin verificar)
+    ...NSO_STATUS_ORDER.map((st): QuickFilter => ({
+      id: 'nso-' + st, group: 'NSO', label: NSO_STATUS_INFO[st].label, hint: NSO_STATUS_INFO[st].hint,
+      test: p => this.nso.statusOf(p.id) === st,
+    })),
   ];
 
+  /** Grupos donde solo se puede elegir UN filtro a la vez (un perfume tiene un solo estado NSO). */
+  private readonly exclusiveGroups = new Set(['NSO']);
+
   /** Agrupación para la plantilla (se arma sola desde `quickFilters`). */
-  readonly filterGroups = ['Proveedores', 'Datos incompletos', 'Catálogo']
+  readonly filterGroups = ['Proveedores', 'Datos incompletos', 'Catálogo', 'NSO']
     .map(g => ({ name: g, filters: this.quickFilters.filter(f => f.group === g) }));
 
   // Config para recálculo en el editor
@@ -109,9 +130,15 @@ export class ProductsComponent implements OnInit {
   xlDone = signal(0);
   xlTotal = signal(0);
 
-  private resellerRows() {
+  /** Perfumes con precio que se ven en la tienda: sin archivados, sin ocultos y sin ocultos por NSO. */
+  private resellerProducts() {
     return this.products()
-      .filter(p => p.available !== false && !(p as any).archived && (p.wholesalePricePen || 0) > 0)
+      .filter(p => p.available !== false && !(p as any).archived && (p.wholesalePricePen || 0) > 0);
+  }
+
+  private resellerRows() {
+    return this.resellerProducts()
+      .filter(p => !this.nso.isHidden(p.id))
       .sort((a, b) => `${a.brand} ${a.name}`.localeCompare(`${b.brand} ${b.name}`))
       .map(p => ({
         brand: p.brand, name: p.name, ml: p.ml, imageUrl: p.imageUrl,
@@ -119,10 +146,42 @@ export class ProductsComponent implements OnInit {
       }));
   }
 
+  /**
+   * Antes de exportar hay que saber qué perfumes oculta el filtro NSO: si no, la lista podría
+   * llevar perfumes que la tienda no muestra (o salir vacía mientras carga el índice).
+   */
+  private nsoReadyForExport(): boolean {
+    if (!this.nso.summary()) {
+      this.toast(this.nso.loadError() || 'Cargando el estado NSO… intenta de nuevo en un momento.');
+      // Sin resumen no se puede exportar: se vuelve a pedir (salvo que ya venga en camino).
+      this.nso.retryIfMissing();
+      return false;
+    }
+    if (this.nso.gateEffective() && (!this.nso.indexLoaded() || this.nso.indexLoading())) {
+      if (this.nso.indexError() && !this.nso.indexLoading()) {
+        // El índice falló: avisar y volver a pedirlo (si no, el botón quedaría muerto).
+        this.toast(this.nso.indexError());
+        this.nso.retryIfMissing();
+      } else {
+        this.toast('Cargando qué perfumes tienen NSO… intenta de nuevo en un momento.');
+      }
+      return false;
+    }
+    return true;
+  }
+
+  /** Aviso de cuántos perfumes quedaron fuera de la lista por el filtro NSO. */
+  private nsoExcludedNote(): string {
+    const n = this.resellerProducts().filter(p => this.nso.isHidden(p.id)).length;
+    return n ? ` (sin ${n} ${n === 1 ? 'perfume oculto' : 'perfumes ocultos'} por NSO)` : '';
+  }
+
   async downloadPriceList() {
     if (this.xlGenerating()) return;
+    if (!this.nsoReadyForExport()) return;
     const rows = this.resellerRows();
-    if (!rows.length) { this.message.set('No hay productos con precio para exportar.'); return; }
+    if (!rows.length) { this.toast('No hay productos con precio para exportar.'); return; }
+    const note = this.nsoExcludedNote();
     this.xlGenerating.set(true);
     this.xlTotal.set(rows.length);
     this.xlDone.set(0);
@@ -134,14 +193,17 @@ export class ProductsComponent implements OnInit {
         rows, withImages: this.xlWithImages(),
         onProgress: (d, t) => { this.xlDone.set(d); this.xlTotal.set(t); }
       });
+      this.toast(`✓ Excel listo: ${rows.length} perfumes${note}.`);
     } catch { /* noop */ }
     this.xlGenerating.set(false);
   }
 
   async downloadPdf() {
     if (this.xlGenerating()) return;
+    if (!this.nsoReadyForExport()) return;
     const rows = this.resellerRows();
-    if (!rows.length) { this.message.set('No hay productos con precio para exportar.'); return; }
+    if (!rows.length) { this.toast('No hay productos con precio para exportar.'); return; }
+    const note = this.nsoExcludedNote();
     this.xlGenerating.set(true);
     this.xlTotal.set(rows.length);
     this.xlDone.set(0);
@@ -152,6 +214,7 @@ export class ProductsComponent implements OnInit {
         filename: 'catalogo-precios.pdf',
         rows, onProgress: (d, t) => { this.xlDone.set(d); this.xlTotal.set(t); }
       });
+      this.toast(`✓ PDF listo: ${rows.length} perfumes${note}.`);
     } catch { /* noop */ }
     this.xlGenerating.set(false);
   }
@@ -187,9 +250,25 @@ export class ProductsComponent implements OnInit {
 
   // Crear
   showCreate = signal(false);
-  nuevo = signal<Partial<Product>>({ sku: '', brand: '', name: '', type: 'EDP', ml: 100, priceUsd: 0, weightG: 350, category: 'unisex' as any, available: true });
+  nuevo = signal<Partial<Product>>(this.emptyNew());
+  creating = signal(false);
+  createError = signal('');
+  /** Código NSO opcional del perfume nuevo. */
+  newNsoCode = signal('');
+  newNsoCodeOk = computed(() => isValidNsoCode(this.newNsoCode()));
+  newNsoCodeNormalized = computed(() => normalizeNsoCode(this.newNsoCode()));
+  /** El código no está en la lista NSO (404 canCreate): se pide el nombre en aduanas para agregarlo. */
+  newNsoMissing = signal<string | null>(null);
+  newNsoDeclared = signal('');
+  newNsoTitular = signal('');
+  newNsoRuc = signal('');
+
+  // NSO por fila: diálogo compartido asignar / cambiar / quitar
+  nsoTarget = signal<NsoAssignProduct | null>(null);
 
   ngOnInit() {
+    // Siempre fresco: la importación o /admin/nso pueden haber cambiado estados.
+    this.nso.refresh();
     this.load();
     this.api.getConfig().subscribe({
       next: (c) => {
@@ -201,7 +280,11 @@ export class ProductsComponent implements OnInit {
   }
 
   load() {
-    this.api.getProducts().subscribe(p => this.products.set(p));
+    // Catálogo admin SIN el filtro NSO de la tienda (el público ocultaría los perfumes sin NSO).
+    this.api.getAdminProducts().subscribe({
+      next: (p) => this.products.set(p),
+      error: (e) => { if (e?.status !== 401 && e?.status !== 403) this.toast('No se pudieron cargar los productos.'); }
+    });
     this.api.getProductsPricing().subscribe({
       next: (list) => {
         const map: Record<number, any> = {};
@@ -210,7 +293,8 @@ export class ProductsComponent implements OnInit {
       },
       error: () => {}
     });
-    this.api.getRetailStock().subscribe({ next: (s) => this.stockMap.set(s || {}), error: () => {} });
+    // Con token: el stock público omite los perfumes ocultos por el filtro NSO (el admin ve todo).
+    this.api.getAdminRetailStock().subscribe({ next: (s) => this.stockMap.set(s || {}), error: () => {} });
     // Índice de ofertas: alimenta el filtro por proveedor / sold out (1 sola consulta).
     this.api.getOffersIndex().subscribe({ next: (idx) => this.offersIndex.set(idx || []), error: () => {} });
   }
@@ -296,9 +380,17 @@ export class ProductsComponent implements OnInit {
   setSupplierStock(v: 'ALL' | 'IN' | 'OUT') { this.supplierStock.set(v); this.visibleCount.set(40); }
 
   toggleFilter(id: string) {
+    const group = this.quickFilters.find(f => f.id === id)?.group;
     this.activeFilters.update(s => {
       const n = new Set(s);
-      if (n.has(id)) n.delete(id); else n.add(id);
+      if (n.has(id)) {
+        n.delete(id);
+      } else {
+        if (group && this.exclusiveGroups.has(group)) {
+          for (const f of this.quickFilters) if (f.group === group) n.delete(f.id);
+        }
+        n.add(id);
+      }
       return n;
     });
     this.visibleCount.set(40);
@@ -367,21 +459,148 @@ export class ProductsComponent implements OnInit {
     this.api.deleteProduct(id).subscribe({ next: () => this.load(), error: () => this.toast('No se pudo eliminar') });
   }
 
+  // --- NSO por fila ---
+  nsoInfo(id: number): NsoStatusInfo { return nsoStatusInfo(this.nso.statusOf(id)); }
+  nsoOtherCountry(id: number): boolean {
+    const r = this.nso.rowOf(id);
+    return !!r && r.status === 'CON_NSO' && isOtherCanCountry(r.country ?? countryOfNsoCode(r.nsoCode));
+  }
+  nsoMaybeExpired(id: number): boolean {
+    const r = this.nso.rowOf(id);
+    return !!r && r.status === 'CON_NSO' && r.possiblyExpired;
+  }
+  /** Tooltip de la pastilla NSO: qué significa, código y cómo se reconoció. */
+  nsoTitle(id: number): string {
+    const info = this.nsoInfo(id);
+    const r = this.nso.rowOf(id);
+    const lines = [`${info.label}: ${info.hint}`];
+    if (r?.status === 'CON_NSO' && r.nsoCode) lines.push(`Código: ${r.nsoCode}`);
+    const how = matchedByLabel(r?.matchedBy);
+    if (r?.status === 'CON_NSO' && how) lines.push(how);
+    if (this.nsoOtherCountry(id)) lines.push(`NSO de otro país: ${countryName(r?.country ?? countryOfNsoCode(r?.nsoCode))}`);
+    if (this.nsoMaybeExpired(id)) lines.push('Tiene más de 7 años: confirma que siga vigente.');
+    if (this.nso.isHidden(id)) lines.push('Con el filtro NSO activo, NO se muestra en la tienda.');
+    return lines.join('\n');
+  }
+  openNso(p: Product) {
+    this.nsoTarget.set({ id: p.id, brand: p.brand, name: p.name, ml: p.ml });
+  }
+  onNsoChanged(ch: NsoAssignChange) { this.toast(ch.message); }
+
   // --- Crear ---
-  toggleCreate() { this.showCreate.update(v => !v); }
+  private emptyNew(): Partial<Product> {
+    return { sku: '', brand: '', name: '', type: 'EDP', ml: 100, priceUsd: 0, weightG: 350, category: 'unisex' as any, available: true };
+  }
+  toggleCreate() {
+    if (this.creating()) return;
+    this.showCreate.update(v => !v);
+    // Al cerrar se limpia todo: al volver a abrir, los campos empiezan vacíos (igual que lo que se envía).
+    if (!this.showCreate()) this.resetCreateForm();
+    this.createError.set('');
+  }
   newField(field: string, e: Event) {
     const t = e.target as HTMLInputElement | HTMLSelectElement;
     const val: any = (t as HTMLInputElement).type === 'number' ? +t.value : t.value;
     this.nuevo.set({ ...this.nuevo(), [field]: val });
+    this.createError.set('');
   }
-  create() {
+  onNewNsoCode(e: Event) {
+    this.newNsoCode.set((e.target as HTMLInputElement).value);
+    this.newNsoMissing.set(null);
+    this.createError.set('');
+  }
+  setNewNso(field: 'declared' | 'titular' | 'ruc', e: Event) {
+    const v = (e.target as HTMLInputElement).value;
+    if (field === 'declared') this.newNsoDeclared.set(v);
+    else if (field === 'titular') this.newNsoTitular.set(v);
+    else this.newNsoRuc.set(v);
+    this.createError.set('');
+  }
+  cancelNewNsoMissing() {
+    this.newNsoMissing.set(null);
+    this.createError.set('');
+  }
+
+  /**
+   * Crea el perfume (POST /admin/products) con su código NSO opcional en una sola operación.
+   * Si el código no está en la lista, el backend responde 404 canCreate: se pide el nombre en
+   * aduanas y se reintenta con `createIfMissing` (se agrega el código y se asigna).
+   */
+  create(createIfMissing = false) {
+    if (this.creating()) return;
     const p = this.nuevo();
-    if (!p.sku || !p.brand || !p.name) { this.toast('SKU, marca y nombre son obligatorios'); return; }
-    this.api.createProduct(p).subscribe({
-      next: () => { this.showCreate.set(false); this.nuevo.set({ sku: '', brand: '', name: '', type: 'EDP', ml: 100, priceUsd: 0, weightG: 350, category: 'unisex' as any, available: true }); this.load(); this.toast('Producto creado'); },
-      error: (e) => this.toast('Error: ' + (e.error?.message || 'no se pudo crear'))
+    if (!p.sku || !p.brand || !p.name) { this.createError.set('SKU, marca y nombre son obligatorios.'); return; }
+    const body: CreateProductWithNsoRequest = { ...p };
+    const rawCode = this.newNsoCode().trim();
+    let code: string | null = null;
+    if (rawCode) {
+      code = normalizeNsoCode(rawCode);
+      if (!isValidNsoCode(code)) {
+        this.createError.set('El código NSO no tiene el formato correcto. Ejemplo: NSOC70523-25PE (o déjalo vacío).');
+        return;
+      }
+      const nso: NsoNewProductCode = { code };
+      if (createIfMissing) {
+        const declared = this.newNsoDeclared().trim();
+        if (!declared) { this.createError.set('Escribe el nombre en aduanas, como figura en el NSO.'); return; }
+        nso.createIfMissing = true;
+        nso.declaredName = declared;
+        if (this.newNsoTitular().trim()) nso.titular = this.newNsoTitular().trim();
+        if (this.newNsoRuc().trim()) nso.ruc = this.newNsoRuc().trim();
+      }
+      body.nso = nso;
+    }
+    this.creating.set(true);
+    this.createError.set('');
+    this.api.createProductWithNso(body).subscribe({
+      next: (res) => {
+        this.creating.set(false);
+        this.showCreate.set(false);
+        this.resetCreateForm();
+        const st = res?.nso?.status;
+        if (res?.product?.id != null && st) {
+          const nsoCode = res.nso.nsoCode ?? null;
+          const country = countryOfNsoCode(nsoCode);
+          this.nso.patchIndex(res.product.id, {
+            status: st, nsoCode, matchedBy: code ? 'MANUAL' : null, locked: !!code,
+            country, otherCanCountry: isOtherCanCountry(country),
+          });
+        }
+        this.nso.afterChange();
+        this.load();
+        this.toast(code
+          ? `✓ Perfume creado con NSO ${res?.nso?.nsoCode ?? code}.`
+          : `✓ Perfume creado. NSO: ${nsoStatusInfo(st).label}.`);
+      },
+      error: (e) => {
+        this.creating.set(false);
+        if (e?.status === 404 && e?.error?.canCreate && code) {
+          this.newNsoMissing.set(code);
+          if (!this.newNsoDeclared().trim()) this.newNsoDeclared.set(`${p.brand} ${p.name}`.trim());
+          this.createError.set('');
+        } else if (e?.status === 0) {
+          this.createError.set('No hay conexión con el servidor. Revisa tu internet e inténtalo de nuevo.');
+        } else {
+          this.createError.set(e?.error?.message || 'No se pudo crear el perfume.');
+        }
+      }
     });
   }
 
-  private toast(m: string) { this.message.set(m); setTimeout(() => this.message.set(''), 3000); }
+  private resetCreateForm() {
+    this.nuevo.set(this.emptyNew());
+    this.newNsoCode.set('');
+    this.newNsoMissing.set(null);
+    this.newNsoDeclared.set('');
+    this.newNsoTitular.set('');
+    this.newNsoRuc.set('');
+    this.createError.set('');
+  }
+
+  private toastTimer: ReturnType<typeof setTimeout> | null = null;
+  private toast(m: string) {
+    this.message.set(m);
+    if (this.toastTimer) clearTimeout(this.toastTimer);
+    this.toastTimer = setTimeout(() => this.message.set(''), 3500);
+  }
 }

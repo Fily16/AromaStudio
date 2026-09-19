@@ -3,6 +3,10 @@
     <h1>AromaStudio</h1>
     <p class="subtitle">Panel de Administración</p>
 
+    @if (expired()) {
+      <p class="expired" role="status">Tu sesión venció, vuelve a entrar.</p>
+    }
+
     <div class="form-group">
       <label>Email</label>
       <input type="email" [value]="email()" (input)="email.set($any($event.target).value)" placeholder="admin@aromastudio.pe">

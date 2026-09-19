@@ -1,12 +1,20 @@
-import { Component, inject, signal, OnInit } from '@angular/core';
+import { Component, inject, signal, computed, OnInit } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { ApiService } from '../../../services/api.service';
-import { Supplier, SupplierConstraint, ImportSummary, ImportPreview, ImportPreviewLine, ColumnMapping, RowOverride, PhotoCandidate, PhotoRow } from '../../../models/api.models';
+import { Supplier, SupplierConstraint, ImportSummary, ImportPreview, ImportPreviewLine, ColumnMapping, RowOverride, PhotoCandidate, PhotoRow, NsoStatus } from '../../../models/api.models';
 import { CdnImgPipe } from '../../../shared/cdn-img.pipe';
 import { ImageProbeService, ProbeResult } from '../../../shared/image-probe.service';
+import { NsoStateService } from '../../../services/nso-state.service';
+import { NsoStatusInfo, countryName, isOtherCanCountry, nsoStatusInfo } from '../../../shared/nso-labels';
+
+/** Filtro NSO de la vista previa: todas las filas o solo un estado. */
+type NsoRowFilter = 'ALL' | NsoStatus;
+
+/** Los 4 estados NSO que puede traer una fila de la vista previa (con lista NSO cargada). */
+const PREVIEW_NSO_STATUSES: NsoStatus[] = ['CON_NSO', 'EN_REVISION', 'MARCA_CON_NSO', 'SIN_NSO'];
 
 @Component({
   selector: 'app-import',
@@ -18,6 +26,7 @@ import { ImageProbeService, ProbeResult } from '../../../shared/image-probe.serv
 export class ImportComponent implements OnInit {
   private api = inject(ApiService);
   probe = inject(ImageProbeService);
+  nso = inject(NsoStateService);
 
   suppliers = signal<Supplier[]>([]);
   selectedSupplierId = signal<number | null>(null);
@@ -95,6 +104,23 @@ export class ImportComponent implements OnInit {
   // Cutover legacy
   archiving = signal(false);
   archiveMessage = signal('');
+
+  // ===== NSO en la vista previa =====
+  readonly nsoStatuses = PREVIEW_NSO_STATUSES;
+  /** Chips sobre la tabla: 'ALL' (por defecto) o un estado NSO. */
+  nsoFilter = signal<NsoRowFilter>('ALL');
+  /** Filas por estado NSO de la vista previa actual (para los chips). */
+  nsoRowCounts = computed(() => {
+    const out: Record<string, number> = {};
+    for (const r of this.preview()?.rows ?? []) {
+      if (r.nsoStatus) out[r.nsoStatus] = (out[r.nsoStatus] ?? 0) + 1;
+    }
+    return out;
+  });
+  /** Filtro NSO activo al publicar (para explicar el resultado cuando la vista previa ya se cerró). */
+  publishedNsoGate = signal(false);
+  /** Filas nuevas sin foto que se saltaron por no tener NSO en la última búsqueda de fotos. */
+  private enrichSkipped = 0;
 
   ngOnInit() {
     this.loadSuppliers();
@@ -513,6 +539,7 @@ export class ImportComponent implements OnInit {
   resetImport() {
     this.preview.set(null); this.editMapping = null; this.overrides = {}; this.approvedSuspicious = {};
     this.summary.set(null);
+    this.nsoFilter.set('ALL');
     this.message.set(''); this.error.set('');
   }
 
@@ -577,18 +604,28 @@ export class ImportComponent implements OnInit {
     const warn = pendingSusp > 0
       ? `\n\nOJO: ${pendingSusp} fila(s) con costo sospechoso quedarán FUERA de stock (marca su casilla ✓ para aprobarlas).`
       : '';
-    if (!confirm('Se publicará a la tienda: los productos y precios quedarán visibles para el cliente.' + warn + '\n¿Continuar?')) return;
+    const gateOn = this.nsoGateActive(p);
+    const withoutNso = gateOn ? p.rows.filter(r => r.nsoStatus !== 'CON_NSO').length : 0;
+    const nsoWarn = withoutNso > 0
+      ? `\n\n${withoutNso} perfume(s) sin NSO se guardan igual, pero NO se mostrarán en la tienda ni en las compras.`
+      : '';
+    if (!confirm('Se publicará a la tienda: los productos y precios quedarán visibles para el cliente.' + warn + nsoWarn + '\n¿Continuar?')) return;
     const approvedSuspiciousIdx = Object.entries(this.approvedSuspicious)
       .filter(([, ok]) => ok).map(([idx]) => +idx);
     this.publishing.set(true); this.error.set('');
     this.api.publishBatch(p.batchId, { overrides: this.overrides, approvedSuspiciousIdx }).subscribe({
       next: (s) => {
         this.publishing.set(false);
+        this.publishedNsoGate.set(gateOn);
         this.summary.set(s);
         this.preview.set(null);
+        this.nsoFilter.set('ALL');
         this.editMapping = null;
         this.message.set('✓ Publicado. Ya está en vista del cliente.');
         this.loadSuppliers(true);
+        // El backend ya re-verificó el NSO de lo publicado: badge del menú y estado compartido al día.
+        this.nso.refreshCount();
+        this.nso.afterChange();
       },
       error: (err) => {
         this.publishing.set(false);
@@ -611,9 +648,21 @@ export class ImportComponent implements OnInit {
     const p = this.preview();
     return p ? p.rows.filter(r => r.editable) : [];
   }
-  /** Filas nuevas que aún no tienen foto asignada. */
+  /** Filas nuevas que aún no tienen foto asignada (sin las que se saltan por NSO). */
   private rowsNeedingPhoto() {
-    return this.newRows().filter(r => !this.overrides[r.idx]?.imageUrl);
+    return this.newRows().filter(r => !this.overrides[r.idx]?.imageUrl && !this.skipPhotoByNso(r));
+  }
+  /**
+   * Con el filtro NSO activo no se gastan créditos de Apify en perfumes sin NSO:
+   * se guardan igual, pero no se van a ver en la tienda.
+   */
+  private skipPhotoByNso(r: ImportPreviewLine): boolean {
+    const p = this.preview();
+    return !!p && this.nsoGateActive(p) && r.nsoStatus !== 'CON_NSO';
+  }
+  /** Cuántas filas nuevas sin foto se saltan por no tener NSO. */
+  nsoPhotoSkipped(): number {
+    return this.newRows().filter(r => !this.overrides[r.idx]?.imageUrl && this.skipPhotoByNso(r)).length;
   }
   /** Consulta como la manual: título original SIN el tamaño (100ml/oz) + "perfume". */
   private buildQuery(row: ImportPreviewLine | undefined, idx: number): string {
@@ -629,7 +678,13 @@ export class ImportComponent implements OnInit {
 
   enrichPhotos() {
     const pending = this.rowsNeedingPhoto();
-    if (!pending.length) { this.enrichMsg.set('Todas las filas nuevas ya tienen foto.'); return; }
+    this.enrichSkipped = this.nsoPhotoSkipped();
+    if (!pending.length) {
+      this.enrichMsg.set(this.enrichSkipped
+        ? `Las ${this.enrichSkipped} filas nuevas sin foto no tienen NSO: no se buscan fotos (no se verán en la tienda).`
+        : 'Todas las filas nuevas ya tienen foto.');
+      return;
+    }
     this.error.set('');
     this.enrichPaused.set(false);
     this.enriching.set(true);
@@ -665,7 +720,8 @@ export class ImportComponent implements OnInit {
     }
     if (i >= idxs.length) {
       this.enriching.set(false);
-      this.enrichMsg.set(`✓ Fotos encontradas: ${found} de ${this.enrichTotal()}.`);
+      const skipped = this.enrichSkipped ? ` Se saltaron ${this.enrichSkipped} sin NSO.` : '';
+      this.enrichMsg.set(`✓ Fotos encontradas: ${found} de ${this.enrichTotal()}.${skipped}`);
       return;
     }
     const idx = idxs[i];
@@ -684,6 +740,76 @@ export class ImportComponent implements OnInit {
         this.error.set(err.error?.message || 'Error consultando Apify. ¿Configuraste APIFY_TOKEN?');
       }
     });
+  }
+
+  // ---------- NSO: pastilla por fila, contadores y filtro ----------
+  /** El backend ya manda los datos NSO en la vista previa (si no, no se muestra nada de NSO). */
+  nsoInfoAvailable(p: ImportPreview): boolean {
+    return typeof p.nsoCatalogLoaded === 'boolean';
+  }
+  /** Filtro de la tienda activo: los perfumes sin NSO quedan ocultos. */
+  nsoGateActive(p: ImportPreview): boolean {
+    return p.nsoGateEnabled === true && p.nsoCatalogLoaded === true;
+  }
+  /** Los 4 contadores NSO (vista previa o resumen de publicación). */
+  nsoCounters(c: { nsoConNso?: number; nsoReview?: number; nsoBrandOnly?: number; nsoNone?: number }): { info: NsoStatusInfo; n: number }[] {
+    return [
+      { info: nsoStatusInfo('CON_NSO'), n: c.nsoConNso ?? 0 },
+      { info: nsoStatusInfo('EN_REVISION'), n: c.nsoReview ?? 0 },
+      { info: nsoStatusInfo('MARCA_CON_NSO'), n: c.nsoBrandOnly ?? 0 },
+      { info: nsoStatusInfo('SIN_NSO'), n: c.nsoNone ?? 0 },
+    ];
+  }
+  /** ¿El resumen de publicación trae contadores NSO con algo que mostrar? */
+  hasNsoSummary(s: ImportSummary): boolean {
+    return (s.nsoConNso ?? 0) + (s.nsoReview ?? 0) + (s.nsoBrandOnly ?? 0) + (s.nsoNone ?? 0) > 0;
+  }
+  /** Chip NSO: tocar el que ya está activo vuelve a «Todas». */
+  setNsoFilter(f: NsoRowFilter) {
+    this.nsoFilter.set(this.nsoFilter() === f && f !== 'ALL' ? 'ALL' : f);
+  }
+  private matchesNsoFilter(r: ImportPreviewLine): boolean {
+    const f = this.nsoFilter();
+    return f === 'ALL' || r.nsoStatus === f;
+  }
+  /**
+   * Filas de la tabla según el chip NSO. Las de costo sospechoso NUNCA se esconden
+   * (hay que aprobarlas antes de publicar): se muestran aunque no sean del grupo elegido.
+   */
+  visibleRows(p: ImportPreview): ImportPreviewLine[] {
+    if (this.nsoFilter() === 'ALL') return p.rows;
+    return p.rows.filter(r => this.matchesNsoFilter(r) || r.suspicious);
+  }
+  /** Sospechosas sin aprobar que no son del grupo elegido (se muestran igual y se avisa). */
+  suspiciousOutsideFilter(p: ImportPreview): number {
+    if (this.nsoFilter() === 'ALL') return 0;
+    return p.rows.filter(r => r.suspicious && !this.approvedSuspicious[r.idx] && !this.matchesNsoFilter(r)).length;
+  }
+  nsoInfo(r: ImportPreviewLine): NsoStatusInfo {
+    return nsoStatusInfo(r.nsoStatus);
+  }
+  statusInfo(st: NsoStatus): NsoStatusInfo {
+    return nsoStatusInfo(st);
+  }
+  nsoOtherCountry(r: ImportPreviewLine): boolean {
+    return isOtherCanCountry(r.nsoCountry);
+  }
+  countryName(c: string | null | undefined): string {
+    return countryName(c);
+  }
+  /** Tooltip de la pastilla: código, nombre en aduanas, titular y motivo, en palabras simples. */
+  nsoTooltip(r: ImportPreviewLine): string {
+    const info = this.nsoInfo(r);
+    const lines: string[] = [info.label + ': ' + info.hint];
+    const codeLabel = r.nsoStatus === 'EN_REVISION' ? 'Código parecido' : 'Código';
+    if (r.nsoCode) lines.push(`${codeLabel}: ${r.nsoCode}`);
+    if (r.nsoDeclaredName) lines.push(`Nombre en aduanas: ${r.nsoDeclaredName}`);
+    if (r.nsoTitular) {
+      lines.push((r.nsoStatus === 'MARCA_CON_NSO' ? 'Titular con NSO de la marca: ' : 'Titular: ') + r.nsoTitular);
+    }
+    if (this.nsoOtherCountry(r)) lines.push(`NSO de otro país: ${countryName(r.nsoCountry)}`);
+    if (r.nsoReason) lines.push(`Motivo: ${r.nsoReason}`);
+    return lines.join('\n');
   }
 
   archive() {

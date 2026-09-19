@@ -11,6 +11,7 @@ import { SHALOM_AGENCIES, SHALOM_DEPARTMENTS, ShalomAgency } from '../../data/sh
 import { downloadResellerExcel } from '../../shared/reseller-excel.util';
 import { downloadResellerPdf } from '../../shared/reseller-pdf.util';
 import { waLink } from '../../shared/whatsapp.util';
+import { removedItemsNotice, unavailableIdsFrom } from '../../shared/unavailable-items.util';
 
 @Component({
   selector: 'app-cart',
@@ -182,6 +183,7 @@ export class CartComponent implements OnDestroy {
       return;
     }
     if (!this.minReached() && this.cart.catalogType() !== 'STOCK') return;
+    this.removedNotice.set('');
     if (typeof (window as any).ttq !== 'undefined') {
       (window as any).ttq.track('InitiateCheckout', {
         content_type: 'product', value: this.cart.totalPen(), currency: 'PEN', quantity: this.totalUnits()
@@ -265,8 +267,40 @@ export class CartComponent implements OnDestroy {
         this.submitting.set(false);
         try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch {}
       },
-      error: (err) => { this.submitError.set(err.error?.message || 'Error al crear el pedido. Intenta de nuevo.'); this.submitting.set(false); }
+      error: (err) => {
+        this.submitting.set(false);
+        const message = err.error?.message || 'Error al crear el pedido. Intenta de nuevo.';
+        if (this.dropUnavailable(err, message)) return;
+        this.submitError.set(message);
+      }
     });
+  }
+
+  /** Aviso visible en la bolsa cuando se quitaron perfumes que ya no se venden (mensaje del backend). */
+  removedNotice = signal('');
+
+  /**
+   * Si el pedido trae perfumes que ya no se venden (400 con unavailableProductIds): los quita del
+   * carrito y muestra el mensaje del backend, cambiando su «Retíralo de tu pedido» (ya lo quitamos)
+   * por lo que falta hacer. Si el carrito queda vacío o por debajo del mínimo vuelve a la bolsa,
+   * para que el cliente vea el aviso y pueda completar su pedido.
+   */
+  private dropUnavailable(err: unknown, message: string): boolean {
+    const ids = unavailableIdsFrom(err);
+    if (!ids.length) return false;
+    const removed = this.cart.removeUnavailable(ids);
+    const removedCount = removed.items + removed.promos;
+    const needsMin = this.cart.catalogType() !== 'STOCK' && !this.minReached();
+    if (this.cart.isEmpty() || needsMin) {
+      this.submitError.set('');
+      this.removedNotice.set(removedItemsNotice(message, removedCount, this.cart.isEmpty() ? 'empty' : 'add'));
+      this.phase.set('bag');
+      try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch {}
+    } else {
+      this.removedNotice.set('');
+      this.submitError.set(removedItemsNotice(message, removedCount, 'confirm'));
+    }
+    return true;
   }
 
   // Excel bonito con lo que compró + S/30 por perfume, para que lo revenda a su público

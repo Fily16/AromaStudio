@@ -1,11 +1,15 @@
 import { Component, computed, inject, signal, OnInit } from '@angular/core';
 import { DecimalPipe, DatePipe } from '@angular/common';
+import { RouterLink } from '@angular/router';
 import { ApiService } from '../../../services/api.service';
+import { NsoStateService } from '../../../services/nso-state.service';
 import { Order, Consolidado, AllocationResponse, MissingItem, MissingStatus, Supplier,
-         Promotion, ProfitReport, OrderPromo, OrderItem, FillReport, SingleSupplierPlan } from '../../../models/api.models';
+         Promotion, ProfitReport, OrderPromo, OrderItem, FillReport, SingleSupplierPlan, NsoBlockedItem } from '../../../models/api.models';
 import { CdnImgPipe } from '../../../shared/cdn-img.pipe';
+import { nsoStatusInfo, NsoStatusInfo } from '../../../shared/nso-labels';
 import { MediaGalleryComponent } from '../shared/media-gallery.component';
-import { MissingPanelComponent } from './missing-panel.component';
+import { MissingPanelComponent, UnavailableEntry } from './missing-panel.component';
+import { nsoBlockedIdSet, nsoBlockedLabel, nsoBlockedSummary, nsoBlockedWhatsappText } from './nso-blocked.util';
 
 /**
  * Pedidos = núcleo del ERP. KPIs del consolidado (total, Lima, provincia, por vendedor,
@@ -15,12 +19,22 @@ import { MissingPanelComponent } from './missing-panel.component';
 @Component({
   selector: 'app-orders',
   standalone: true,
-  imports: [DecimalPipe, DatePipe, CdnImgPipe, MediaGalleryComponent, MissingPanelComponent],
+  imports: [DecimalPipe, DatePipe, RouterLink, CdnImgPipe, MediaGalleryComponent, MissingPanelComponent],
   templateUrl: './orders.component.html',
   styleUrl: './orders.component.css'
 })
 export class OrdersComponent implements OnInit {
   private api = inject(ApiService);
+  nso = inject(NsoStateService);
+
+  /** Chip «Sin NSO» en los ítems: solo con el filtro NSO activo (nso.isHidden ya lo contempla). */
+  nsoHidden(productId: number | null | undefined): boolean {
+    return productId != null && this.nso.indexLoaded() && this.nso.isHidden(productId);
+  }
+  nsoChipTitle(productId: number): string {
+    const info = nsoStatusInfo(this.nso.statusOf(productId));
+    return `Estado NSO: ${info.label}. No se puede importar ni volver a comprar; avisa al cliente.`;
+  }
 
   consolidados = signal<Consolidado[]>([]);
   selectedId = signal<number | null>(null);
@@ -452,6 +466,8 @@ De esta manera podremos procesar todos los pedidos de forma ordenada y garantiza
   });
 
   ngOnInit() {
+    // Estado NSO (una vez por sesión) para el chip «Sin NSO» de los ítems.
+    this.nso.load();
     this.api.getSellers().subscribe({ next: (s) => this.sellers.set(s), error: () => {} });
     this.api.getPromotions().subscribe({
       next: (list) => { const m = new Map<number, Promotion>(); for (const p of list) m.set(p.id, p); this.promotionsMap.set(m); },
@@ -889,6 +905,28 @@ De esta manera podremos procesar todos los pedidos de forma ordenada y garantiza
     const list = this.singlePlan()?.couldNotBuy || [];
     return { perfumes: list.length, units: list.reduce((u, c) => u + c.quantity, 0) };
   });
+
+  // ---- Grupo "No se puede importar": demanda de perfumes sin NSO (el backend la separa del plan) ----
+  /** En modo "Solo X" se usa el nsoBlocked de ese plan; si no, el de la asignación normal. */
+  nsoBlocked = computed<NsoBlockedItem[]>(() =>
+    this.singlePlan()?.nsoBlocked ?? this.allocation()?.nsoBlocked ?? []);
+  nsoBlockedTotals = computed(() => nsoBlockedSummary(this.nsoBlocked()));
+  private nsoBlockedIds = computed(() => nsoBlockedIdSet(this.nsoBlocked()));
+  /** Clientes afectados: mismo constructor por pedido que "Revisar separados" / Caso B. */
+  nsoBlockedReport = computed(() => {
+    const ids = this.nsoBlockedIds();
+    return ids.size ? this.buildUnavailableReport(p => ids.has(p.id)) : [];
+  });
+  blockedLabel(b: NsoBlockedItem): string { return nsoBlockedLabel(b); }
+  nsoInfo(status: string | null | undefined): NsoStatusInfo { return nsoStatusInfo(status); }
+
+  /** WhatsApp al cliente con TEXTO PROPIO neutral ("no está disponible para importación"; nunca dice NSO). */
+  whatsappNsoBlocked(e: UnavailableEntry) {
+    this.openClientWhatsapp(e.order.clientPhone, nsoBlockedWhatsappText(e));
+    this.nsoNotified.update(s => new Set(s).add(e.order.id));
+  }
+  /** Clientes ya avisados en esta vista (solo marca visual; no se guarda). */
+  nsoNotified = signal<Set<number>>(new Set());
 
   // ---- Completar Excel del proveedor (llena Quantity por UPC con la asignación) ----
   filling = signal<number | null>(null);   // supplierId en proceso

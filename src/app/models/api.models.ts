@@ -212,6 +212,12 @@ export interface DashboardStats {
   retailSalesCount: number;
   retailRevenuePen: number;
   retailProfitPen: number;
+  // NSO (aditivos): conteos por estado y si el filtro de la tienda está activo
+  nsoConNso?: number;
+  nsoPending?: number;
+  nsoMarca?: number;
+  nsoSin?: number;
+  nsoGateEffective?: boolean;
 }
 
 export interface LoginResponse {
@@ -372,6 +378,11 @@ export interface ImportSummary {
   reviewQueued: number;    // posibles duplicados enviados a la cola de revisión
   suspiciousRows: number;  // filas con costo fuera de rango, guardadas fuera de stock
   notes: string[];
+  // NSO (aditivos): cómo quedaron los perfumes publicados frente a la lista NSO
+  nsoConNso?: number;
+  nsoReview?: number;
+  nsoBrandOnly?: number;
+  nsoNone?: number;
 }
 
 // Alta/edicion de proveedor
@@ -415,6 +426,13 @@ export interface ImportPreviewLine {
   matchScore: number | null;   // similitud del mejor candidato (L2)
   gtinStatus: 'OK' | 'EMPTY' | 'INVALID_LENGTH' | 'CHECKSUM_FAIL' | 'AMBIGUOUS' | null;
   suspicious: boolean;         // costo fuera de rango plausible: no repreciará salvo aprobación
+  // NSO (aditivos; todos null si no hay lista NSO cargada)
+  nsoStatus?: NsoStatus | null;
+  nsoCode?: string | null;
+  nsoDeclaredName?: string | null;
+  nsoTitular?: string | null;
+  nsoReason?: string | null;
+  nsoCountry?: string | null;
 }
 
 // Correcciones manuales al publicar (por índice de fila): marca/nombre/ml/foto de productos nuevos
@@ -444,6 +462,13 @@ export interface ImportPreview {
   suspiciousRows: number;   // costo fuera de rango (typo probable)
   layoutFallback: boolean;  // el parser afinado no reconoció el layout; se usó el genérico
   rows: ImportPreviewLine[];
+  // NSO (aditivos)
+  nsoCatalogLoaded?: boolean;
+  nsoGateEnabled?: boolean;
+  nsoConNso?: number;
+  nsoReview?: number;
+  nsoBrandOnly?: number;
+  nsoNone?: number;
 }
 
 export interface AltPrice {
@@ -495,6 +520,7 @@ export interface SingleSupplierPlan {
   consolidadoId: number; targetSupplierId: number; targetSupplierName: string;
   buy: SingleSupplierBuyLine[]; couldNotBuy: SingleSupplierCouldNotBuy[];
   buyPerfumes: number; buyUnits: number; buySubtotalUsd: number;
+  nsoBlocked?: NsoBlockedItem[]; // demanda que no se puede importar (sin NSO)
 }
 
 export interface AllocationLine {
@@ -581,6 +607,7 @@ export interface AllocationResponse {
   marginWarnings: MarginWarning[];
   lostSales: LostSale[];
   penaltiesUsd: number;
+  nsoBlocked?: NsoBlockedItem[]; // demanda separada: perfumes sin NSO (no se pueden importar)
 }
 
 // --- Plan de compra persistido (DRAFT -> CONFIRMED) ---
@@ -701,4 +728,285 @@ export interface PhotoRow {
   selected?: boolean;
   /** Motivo de rotura detectado por el navegador (error/timeout/placeholder/sin-url). */
   reason?: string;
+}
+
+// ============================================================================
+// NSO (Notificación Sanitaria Obligatoria, DIGEMID) — SOLO uso interno del admin.
+// Contrato: /api/admin/nso/**. El cliente de la tienda nunca ve estos datos.
+// ============================================================================
+
+/** Estado NSO de un producto. Un producto sin fila en el índice cuenta como SIN_VERIFICAR. */
+export type NsoStatus = 'CON_NSO' | 'EN_REVISION' | 'MARCA_CON_NSO' | 'SIN_NSO' | 'SIN_VERIFICAR';
+
+/** Cómo se reconoció el NSO de un producto. */
+export type MatchedBy = 'UPC' | 'ALIAS_SKU' | 'ALIAS_NOMBRE' | 'NOMBRE' | 'MANUAL' | 'APROBADO';
+
+export type NsoCandidateOrigin = 'MATCHER' | 'RESEARCH';
+export type NsoCandidateStatus = 'PENDING' | 'ACCEPTED' | 'REJECTED' | 'SUPERSEDED';
+export type NsoRecordSource = 'CSV' | 'ADUANET' | 'XLSX' | 'MANUAL';
+
+/** Progreso del "Volver a verificar todo" (corre en segundo plano). */
+export interface NsoRematchProgress {
+  running: boolean;
+  processed: number;
+  total: number;
+  startedAt: string | null;
+  finishedAt: string | null;
+  error: string | null;
+}
+
+/** Código que estaba en la lista anterior pero no vino en la última carga (no se borra). */
+export interface NsoMissingCode {
+  code: string;
+  brand: string | null;
+  declaredName: string | null;
+  linkedProducts: number;
+}
+
+export interface NsoSummary {
+  gateEnabled: boolean;
+  gateEffective: boolean;        // interruptor encendido Y hay al menos un código activo
+  catalogRecords: number;
+  catalogActiveRecords: number;
+  catalogVersion: number;
+  lastUpload: { at: string; by: string | null; filename: string | null } | null;
+  counts: Record<NsoStatus, number>;
+  /** nso_accept_can_codes: si es false, los NSO de otro país (CO/BO/EC) NO cuentan para la tienda. */
+  acceptCanCodes: boolean;
+  /** nso_review_min_score (0.5–0.95). Solo informativo: el panel no lo muestra (es muy técnico). */
+  reviewMinScore?: number;
+  pendingCandidates: number;     // productos con candidatos pendientes de revisión
+  publicNow: number;             // visibles hoy en la tienda (ignorando el filtro)
+  publicIfActivated: number;     // de esos, cuántos quedarían visibles con el filtro activo
+  codesNotInLastUpload: NsoMissingCode[];
+  rematch: NsoRematchProgress;
+}
+
+/** Fila del índice compacto (1 request) para pintar el estado NSO en cualquier pantalla. */
+export interface NsoIndexRow {
+  productId: number;
+  status: NsoStatus;
+  nsoCode: string | null;
+  matchedBy: MatchedBy | null;
+  locked: boolean;
+  score: number | null;
+  country: string | null;
+  nsoYear: number | null;
+  otherCanCountry: boolean;
+  possiblyExpired: boolean;
+}
+
+export interface NsoReviewOffer {
+  supplierName: string | null;
+  rawTitle: string | null;
+  supplierSku: string | null;
+  inStock: boolean;
+}
+
+export interface NsoReviewProduct {
+  id: number;
+  brand: string;
+  name: string;
+  ml: number | null;
+  imageUrl: string | null;
+  gtin: string | null;
+  pricePen: number | null;
+  offers: NsoReviewOffer[];
+}
+
+/** Una opción de NSO propuesta para un producto en revisión. */
+export interface NsoCandidateView {
+  id: number;
+  nsoCode: string;
+  brand: string | null;
+  declaredName: string | null;
+  titular: string | null;
+  ruc: string | null;
+  country: string | null;
+  nsoYear: number | null;
+  score: number | null;
+  reasons: string[];
+  origin: NsoCandidateOrigin;
+}
+
+export interface NsoReviewItem {
+  product: NsoReviewProduct;
+  reasons: string[];
+  candidates: NsoCandidateView[];
+}
+
+/** Titular (importador) que tiene NSO de una marca, con sus códigos. */
+export interface NsoTitular {
+  titular: string | null;
+  ruc: string | null;
+  codes: string[];
+}
+
+export interface NsoBrandGroupProduct {
+  id: number;
+  brand: string;
+  name: string;
+  ml: number | null;
+  pricePen: number | null;
+  imageUrl: string | null;
+  suppliers: string[];
+}
+
+export interface NsoBrandGroup {
+  brandKey: string;
+  brandName: string;
+  titulares: NsoTitular[];
+  genericRecords: number;       // registros que solo dicen «agua de perfume» (sin nombre)
+  unknownTitularCodes: number;  // códigos vistos en Aduanet sin titular conocido
+  products: NsoBrandGroupProduct[];
+}
+
+/** Producto con su estado NSO detallado (GET /admin/nso/products?status=). */
+export interface NsoProductRow {
+  id: number;
+  brand: string;
+  name: string;
+  ml: number | null;
+  imageUrl: string | null;
+  pricePen: number | null;
+  suppliers: string[];
+  available: boolean;
+  archived: boolean;
+  status: NsoStatus;
+  nsoCode: string | null;
+  declaredName: string | null;
+  titular: string | null;
+  matchedBy: MatchedBy | null;
+  locked: boolean;
+  score: number | null;
+  reasons: string[];
+  suggestedBrand: string | null;
+  country: string | null;
+  nsoYear: number | null;
+  possiblyExpired: boolean;
+  decidedBy: string | null;
+  decidedAt: string | null;
+}
+
+/** Código de la lista NSO (catálogo). */
+export interface NsoRecordView {
+  code: string;
+  brand: string | null;
+  declaredName: string | null;
+  titular: string | null;
+  ruc: string | null;
+  tipo: string | null;
+  origen: string | null;
+  country: string | null;
+  nsoYear: number | null;
+  source: NsoRecordSource | null;
+  active: boolean;
+  inLastUpload: boolean;
+  linkedProducts: number;
+  possiblyExpired: boolean;
+  usdKg: number | null;
+  lastImportDate: string | null;
+}
+
+export interface NsoCatalogPage {
+  items: NsoRecordView[];
+  total: number;
+  page: number;
+  size: number;
+}
+
+export interface NsoInvalidRow {
+  row: number;
+  raw: string | null;
+  reason: string;
+}
+
+/** Resultado de subir la lista NSO (.xlsx o .csv). */
+export interface NsoUploadSummary {
+  fileType: 'XLSX' | 'CSV';
+  filename: string;
+  recordsRead: number;
+  inserted: number;
+  updated: number;
+  unchanged: number;
+  invalidRows: NsoInvalidRow[];
+  missingFromFile: number;
+  researchLinksRead: number;
+  catalogVersion: number;
+  rematchStarted: boolean;
+}
+
+export interface NsoEvent {
+  id: number;
+  type: string;
+  productId: number | null;
+  nsoCode: string | null;
+  fromStatus: string | null;
+  toStatus: string | null;
+  actor: string | null;
+  detail: string | null;
+  createdAt: string;
+}
+
+/** Demanda que no se puede importar por falta de NSO (plan de compra / asignación). */
+export interface NsoBlockedItem {
+  productId: number;
+  brand: string;
+  name: string;
+  ml: number | null;
+  quantity: number;   // unidades demandadas
+  status: NsoStatus;
+}
+
+// --- Respuestas de acciones NSO ---
+export interface NsoAcceptResult {
+  productId: number;
+  status: NsoStatus;
+  nsoCode: string;
+  alsoResolved: number[];
+}
+export interface NsoStatusResult {
+  productId: number;
+  status: NsoStatus;
+  nsoCode?: string | null;
+}
+export interface NsoAssignRequest {
+  code: string;
+  createIfMissing?: boolean;
+  brand?: string;
+  declaredName?: string;
+  titular?: string;
+  ruc?: string;
+}
+export interface NsoCreateRecordRequest {
+  code: string;
+  brand: string;
+  declaredName: string;
+  titular?: string;
+  ruc?: string;
+}
+/** Respuesta de POST /admin/nso/catalog: el código creado + perfumes que se re-verificaron al instante. */
+export interface NsoCreateRecordResult {
+  record: NsoRecordView;
+  rematched: number;
+  linkedProducts: { id: number; brand: string | null; name: string | null; status: NsoStatus }[];
+}
+/** NSO opcional al crear un perfume a mano (POST /admin/products). */
+export interface NsoNewProductCode {
+  code: string;
+  createIfMissing?: boolean;
+  declaredName?: string;
+  titular?: string;
+  ruc?: string;
+}
+/** Body de POST /admin/products: campos del formulario «Nuevo producto» + NSO opcional. */
+export type CreateProductWithNsoRequest = Partial<Product> & { nso?: NsoNewProductCode };
+/** Respuesta de POST /admin/products. */
+export interface CreateProductWithNsoResult {
+  product: Product;
+  nso: NsoStatusResult;
+}
+export interface NsoCodeActiveResult {
+  applied: boolean;
+  affectedProducts: { id: number; brand: string; name: string }[];
 }

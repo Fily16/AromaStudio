@@ -82,3 +82,42 @@
 .offers-sub .mono, .offers-table .mono { font-family: ui-monospace, monospace; }
 .offers-table tr.dim td { opacity: .55; }
 .offers-note { margin-top: 12px; font-size: .8rem; color: var(--a-muted); }
+
+/* ===== Aviso flotante (antes solo existía en Pedidos: aquí no se veía) ===== */
+.ord-toast {
+  position: fixed; top: 70px; left: 50%; transform: translateX(-50%);
+  max-width: min(560px, calc(100vw - 24px));
+  background: #131722; color: #fff; padding: 10px 18px; border-radius: 8px;
+  font-size: .88rem; font-weight: 600; line-height: 1.4; z-index: 120; box-shadow: 0 8px 24px rgba(0,0,0,.25);
+}
+/* Encabezado, acciones y fila de edición (mismas clases que Pedidos) */
+.ord-head { display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; margin-bottom: 18px; }
+.ord-head-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+.ord-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+.ord-detail-tr td { background: var(--a-surface-2); padding: 14px 18px; }
+.ord-detail-tr:hover td { background: var(--a-surface-2); }
+
+/* ===== NSO: estado por fila y alta con código ===== */
+.prod-state { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; }
+.prod-state .adm-st { cursor: default; }
+.prod-state button.adm-st { cursor: pointer; }
+.pflag.other { background: var(--a-accent-050); color: var(--a-accent-700); }
+.prod-nso-hint { color: var(--a-muted); font-size: .74rem; }
+.prod-nso-err { color: var(--a-danger); font-size: .78rem; font-weight: 600; }
+.prod-nso-missing {
+  display: flex; flex-direction: column; gap: 6px; margin-top: 14px; font-size: .86rem; line-height: 1.45;
+  background: var(--a-warn-bg); color: #6d4604; border: 1px solid #f1dcaa; border-radius: var(--a-r-sm); padding: 12px 14px;
+}
+.prod-nso-missing .prod-form { margin-top: 6px; color: var(--a-ink); }
+
+/* Laptops de 1280-1439px: la tabla (8 columnas + botones) no entraba y tapaba los botones de la derecha.
+   Menos relleno horizontal solo aqui; en pantallas grandes queda igual que el resto del panel. */
+@media (max-width: 1439px) {
+  .adm-table thead th { padding-left: 8px; padding-right: 8px; }
+  .adm-table tbody td { padding-left: 8px; padding-right: 8px; }
+}
+
+@media (max-width: 640px) {
+  .ord-toast { top: 64px; width: calc(100vw - 24px); }
+  .prod-nso-missing .adm-field { grid-column: auto !important; }
+}

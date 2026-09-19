@@ -226,11 +226,46 @@
           </p>
         }
 
+        <!-- NSO: cómo quedaría cada perfume frente a tu lista NSO (solo interno) -->
+        @if (nsoInfoAvailable(p)) {
+          @if (!p.nsoCatalogLoaded) {
+            <div class="nso-note">
+              <b>Aún no subiste tu lista NSO.</b>
+              <span>Sin ella no sabemos qué perfumes tienen NSO. <a routerLink="/admin/nso">Subir mi lista NSO →</a></span>
+            </div>
+          } @else {
+            <div class="nso-box">
+              <p class="mm-title">NSO de esta lista <span>(toca un número para ver solo esas filas)</span></p>
+              <div class="nso-counts">
+                @for (c of nsoCounters(p); track c.info.status) {
+                  <button type="button" [class]="'nso-count ' + c.info.color" [class.on]="nsoFilter() === c.info.status"
+                          [title]="c.info.hint" (click)="setNsoFilter(c.info.status)">
+                    <b>{{ c.n }}</b><span>{{ c.info.label }}</span>
+                  </button>
+                }
+              </div>
+              <p class="nso-banner">
+                @if (nsoGateActive(p)) {
+                  Los perfumes <b>sin NSO</b> se guardan igual (precio y stock al día), pero <b>no aparecen en tu tienda ni en las compras</b>.
+                } @else {
+                  Los perfumes sin NSO se guardan igual. Hoy tu tienda muestra todo: quedarán ocultos cuando actives
+                  «Mostrar solo perfumes con NSO» en <a routerLink="/admin/nso">NSO</a>.
+                }
+              </p>
+            </div>
+          }
+        }
+
         <!-- Rellenar fotos con Apify (solo filas nuevas, de 1 en 1 con pausa) -->
         @if (newRows().length) {
           <div class="enrich">
             @if (!enriching()) {
               <button class="btn ghost sm" (click)="enrichPhotos()">🖼️ Rellenar fotos con Apify ({{ newRows().length }} nuevos)</button>
+              @if (nsoPhotoSkipped() > 0) {
+                <span class="enrich-skip" title="Con el filtro NSO activo no se gastan créditos en perfumes que no se verán en la tienda">
+                  Se saltan {{ nsoPhotoSkipped() }} sin NSO
+                </span>
+              }
             } @else {
               <button class="btn danger sm" (click)="pauseEnrich()">⏸ Pausar</button>
               <span class="searching">Buscando: {{ enrichDone() + 1 }}/{{ enrichTotal() }}…</span>
@@ -245,17 +280,39 @@
           </div>
         }
 
+        <!-- Chips de filtro NSO (Todas por defecto) -->
+        @if (p.nsoCatalogLoaded) {
+          <div class="nso-chips" role="group" aria-label="Filtrar filas por NSO">
+            <span class="nso-chips-lbl">Ver:</span>
+            <button type="button" class="nso-fchip" [class.on]="nsoFilter() === 'ALL'" (click)="setNsoFilter('ALL')">
+              Todas <span class="n">{{ p.rows.length }}</span>
+            </button>
+            @for (st of nsoStatuses; track st) {
+              <button type="button" class="nso-fchip" [class.on]="nsoFilter() === st" (click)="setNsoFilter(st)">
+                <i [class]="'dot ' + statusInfo(st).color"></i>
+                {{ statusInfo(st).label }} <span class="n">{{ nsoRowCounts()[st] || 0 }}</span>
+              </button>
+            }
+          </div>
+          @if (suspiciousOutsideFilter(p) > 0) {
+            <p class="legend warn-note">
+              ⚠ También ves {{ suspiciousOutsideFilter(p) }} fila(s) con <b>costo sospechoso sin aprobar</b> que no son de este grupo:
+              no se esconden para que las revises antes de publicar.
+            </p>
+          }
+        }
+
         <!-- Tabla de filas -->
         <div class="pv-table-wrap">
           <table class="pv-table">
             <thead>
               <tr>
-                <th>Foto</th><th>Marca</th><th>Nombre</th><th>ml</th><th>UPC</th>
+                <th>Foto</th><th>Marca</th><th>Nombre</th><th>ml</th><th>NSO</th><th>UPC</th>
                 <th>Costo $</th><th>Stock</th><th>Precio al cliente S/</th>
               </tr>
             </thead>
             <tbody>
-              @for (r of p.rows; track r.idx) {
+              @for (r of visibleRows(p); track r.idx) {
                 <tr [class.oos]="!r.inStock" [class.isnew]="r.editable">
                   <!-- Foto: del producto existente (por UPC). Nuevos: sin foto todavía. -->
                   <td class="pv-foto">
@@ -291,6 +348,16 @@
                     </td>
                     <td>{{ r.matchedMl || '' }}</td>
                   }
+
+                  <!-- NSO: pastilla con el estado (detalle en el tooltip) -->
+                  <td class="pv-nso">
+                    @if (r.nsoStatus) {
+                      <span [class]="'nso-pill ' + nsoInfo(r).color" [title]="nsoTooltip(r)">{{ nsoInfo(r).label }}</span>
+                      @if (nsoOtherCountry(r)) {
+                        <span class="tag other-country" [title]="'NSO emitido en ' + countryName(r.nsoCountry)">NSO de otro país</span>
+                      }
+                    } @else { <span class="nofoto">—</span> }
+                  </td>
 
                   <td class="mono">
                     {{ r.upc || '—' }}
@@ -360,6 +427,29 @@
             🔍 {{ s.reviewQueued }} posible(s) duplicado(s) esperan tu decisión en
             <a routerLink="/admin/revision"><b>Revisión</b></a>.
           </p>
+        }
+        @if (hasNsoSummary(s)) {
+          <div class="nso-box">
+            <p class="mm-title">NSO de lo publicado</p>
+            <div class="nso-counts">
+              @for (c of nsoCounters(s); track c.info.status) {
+                <div [class]="'nso-count static ' + c.info.color" [title]="c.info.hint">
+                  <b>{{ c.n }}</b><span>{{ c.info.label }}</span>
+                </div>
+              }
+            </div>
+            @if (publishedNsoGate() && (s.nsoReview ?? 0) + (s.nsoBrandOnly ?? 0) + (s.nsoNone ?? 0) > 0) {
+              <p class="nso-banner">
+                {{ (s.nsoReview ?? 0) + (s.nsoBrandOnly ?? 0) + (s.nsoNone ?? 0) }} perfume(s) sin NSO confirmado quedaron guardados, pero ocultos en tu tienda.
+              </p>
+            }
+            @if ((s.nsoReview ?? 0) > 0) {
+              <div class="nso-cta">
+                <span>🔎 {{ s.nsoReview }} perfume(s) tienen un NSO parecido: confirma si es el mismo.</span>
+                <a class="btn sm" routerLink="/admin/nso" [queryParams]="{ tab: 'revisar' }">Revisar NSO ({{ s.nsoReview }})</a>
+              </div>
+            }
+          </div>
         }
         @if (s.notes.length) {
           <ul class="notes">@for (n of s.notes; track n) { <li>{{ n }}</li> }</ul>

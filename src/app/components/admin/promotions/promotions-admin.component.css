@@ -22,6 +22,15 @@
 .pr-active input { width: 15px; height: 15px; accent-color: var(--a-accent); }
 .pr-hint { font-size: .78rem; color: var(--a-warn, #b45309); margin: -2px 0 0; }
 
+/* NSO: error del backend, contador de ocultos y perfumes marcados «sin NSO» */
+.pr-error { font-size: .82rem; font-weight: 600; color: var(--a-danger, #c62828); background: var(--a-danger-bg, #fdeaea);
+  border-radius: 8px; padding: 8px 10px; margin: 0; line-height: 1.4; }
+.pr-hidden { font-size: .78rem; color: var(--a-muted); margin: 0; }
+.pr-hidden.warn { color: var(--a-warn); }
+.pr-chip.blocked, .pr-mini.blocked { border: 1px solid #f3c7cd; background: var(--a-danger-bg, #fdeaea); }
+.pr-chip em.pr-nso, .pr-mini em.pr-nso { font-size: .66rem; color: var(--a-danger, #c62828); font-style: normal; font-weight: 700; margin-left: 4px; }
+.pr-card-warn { font-size: .78rem; font-weight: 600; color: var(--a-danger, #c62828); margin: 6px 0 0; }
+
 .pr-upload { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
 .pr-upload-preview { position: relative; width: 90px; height: 90px; border-radius: 10px; overflow: hidden; background: #f4f4f6; }
 .pr-upload-preview img { width: 100%; height: 100%; object-fit: cover; }

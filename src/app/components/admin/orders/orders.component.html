@@ -188,7 +188,9 @@
               <div class="sl-thumb">@if (r.product.imageUrl) { <img [src]="r.product.imageUrl | cdnImg:100" [alt]="r.product.name"> } @else { <span>{{ r.product.brand }}</span> }</div>
               <div class="ord-detail-info">
                 <b>{{ r.product.brand }}</b>
-                <span>{{ r.product.name }} @if (r.product.ml) { · {{ r.product.ml }}ml }</span>
+                <span>{{ r.product.name }} @if (r.product.ml) { · {{ r.product.ml }}ml }
+                  @if (nsoHidden(r.product.id)) { <span class="ord-nso-chip" [title]="nsoChipTitle(r.product.id)">Sin NSO</span> }
+                </span>
               </div>
               <span class="ord-bd-count">{{ r.clients.length }} cliente(s)</span>
               <span class="ord-bd-qty">{{ r.qty }}</span>
@@ -235,6 +237,11 @@
         <div class="ord-sum-kpi"><span>Ahorro por distribución</span><b class="pos">US$ {{ ps.savingsUsd | number:'1.0-0' }}</b></div>
         <div class="ord-sum-kpi"><span>A CristFragance</span><b>{{ ps.cristfrance }} <small>({{ ps.cristfranceBought }} ✓)</small></b></div>
         <div class="ord-sum-kpi"><span>Avisar cliente</span><b [class.neg]="ps.toNotify > 0">{{ ps.toNotify }}</b></div>
+        @if (nsoBlocked().length) {
+          <div class="ord-sum-kpi" title="Perfumes pedidos sin NSO: no entran en la compra">
+            <span>No se puede importar</span><b class="neg">{{ nsoBlocked().length }}</b>
+          </div>
+        }
       </div>
     }
 
@@ -417,6 +424,73 @@
       </div>
     }
 
+    <!-- No se puede importar: perfumes pedidos sin NSO. No entran en la compra (ni en "Solo X") -->
+    @if (nsoBlocked().length) {
+      <div class="ord-single-group ord-nso">
+        <div class="ord-single-gh">
+          <b>⛔ No se puede importar ({{ nsoBlockedTotals().perfumes }})</b>
+          <span class="adm-st red">
+            {{ nsoBlockedTotals().perfumes }} {{ nsoBlockedTotals().perfumes === 1 ? 'perfume' : 'perfumes' }} ·
+            {{ nsoBlockedTotals().units }} {{ nsoBlockedTotals().units === 1 ? 'unidad' : 'unidades' }}
+          </span>
+        </div>
+        <p class="ord-nso-why">
+          No tienen NSO confirmado, así que <b>no se incluyen en la compra</b>. Avisa a los clientes.
+          Si consigues el NSO de alguno, <a routerLink="/admin/nso">revísalo en NSO</a> y vuelve a pulsar «Ver qué comprar».
+        </p>
+
+        <div class="ord-nc-grid">
+          @for (b of nsoBlocked(); track b.productId) {
+            <div class="ord-nc-card ord-nso-card">
+              <span class="ord-nc-thumb">
+                @if (productImg(b.productId); as img) { <img [src]="img | cdnImg:120" [alt]="b.name" loading="lazy"> }
+                @else { <span class="ord-alloc-noimg">{{ b.brand }}</span> }
+              </span>
+              <div class="ord-nc-info">
+                <div class="ord-nc-name" [title]="blockedLabel(b)">{{ b.brand }} — {{ b.name }}</div>
+                <div class="ord-nc-meta">
+                  @if (b.ml) { <span class="ord-nc-ml">{{ b.ml }}ml</span> }
+                  <span [class]="'adm-st ' + nsoInfo(b.status).color" [title]="nsoInfo(b.status).hint">{{ nsoInfo(b.status).label }}</span>
+                </div>
+              </div>
+              <span class="ord-nc-qty" title="Unidades pedidas de este perfume">×{{ b.quantity }}</span>
+            </div>
+          }
+        </div>
+
+        @if (nsoBlockedReport().length) {
+          <div class="ord-nc-notify">
+            <div class="ord-nc-notify-head">📲 Avisar a {{ nsoBlockedReport().length }} cliente(s)</div>
+            <p class="ord-nso-hint">
+              El mensaje dice que el perfume «no está disponible para importación» (no menciona el NSO).
+              Se abre ya escrito y puedes cambiarlo antes de enviarlo.
+            </p>
+            <div class="ord-nc-clients">
+              @for (r of nsoBlockedReport(); track r.order.id) {
+                <div class="ord-nc-client" [class.ord-nso-sent]="nsoNotified().has(r.order.id)">
+                  <div class="ord-nc-client-top">
+                    <b>{{ r.order.clientName }}</b>
+                    <span class="ord-nc-code">{{ r.order.orderCode }}</span>
+                  </div>
+                  <div class="ord-nc-chips">
+                    <span class="ord-nc-chip miss">No se puede importar:</span>
+                    @for (u of r.unavailable; track u.label) {
+                      <span class="ord-nc-chip">{{ u.label }} <b>×{{ u.qty }}</b></span>
+                    }
+                  </div>
+                  <button class="adm-btn sm wa" (click)="whatsappNsoBlocked(r)">
+                    {{ nsoNotified().has(r.order.id) ? '↻ Enviar de nuevo' : '📲 Enviar WhatsApp' }}
+                  </button>
+                </div>
+              }
+            </div>
+          </div>
+        } @else {
+          <p class="ord-nso-hint">Ningún pedido aceptado de clientes tiene estos perfumes (pueden ser compras para la tienda).</p>
+        }
+      </div>
+    }
+
     <!-- Reporte de "Completar Excel del proveedor" -->
     @if (fillReport(); as fr) {
       <div class="ord-fill-report">
@@ -549,7 +623,9 @@
                       <div class="sl-thumb">@if (it.product.imageUrl) { <img [src]="it.product.imageUrl | cdnImg:100" [alt]="it.product.name"> } @else { <span>{{ it.product.brand }}</span> }</div>
                       <div class="ord-detail-info">
                         <b>{{ it.product.brand }}</b>
-                        <span>{{ it.product.name }} @if (it.product.ml) { · {{ it.product.ml }}ml }</span>
+                        <span>{{ it.product.name }} @if (it.product.ml) { · {{ it.product.ml }}ml }
+                          @if (nsoHidden(it.product.id)) { <span class="ord-nso-chip" [title]="nsoChipTitle(it.product.id)">Sin NSO</span> }
+                        </span>
                       </div>
                       <div class="ord-detail-qty">x{{ it.quantity }}</div>
                       <div class="num">S/ {{ (it.unitPricePen || 0) | number:'1.2-2' }}</div>

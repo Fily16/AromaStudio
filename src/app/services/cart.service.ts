@@ -1,5 +1,6 @@
 import { Injectable, signal, computed } from '@angular/core';
 import { CartItem, PromoCartItem, Product, Promotion } from '../models/api.models';
+import { splitUnavailableCart } from '../shared/unavailable-items.util';
 
 // Canal de compra: CONSOLIDADO (por encargo, +20) o STOCK (entrega inmediata, +35).
 // Las promociones (packs) son compatibles con STOCK (entrega inmediata), nunca con CONSOLIDADO.
@@ -112,6 +113,19 @@ export class CartService {
   removePromo(promoId: number) {
     this.promos.set(this.promos().filter(p => p.promo.id !== promoId));
     this.resetTypeIfEmpty();
+  }
+
+  /**
+   * Quita del carrito los perfumes que el backend ya no vende (unavailableProductIds de un 400)
+   * y los packs que traen alguno. Devuelve cuántas líneas se quitaron.
+   */
+  removeUnavailable(productIds: number[]): { items: number; promos: number } {
+    if (!productIds?.length) return { items: 0, promos: 0 };
+    const split = splitUnavailableCart(this.items(), this.promos(), productIds);
+    if (split.removedItems.length) this.items.set(split.keptItems);
+    if (split.removedPromos.length) this.promos.set(split.keptPromos);
+    this.resetTypeIfEmpty();
+    return { items: split.removedItems.length, promos: split.removedPromos.length };
   }
 
   private resetTypeIfEmpty() {

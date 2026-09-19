@@ -52,26 +52,28 @@
   </section>
 }
 
-<!-- ===== Más vendidos ===== -->
-<section class="as-section reveal" id="mas-vendidos">
-  <div class="as-container">
-    <div class="as-section-head">
-      <h2 class="as-title">Best Sellers</h2>
-      <a class="as-link" routerLink="/catalogo">Ver todo →</a>
+<!-- ===== Más vendidos (mientras carga, esqueleto; si queda vacío, la sección no se muestra) ===== -->
+@if (loading() || bestSellers().length) {
+  <section class="as-section reveal" id="mas-vendidos">
+    <div class="as-container">
+      <div class="as-section-head">
+        <h2 class="as-title">Best Sellers</h2>
+        <a class="as-link" routerLink="/catalogo">Ver todo →</a>
+      </div>
     </div>
-  </div>
-  <div class="as-container">
-    <as-scroller>
-      @if (loading()) {
-        @for (s of [1,2,3,4,5,6]; track s) { <div class="card-skeleton as-skeleton"></div> }
-      } @else {
-        @for (p of bestSellers(); track p.id) {
-          <as-product-card [product]="p" [inStock]="isInStock(p.id)" [stockQty]="stockQtyFor(p.id)" />
+    <div class="as-container">
+      <as-scroller>
+        @if (loading()) {
+          @for (s of [1,2,3,4,5,6]; track s) { <div class="card-skeleton as-skeleton"></div> }
+        } @else {
+          @for (p of bestSellers(); track p.id) {
+            <as-product-card [product]="p" [inStock]="isInStock(p.id)" [stockQty]="stockQtyFor(p.id)" />
+          }
         }
-      }
-    </as-scroller>
-  </div>
-</section>
+      </as-scroller>
+    </div>
+  </section>
+}
 
 <!-- ===== Categorías (Para Ella / Para Él / Unisex) ===== -->
 @if (categoryCards().length) {

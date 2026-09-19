@@ -9,6 +9,19 @@
 
 .cart-title { font-family: var(--font-display); font-size: var(--fz-h2); font-weight: 600; color: var(--ink); margin-bottom: 20px; }
 
+/* Aviso: se quitaron perfumes que ya no están disponibles (mensaje del backend tal cual) */
+.cart-removed, .cart-empty .cart-removed {
+  position: relative; display: block; text-align: left;
+  background: #fff5f6; border: 1px solid #f6d3d8; border-radius: 10px;
+  padding: 10px 38px 10px 14px; margin: 0 0 16px; font-size: .88rem; line-height: 1.45; color: #8a1122;
+}
+.cart-empty .cart-removed { max-width: 520px; margin: 14px auto 4px; padding-right: 14px; }
+.cart-removed-x {
+  position: absolute; top: 6px; right: 6px; width: 28px; height: 28px; border: none; border-radius: 50%;
+  background: transparent; color: #8a1122; cursor: pointer; font-size: .8rem;
+}
+.cart-removed-x:hover { background: #fbe3e7; }
+
 .cart-layout { display: grid; grid-template-columns: 1fr; gap: clamp(18px, 3vw, 36px); align-items: start; }
 
 /* Min bar */

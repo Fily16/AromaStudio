@@ -8,6 +8,7 @@ import { Product, Order, Banner, Promotion } from '../../models/api.models';
 import { ProductCardComponent } from '../shared/product-card.component';
 import { NoteIconComponent } from '../shared/note-icon.component';
 import { CdnImgPipe } from '../../shared/cdn-img.pipe';
+import { applyUnavailableToEdit, editRemovalNotice, unavailableIdsFrom } from '../../shared/unavailable-items.util';
 import {
   parseNotes, noteLabel, familyLabel, FamilyCode, FAMILY_ORDER,
   OCCASION_LABEL, SEASON_LABEL, SEASON_ORDER
@@ -475,9 +476,30 @@ export class CatalogComponent implements OnInit, OnDestroy {
         }
       },
       error: (err) => {
-        this.editError.set(err.error?.message || 'Error al guardar los cambios.');
+        const message = err.error?.message || 'Error al guardar los cambios.';
+        this.editError.set(this.dropUnavailableFromEdit(err, message));
         this.editLoading.set(false);
       }
     });
+  }
+
+  /**
+   * Perfumes que ya no se venden (400 con unavailableProductIds): los agregados se quitan y los que
+   * ya estaban en el pedido vuelven a la cantidad que tenían (se pueden mantener, no subir).
+   * Devuelve el texto a mostrar: el mensaje del backend sin su «Retíralo de tu pedido» (ya se hizo
+   * solo) + qué pasó y qué falta hacer.
+   */
+  private dropUnavailableFromEdit(err: unknown, message: string): string {
+    const ids = unavailableIdsFrom(err);
+    if (!ids.length) return message;
+    const original = new Map<number, number>();
+    for (const it of this.editOrder()?.items ?? []) {
+      if (it.product?.id != null) {
+        original.set(it.product.id, (original.get(it.product.id) ?? 0) + (it.quantity || 0));
+      }
+    }
+    const res = applyUnavailableToEdit(this.editItems(), original, ids);
+    this.editItems.set(res.items);
+    return editRemovalNotice(message, res);
   }
 }

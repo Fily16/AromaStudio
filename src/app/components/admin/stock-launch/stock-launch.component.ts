@@ -1,18 +1,23 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
+import { RouterLink } from '@angular/router';
 import { ApiService } from '../../../services/api.service';
+import { NsoStateService } from '../../../services/nso-state.service';
 import { Product, RetailInventory, RetailSale } from '../../../models/api.models';
 import { PromotionsAdminComponent } from '../promotions/promotions-admin.component';
 import { CdnImgPipe } from '../../../shared/cdn-img.pipe';
+import { splitHiddenByNso } from '../../../shared/nso-labels';
 
 /**
  * Lanzar a stock: el admin selecciona perfumes que tiene físicamente y los "lanza"
  * a la tienda. El backend crea inventario retail y fija el precio = costo landed + S/35.
+ * Con el filtro NSO activo solo se ofrecen perfumes con NSO (lanzar = volver a comprar);
+ * el stock que ya existe se puede seguir vendiendo, con aviso.
  */
 @Component({
   selector: 'app-admin-stock-launch',
   standalone: true,
-  imports: [DecimalPipe, PromotionsAdminComponent, CdnImgPipe],
+  imports: [DecimalPipe, RouterLink, PromotionsAdminComponent, CdnImgPipe],
   template: `
     <div class="ord-head" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:14px">
       <h2 class="adm-section-title" style="margin:0">Stock de tienda</h2>
@@ -34,15 +39,34 @@ import { CdnImgPipe } from '../../../shared/cdn-img.pipe';
       “entrega inmediata” en la tienda, con precio automático de <b>costo + S/35</b>.
     </p>
 
+    @if (catalogError() || stockError()) {
+      <div class="sl-error" role="alert">
+        @if (catalogError()) { <div>{{ catalogError() }}</div> }
+        @if (stockError()) { <div>{{ stockError() }}</div> }
+        <button class="adm-btn sm" (click)="reload()">Reintentar</button>
+      </div>
+    }
+
     <div class="sl-grid">
       <!-- Catálogo -->
       <div class="adm-card">
         <div class="adm-card-pad" style="border-bottom:1px solid var(--a-line)">
           <input class="adm-input" type="search" placeholder="Buscar perfume por nombre, marca o SKU…"
                  [value]="query()" (input)="query.set($any($event.target).value)">
+          @if (hiddenCount() > 0) {
+            <p class="sl-hidden">
+              🔒 {{ hiddenCount() }} {{ hiddenCount() === 1 ? 'oculto' : 'ocultos' }} por no tener NSO
+              (no se pueden volver a comprar). <a routerLink="/admin/nso">Ver en NSO</a>
+            </p>
+          } @else if (nsoFailed()) {
+            <p class="sl-hidden warn">
+              No se pudo revisar el NSO: se muestran todos. Al lanzar, el sistema igual deja fuera los que no tienen NSO.
+              <button class="adm-btn sm" (click)="nso.retryIfMissing()">Reintentar</button>
+            </p>
+          }
         </div>
         <div class="sl-list">
-          @if (loading()) {
+          @if (loading() || nsoWaiting()) {
             <p style="padding:18px;color:var(--a-muted)">Cargando catálogo…</p>
           } @else {
             @for (p of filtered(); track p.id) {
@@ -73,7 +97,9 @@ import { CdnImgPipe } from '../../../shared/cdn-img.pipe';
           <div class="sl-selected">
             @for (row of selectedRows(); track row.product.id) {
               <div class="sl-row">
-                <span class="sl-row-name">{{ row.product.brand }} — {{ row.product.name }}</span>
+                <span class="sl-row-name">{{ row.product.brand }} — {{ row.product.name }}
+                  @if (isHiddenNow(row.product.id)) { <small class="sl-row-warn">Sin NSO: no se lanzará</small> }
+                </span>
                 <div class="sl-qty">
                   <button class="adm-btn ghost sm" (click)="changeQty(row.product.id, -1)">−</button>
                   <span>{{ row.qty }}</span>
@@ -87,7 +113,7 @@ import { CdnImgPipe } from '../../../shared/cdn-img.pipe';
             {{ launching() ? 'Lanzando…' : 'Lanzar ' + totalUnits() + ' unidades a la tienda' }}
           </button>
         }
-        @if (message()) { <p class="sl-msg">{{ message() }}</p> }
+        @if (message()) { <p class="sl-msg" [class.warn]="messageKind() === 'warn'" [class.error]="messageKind() === 'error'" role="status">{{ message() }}</p> }
       </div>
     </div>
 
@@ -107,6 +133,11 @@ import { CdnImgPipe } from '../../../shared/cdn-img.pipe';
                     <div class="sl-thumb">@if (r.product.imageUrl) { <img [src]="r.product.imageUrl | cdnImg:100" [alt]="r.product.name"> } @else { <span>{{ r.product.brand }}</span> }</div>
                     <div><b>{{ r.product.brand }}</b><div style="font-size:.82rem;color:var(--a-muted)">{{ r.product.name }} @if (r.product.ml) { · {{ r.product.ml }}ml }</div></div>
                   </div>
+                  @if (isHiddenNow(r.product.id)) {
+                    <div class="sl-nso-warn">
+                      Este perfume no tiene NSO: puedes vender el stock que ya tienes, pero no se volverá a comprar.
+                    </div>
+                  }
                 </td>
                 <td class="num">{{ r.quantity }}</td>
                 <td class="num">S/ {{ (r.product.stockPricePen || 0) | number:'1.2-2' }}</td>
@@ -152,21 +183,55 @@ import { CdnImgPipe } from '../../../shared/cdn-img.pipe';
     .sl-row-name { flex: 1; font-size: .82rem; }
     .sl-qty { display: flex; align-items: center; gap: 6px; }
     .sl-qty span { min-width: 20px; text-align: center; font-weight: 600; font-size: .85rem; }
-    .sl-msg { margin-top: 12px; color: var(--a-ok); font-weight: 600; font-size: .88rem; }
+    .sl-msg { margin-top: 12px; color: var(--a-ok); font-weight: 600; font-size: .88rem; line-height: 1.45; }
+    .sl-msg.warn { color: var(--a-warn); }
+    .sl-msg.error { color: var(--a-danger); }
+    .sl-error { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; margin-bottom: 16px;
+      background: var(--a-danger-bg); color: var(--a-danger); border: 1px solid #f3c7cd; border-radius: 10px;
+      padding: 10px 14px; font-size: .86rem; font-weight: 600; }
+    .sl-hidden { margin: 8px 0 0; font-size: .8rem; color: var(--a-muted); line-height: 1.4; }
+    .sl-hidden a { color: var(--a-accent-700); font-weight: 600; text-decoration: underline; }
+    .sl-hidden.warn { color: var(--a-warn); }
+    .sl-row-warn { display: block; color: var(--a-danger); font-size: .72rem; font-weight: 600; }
+    .sl-nso-warn { margin-top: 6px; max-width: 420px; font-size: .76rem; line-height: 1.35; color: var(--a-warn);
+      background: var(--a-warn-bg); border-radius: 6px; padding: 4px 8px; }
   `]
 })
 export class StockLaunchComponent {
   private api = inject(ApiService);
+  nso = inject(NsoStateService);
 
   tab = signal<'stock' | 'promos'>('stock');
   loading = signal(true);
   launching = signal(false);
   message = signal('');
+  messageKind = signal<'ok' | 'warn' | 'error'>('ok');
+  catalogError = signal('');
+  stockError = signal('');
   allProducts = signal<Product[]>([]);
   query = signal('');
   selected = signal<Map<number, number>>(new Map());
   inventory = signal<RetailInventory[]>([]);
   sales = signal<RetailSale[]>([]);
+
+  /** El estado NSO ya permite decidir qué ocultar (resumen + índice si el filtro está activo). */
+  nsoReady = computed(() => !!this.nso.summary() && (!this.nso.gateEffective() || this.nso.indexLoaded()));
+  /** Falló la carga NSO: se muestra todo con aviso (el backend igual omite los bloqueados). */
+  nsoFailed = computed(() => !this.nsoReady() && !!this.nso.loadError());
+  nsoWaiting = computed(() => !this.nsoReady() && !this.nso.loadError());
+
+  /** Catálogo ofrecido: con el filtro NSO activo, solo los que se pueden volver a comprar. */
+  private catalog = computed(() => {
+    const all = this.allProducts();
+    if (!this.nsoReady()) return { visible: all, hiddenCount: 0 };
+    return splitHiddenByNso(all, (id) => this.nso.isHidden(id));
+  });
+  hiddenCount = computed(() => this.catalog().hiddenCount);
+
+  /** Oculto por NSO según lo cargado (false mientras no se sabe). */
+  isHiddenNow(productId: number): boolean {
+    return this.nsoReady() && this.nso.isHidden(productId);
+  }
 
   // Stock agregado por producto (suma de filas de inventario con cantidad > 0)
   stockRows = computed(() => {
@@ -184,7 +249,7 @@ export class StockLaunchComponent {
 
   filtered = computed(() => {
     const q = this.query().toLowerCase().trim();
-    let list = this.allProducts();
+    let list = this.catalog().visible;
     if (q) {
       const tokens = q.split(/\s+/);
       list = list.filter(p => {
@@ -206,25 +271,57 @@ export class StockLaunchComponent {
   totalUnits = computed(() => [...this.selected().values()].reduce((a, b) => a + b, 0));
 
   constructor() {
-    this.api.getProducts({ onlyAvailable: false }).subscribe({
-      next: (products) => { this.allProducts.set(products); this.loading.set(false); },
-      error: () => this.loading.set(false)
-    });
+    // Estado NSO fresco: la importación o la pantalla NSO pueden haber cambiado estados.
+    this.nso.refresh();
+    this.loadCatalog();
     this.loadStock();
   }
 
-  loadStock() {
-    this.api.getRetailInventory(true).subscribe({ next: (inv) => this.inventory.set(inv), error: () => {} });
-    this.api.getRetailSales().subscribe({ next: (s) => this.sales.set(s), error: () => {} });
+  reload() {
+    if (this.catalogError()) this.loadCatalog();
+    this.loadStock();
+    // Falta el estado NSO (falló o nunca llegó): se vuelve a pedir, no solo si hay texto de error.
+    if (!this.nsoReady()) this.nso.retryIfMissing();
   }
 
+  private loadCatalog() {
+    this.loading.set(true);
+    this.catalogError.set('');
+    // Catálogo admin (sin el filtro de la tienda): el filtro NSO se aplica aquí mismo.
+    this.api.getAdminProducts().subscribe({
+      next: (products) => { this.allProducts.set(products); this.loading.set(false); },
+      error: (e) => {
+        this.loading.set(false);
+        this.catalogError.set(e?.error?.message || 'No se pudo cargar el catálogo de perfumes.');
+      }
+    });
+  }
+
+  loadStock() {
+    this.stockError.set('');
+    this.api.getRetailInventory(true).subscribe({
+      next: (inv) => this.inventory.set(inv),
+      error: (e) => this.stockError.set(e?.error?.message || 'No se pudo cargar el stock de tienda.')
+    });
+    this.api.getRetailSales().subscribe({
+      next: (s) => this.sales.set(s),
+      error: (e) => this.stockError.set(e?.error?.message || 'No se pudieron cargar las ventas de tienda.')
+    });
+  }
+
+  /** Vender stock que ya existe: nunca se bloquea (ni sin NSO); la tabla muestra el aviso. */
   sell(row: { product: Product; quantity: number }, qty: number) {
     const n = Math.max(1, Math.min(qty || 1, row.quantity));
     const price = row.product.stockPricePen || 0;
     this.api.registerRetailSale({ productId: row.product.id, quantity: n, salePricePen: price, channel: 'TIENDA' }).subscribe({
-      next: () => { this.message.set(`✓ Vendiste ${n} × ${row.product.brand} ${row.product.name}.`); this.loadStock(); },
-      error: () => this.message.set('No se pudo registrar la venta.')
+      next: () => { this.say(`✓ Vendiste ${n} × ${row.product.brand} ${row.product.name}.`); this.loadStock(); },
+      error: (e) => this.say(e?.error?.message || 'No se pudo registrar la venta.', 'error')
     });
+  }
+
+  private say(text: string, kind: 'ok' | 'warn' | 'error' = 'ok') {
+    this.messageKind.set(kind);
+    this.message.set(text);
   }
 
   toggle(p: Product) {
@@ -254,13 +351,22 @@ export class StockLaunchComponent {
     this.api.launchToStock(items).subscribe({
       next: (res) => {
         this.launching.set(false);
-        this.message.set(`✓ ${res.launched} perfume(s) lanzados a la tienda con precio costo + S/35.`);
+        const blocked = res.blocked ?? [];
+        const launchedText = `✓ ${res.launched} perfume(s) lanzados a la tienda con precio costo + S/35.`;
+        if (blocked.length) {
+          const names = blocked.map(b => b.name).join(', ');
+          this.say(`${res.launched ? launchedText + ' ' : ''}No se lanzaron ${blocked.length} por no tener NSO: ${names}.`,
+            res.launched ? 'warn' : 'error');
+          if (this.nso.gateEffective()) this.nso.refreshIndex();
+        } else {
+          this.say(launchedText);
+        }
         this.selected.set(new Map());
         this.loadStock();
       },
-      error: () => {
+      error: (e) => {
         this.launching.set(false);
-        this.message.set('Ocurrió un error al lanzar. Intenta de nuevo.');
+        this.say(e?.error?.message || 'Ocurrió un error al lanzar. Intenta de nuevo.', 'error');
       }
     });
   }

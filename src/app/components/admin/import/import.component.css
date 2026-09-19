@@ -199,3 +199,68 @@ h1 { margin: 0 0 4px; }
   padding: 12px 18px; border-top: 1px solid #eee;
 }
 .rev-foot .spacer { flex: 1; }
+
+/* ===== NSO (solo interno): pastilla por fila, contadores, chips de filtro y avisos ===== */
+.nso-note {
+  display: flex; flex-direction: column; gap: 3px; margin: 0 0 14px;
+  background: #eef6ff; border: 1px solid #cfe0fd; color: #1a4f8a;
+  border-radius: 10px; padding: 10px 14px; font-size: 14px;
+}
+.nso-note a, .nso-banner a { color: #1f6fb2; font-weight: 700; text-decoration: underline; }
+.nso-box { background: #fbfbfd; border: 1px solid #e8eaf0; border-radius: 10px; padding: 12px 14px; margin: 0 0 14px; }
+.summary .nso-box { margin: 14px 0 0; }
+.nso-counts { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; margin-bottom: 10px; }
+.nso-count {
+  display: flex; flex-direction: column; align-items: center; gap: 2px; text-align: center;
+  border: 2px solid transparent; border-radius: 10px; padding: 10px 8px; cursor: pointer;
+  font: inherit; background: #f4f4f4; color: #555;
+}
+.nso-count.static { cursor: default; }
+.nso-count b { font-size: 22px; line-height: 1.1; }
+.nso-count span { font-size: 12px; font-weight: 600; }
+.nso-count.green { background: #e3f4e8; color: #137333; }
+.nso-count.amber { background: #fff4e5; color: #b26a00; }
+.nso-count.blue { background: #eef6ff; color: #1f6fb2; }
+.nso-count.red { background: #fdecea; color: #b4232a; }
+.nso-count.on { border-color: currentColor; }
+.nso-banner { margin: 0; font-size: 13px; color: #555; line-height: 1.5; }
+.nso-cta {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;
+  margin-top: 10px; background: #fef3e0; border: 1px solid #f4dfb8; border-radius: 8px; padding: 10px 14px; font-size: 14px;
+}
+.nso-cta .btn { text-decoration: none; }
+
+.nso-chips { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin: 0 0 10px; }
+.nso-chips-lbl { font-size: 12px; font-weight: 700; color: #888; text-transform: uppercase; margin-right: 2px; }
+.nso-fchip {
+  display: inline-flex; align-items: center; gap: 6px; cursor: pointer; font: inherit;
+  background: #fff; border: 1px solid #ddd; border-radius: 999px; padding: 5px 12px; font-size: 13px; font-weight: 600; color: #555;
+}
+.nso-fchip:hover { border-color: #999; }
+.nso-fchip.on { background: #1f2937; border-color: #1f2937; color: #fff; }
+.nso-fchip .n { background: rgba(0,0,0,.07); border-radius: 999px; padding: 0 7px; font-size: 11px; }
+.nso-fchip.on .n { background: rgba(255,255,255,.22); }
+.nso-fchip .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; background: #bbb; }
+.dot.green { background: #137333; }
+.dot.amber { background: #d99a1e; }
+.dot.blue { background: #1f6fb2; }
+.dot.red { background: #b4232a; }
+.dot.gray { background: #999; }
+
+.pv-nso .nso-pill {
+  display: inline-block; font-size: 11px; font-weight: 700; padding: 2px 9px; border-radius: 999px;
+  white-space: nowrap; cursor: help; background: #f0f0f0; color: #666;
+}
+.pv-nso .nso-pill.green { background: #e3f4e8; color: #137333; }
+.pv-nso .nso-pill.amber { background: #fff4e5; color: #b26a00; }
+.pv-nso .nso-pill.blue { background: #eef6ff; color: #1f6fb2; }
+.pv-nso .nso-pill.red { background: #fdecea; color: #b4232a; }
+.pv-nso .nofoto { color: #bbb; font-size: 10px; }
+.pv-table .tag.other-country { background: #eef6ff; color: #1f6fb2; display: inline-block; margin-top: 3px; }
+.enrich .enrich-skip { font-size: 12px; color: #b26a00; font-weight: 600; }
+
+@media (max-width: 640px) {
+  .nso-counts { grid-template-columns: 1fr 1fr; }
+  .nso-fchip { min-height: 40px; }
+  .nso-cta .btn { width: 100%; text-align: center; }
+}

@@ -2,6 +2,7 @@ import { Component, inject, signal } from '@angular/core';
 import { RouterOutlet, RouterLink, RouterLinkActive, Router } from '@angular/router';
 import { AuthService } from '../../../services/auth.service';
 import { ApiService } from '../../../services/api.service';
+import { NsoStateService } from '../../../services/nso-state.service';
 
 /**
  * Shell del ERP admin: sidebar de navegación + topbar (consolidado activo, usuario, salir).
@@ -40,6 +41,13 @@ import { ApiService } from '../../../services/api.service';
               Revisión
               @if (pendingReviews() > 0) {
                 <span class="adm-nav-badge">{{ pendingReviews() }}</span>
+              }
+            </a>
+            <a routerLink="/admin/nso" routerLinkActive="active" title="Notificación Sanitaria: qué perfumes se pueden vender e importar">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3l7 3v5c0 4.5-3 8.5-7 10-4-1.5-7-5.5-7-10V6l7-3z"/><path d="M9 12l2 2 4-4"/></svg>
+              NSO
+              @if (nso.pendingCount() > 0) {
+                <span class="adm-nav-badge">{{ nso.pendingCount() }}</span>
               }
             </a>
             <a routerLink="/admin/compra" routerLinkActive="active">
@@ -81,6 +89,7 @@ export class AdminShellComponent {
   auth = inject(AuthService);
   private api = inject(ApiService);
   private router = inject(Router);
+  nso = inject(NsoStateService);
 
   menuOpen = signal(false);
   consolidado = signal<number | null>(null);
@@ -96,6 +105,8 @@ export class AdminShellComponent {
       next: (r) => this.pendingReviews.set(r?.pending ?? 0),
       error: () => {}
     });
+    // Badge NSO: perfumes con un NSO parecido esperando que la dueña confirme
+    this.nso.refreshCount();
   }
 
   logout() {

@@ -14,6 +14,21 @@
 .pd-sk-img { aspect-ratio: 1/1; border-radius: var(--r); }
 .pd-sk-info { display: flex; flex-direction: column; gap: 16px; }
 
+/* Perfume que ya no está a la venta (o no se pudo cargar): aviso amable con salida al catálogo */
+.pd-gone { padding-block: clamp(36px, 7vw, 72px) clamp(10px, 3vw, 24px); }
+.pd-gone-card {
+  max-width: 520px; margin: 0 auto; text-align: center;
+  background: #fff; border: 1px solid var(--line); border-radius: var(--r);
+  padding: clamp(24px, 5vw, 40px) clamp(18px, 4vw, 32px);
+}
+.pd-gone-title {
+  font-family: var(--font-display); font-weight: 600; color: var(--ink);
+  font-size: clamp(1.4rem, 1rem + 1.6vw, 2rem); line-height: 1.15; margin-bottom: 10px;
+}
+.pd-gone-text { color: var(--muted); font-size: 0.95rem; margin-bottom: 22px; }
+.pd-gone-actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+.pd-gone-ghost { background: #fff; border: 1.5px solid var(--line-strong); color: var(--ink); }
+
 /* Breadcrumb */
 .pd-crumbs { padding-block: 18px 6px; font-size: 0.78rem; color: var(--muted); }
 .pd-crumbs a:hover { color: var(--accent); }

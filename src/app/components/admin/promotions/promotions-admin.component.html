@@ -60,6 +60,10 @@
         </div>
         @if (hasCustomItem()) {
           <p class="pr-hint">Incluye un perfume exclusivo: la ganancia debe ingresarse a mano.</p>
+          <p class="pr-hint">
+            Los perfumes exclusivos no están en tu catálogo y el sistema no puede revisar su NSO:
+            verifica a mano que lo tengan antes de publicar la promoción.
+          </p>
         }
 
         <!-- Perfumes de la promo -->
@@ -69,13 +73,17 @@
         } @else {
           <div class="pr-chips">
             @for (it of fItems(); track $index) {
-              <span class="pr-chip" [class.custom]="it.productId == null">
+              <span class="pr-chip" [class.custom]="it.productId == null" [class.blocked]="isHiddenNow(it.productId)">
                 @if (it.imageUrl) { <img [src]="it.imageUrl | cdnImg:80" [alt]="it.name"> }
                 {{ it.name }} @if (it.productId == null) { <em>exclusivo</em> }
+                @if (isHiddenNow(it.productId)) { <em class="pr-nso">sin NSO</em> }
                 <button (click)="removeItem($index)" title="Quitar">✕</button>
               </span>
             }
           </div>
+          @if (draftHasHidden()) {
+            <p class="pr-error">Quita los perfumes marcados «sin NSO»: no se pueden poner en una promoción.</p>
+          }
         }
 
         <!-- Agregar exclusivo -->
@@ -85,6 +93,7 @@
           <button class="adm-btn sm" (click)="addCustomItem()">+ Exclusivo</button>
         </div>
 
+        @if (formError()) { <p class="pr-error" role="alert">{{ formError() }}</p> }
         <div class="pr-actions">
           <button class="adm-btn" (click)="cancelForm()">Cancelar</button>
           <button class="adm-btn primary" (click)="save()">Guardar promoción</button>
@@ -94,14 +103,29 @@
       <!-- Catálogo para agregar -->
       <div class="pr-form-right">
         <input class="adm-input" type="search" [value]="pQuery()" (input)="pQuery.set($any($event.target).value)" placeholder="Buscar en el catálogo…">
+        @if (productsError()) {
+          <p class="pr-error" role="alert">{{ productsError() }} <button class="adm-btn sm" (click)="load()">Reintentar</button></p>
+        }
+        @if (hiddenCount() > 0) {
+          <p class="pr-hidden">🔒 {{ hiddenCount() }} {{ hiddenCount() === 1 ? 'oculto' : 'ocultos' }} por no tener NSO</p>
+        } @else if (nsoFailed()) {
+          <p class="pr-hidden warn">
+            No se pudo revisar el NSO: se muestran todos. Al guardar, el sistema igual rechaza los que no tienen NSO.
+            <button class="adm-btn sm" (click)="nso.retryIfMissing()">Reintentar</button>
+          </p>
+        }
         <div class="pr-cat-list">
-          @for (p of filteredProducts(); track p.id) {
-            <button class="pr-cat-item" (click)="addCatalogItem(p)">
-              <div class="sl-thumb">@if (p.imageUrl) { <img [src]="p.imageUrl | cdnImg:100" [alt]="p.name"> } @else { <span>{{ p.brand }}</span> }</div>
-              <div class="pr-cat-info"><b>{{ p.brand }}</b><span>{{ p.name }} @if (p.ml) { · {{ p.ml }}ml }</span></div>
-              <span class="pr-cat-add">+</span>
-            </button>
-          } @empty { <p style="padding:14px;color:var(--a-muted);font-size:.84rem">Sin resultados.</p> }
+          @if (nsoWaiting()) {
+            <p style="padding:14px;color:var(--a-muted);font-size:.84rem">Cargando catálogo…</p>
+          } @else {
+            @for (p of filteredProducts(); track p.id) {
+              <button class="pr-cat-item" (click)="addCatalogItem(p)">
+                <div class="sl-thumb">@if (p.imageUrl) { <img [src]="p.imageUrl | cdnImg:100" [alt]="p.name"> } @else { <span>{{ p.brand }}</span> }</div>
+                <div class="pr-cat-info"><b>{{ p.brand }}</b><span>{{ p.name }} @if (p.ml) { · {{ p.ml }}ml }</span></div>
+                <span class="pr-cat-add">+</span>
+              </button>
+            } @empty { <p style="padding:14px;color:var(--a-muted);font-size:.84rem">Sin resultados.</p> }
+          }
         </div>
       </div>
     </div>
@@ -133,9 +157,12 @@
           </div>
           <div class="pr-card-perfumes">
             @for (it of p.items; track $index) {
-              <span class="pr-mini">@if (it.imageUrl) { <img [src]="it.imageUrl | cdnImg:80" [alt]="it.name"> } {{ it.name }}</span>
+              <span class="pr-mini" [class.blocked]="isHiddenNow(it.productId)">@if (it.imageUrl) { <img [src]="it.imageUrl | cdnImg:80" [alt]="it.name"> } {{ it.name }}@if (isHiddenNow(it.productId)) { <em class="pr-nso">sin NSO</em> }</span>
             }
           </div>
+          @if (promoHasHidden(p)) {
+            <p class="pr-card-warn">No se muestra en la tienda: tiene un perfume sin NSO. Edítala y quítalo.</p>
+          }
         </div>
         <div class="pr-card-actions">
           <button class="adm-btn sm" (click)="toggleActive(p)">{{ p.active ? 'Ocultar' : 'Activar' }}</button>

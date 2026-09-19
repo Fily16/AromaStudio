@@ -15,6 +15,41 @@
       <div class="as-skeleton" style="height:48px;width:100%"></div>
     </div>
   </div>
+} @else if (notFound() || loadFailed()) {
+  <div class="as-container pd-gone">
+    <div class="pd-gone-card" role="status">
+      @if (notFound()) {
+        <h1 class="pd-gone-title">Este perfume ya no está disponible</h1>
+        <p class="pd-gone-text">Tenemos muchos más perfumes esperándote en el catálogo.</p>
+        <a class="as-btn as-btn-primary" routerLink="/catalogo">Ver catálogo</a>
+      } @else {
+        <h1 class="pd-gone-title">No pudimos cargar este perfume</h1>
+        <p class="pd-gone-text">Revisa tu conexión e inténtalo otra vez.</p>
+        <div class="pd-gone-actions">
+          <button type="button" class="as-btn as-btn-primary" (click)="retry()">Reintentar</button>
+          <a class="as-btn pd-gone-ghost" routerLink="/catalogo">Ver catálogo</a>
+        </div>
+      }
+    </div>
+  </div>
+
+  @if (notFound() && suggestions().length) {
+    <section class="as-section">
+      <div class="as-container">
+        <div class="as-section-head">
+          <h2 class="as-title">Te puede interesar</h2>
+          <a class="as-link" routerLink="/catalogo">Ver todo →</a>
+        </div>
+      </div>
+      <div class="as-container">
+        <as-scroller>
+          @for (s of suggestions(); track s.id) {
+            <as-product-card [product]="s" [inStock]="isInStock(s.id)" />
+          }
+        </as-scroller>
+      </div>
+    </section>
+  }
 } @else if (product(); as p) {
   <div class="as-container pd-crumbs">
     <a routerLink="/">Inicio</a> ›
