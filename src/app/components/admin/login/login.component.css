@@ -39,6 +39,14 @@
   font-size: 0.9rem; font-weight: 600;
 }
 
+/* Aviso al conectar la app local de Claude (se llega con ?agent=...) */
+.connect {
+  background: #eef4ff; color: #1c3d73; border: 1px solid #c7dbff;
+  border-radius: 8px; padding: 0.7rem 1rem; margin: -0.75rem 0 1.25rem;
+  font-size: 0.88rem; line-height: 1.45;
+}
+.connect b { display: block; margin-bottom: 2px; }
+
 .login-btn {
   width: 100%; padding: 0.85rem;
   background: #C9A227; color: #fff; border: none;

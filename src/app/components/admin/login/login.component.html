@@ -7,6 +7,17 @@
       <p class="expired" role="status">Tu sesión venció, vuelve a entrar.</p>
     }
 
+    @if (conectandoClaude()) {
+      <p class="connect" role="status">
+        <b>Conectar Claude con tu panel.</b>
+        Entra con tu usuario y clave de siempre. Quedará conectado por un año, y podrás desconectarlo
+        cuando quieras desde Ajustes.
+      </p>
+    }
+    @if (claudeListo()) {
+      <p class="expired" role="status">✓ Listo. Ya puedes cerrar esta pestaña.</p>
+    }
+
     <div class="form-group">
       <label>Email</label>
       <input type="email" [value]="email()" (input)="email.set($any($event.target).value)" placeholder="admin@aromastudio.pe">

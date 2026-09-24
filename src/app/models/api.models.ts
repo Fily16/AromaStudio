@@ -233,6 +233,21 @@ export interface AppConfig {
   description: string;
 }
 
+/** Token largo que el panel le entrega a la app local de Claude (MCP) al conectarla. */
+export interface AgentToken {
+  token: string;
+  email: string;
+  expiresAt: string;
+  days: number;
+  generation: number;
+}
+
+export interface AgentTokenStatus {
+  generation: number;
+  revokedAt: string | null;
+  days: number;
+}
+
 export interface PublicConfig {
   yapeNumber: string;
   exchangeRate: number;

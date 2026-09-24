@@ -4,7 +4,7 @@ import { Observable, of } from 'rxjs';
 import { environment } from '../../environments/environment';
 import {
   Product, Order, Consolidado, RetailInventory, RetailSale,
-  DashboardStats, AppConfig, PublicConfig, OrderRequest, LoginResponse,
+  DashboardStats, AppConfig, PublicConfig, OrderRequest, LoginResponse, AgentToken, AgentTokenStatus,
   StockPurchaseRequest, BreakdownSection, FullBreakdownResponse,
   Supplier, ImportSummary, AllocationResponse, SuggestResult, OperationsSummary, MissingItem, MissingStatus,
   Promotion, ProfitReport, SupplierRequest, ColumnMapping, ImportPreview, PublishRequest,
@@ -287,6 +287,19 @@ export class ApiService {
 
   getPublicConfig(): Observable<PublicConfig> {
     return this.http.get<PublicConfig>(`${this.url}/config/public`);
+  }
+
+  // --- Conexión de Claude (MCP local): token largo en vez de guardar la clave en un archivo ---
+  createAgentToken(): Observable<AgentToken> {
+    return this.http.post<AgentToken>(`${this.url}/admin/agent-tokens`, {}, { headers: this.authHeaders() });
+  }
+
+  getAgentTokenStatus(): Observable<AgentTokenStatus> {
+    return this.http.get<AgentTokenStatus>(`${this.url}/admin/agent-tokens`, { headers: this.authHeaders() });
+  }
+
+  revokeAgentTokens(): Observable<AgentTokenStatus> {
+    return this.http.delete<AgentTokenStatus>(`${this.url}/admin/agent-tokens`, { headers: this.authHeaders() });
   }
 
   // --- Stock Purchase ---
